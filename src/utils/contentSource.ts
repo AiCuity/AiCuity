@@ -1,7 +1,5 @@
 
 import { ExtractedContent } from "./contentExtractor";
-import { Readability } from "@mozilla/readability";
-import { JSDOM } from "jsdom";
 
 /**
  * Tries to fetch actual content from sources that allow direct access
@@ -30,29 +28,8 @@ export async function fetchActualContent(url: string): Promise<ExtractedContent 
       };
     }
     
-    // For other URLs, try a direct fetch and use Readability
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        throw new Error(`Failed to fetch content: ${response.statusText}`);
-      }
-      
-      const html = await response.text();
-      const dom = new JSDOM(html, { url });
-      const reader = new Readability(dom.window.document);
-      const article = reader.parse();
-      
-      if (article) {
-        return {
-          content: article.content,
-          title: article.title || "Extracted Content",
-          sourceUrl: url
-        };
-      }
-    } catch (error) {
-      console.error("Error extracting with direct Readability:", error);
-    }
-    
+    // For other URLs, we can't reliably extract content in the browser
+    // You would need a server-side solution or proxy for this
     return null;
   } catch (error) {
     console.error("Error fetching actual content:", error);

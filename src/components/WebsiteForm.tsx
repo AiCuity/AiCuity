@@ -43,6 +43,10 @@ const WebsiteForm = () => {
       
       const extractedContent = await extractContentFromUrl(processedUrl);
       
+      if (!extractedContent || !extractedContent.content) {
+        throw new Error("Failed to extract any content from the website.");
+      }
+      
       // Store the extracted content in sessionStorage
       sessionStorage.setItem('readerContent', extractedContent.content);
       sessionStorage.setItem('contentTitle', extractedContent.title || 'Website content');
@@ -62,7 +66,7 @@ const WebsiteForm = () => {
       
       toast({
         title: "Error",
-        description: "Failed to extract content from the website.",
+        description: "Failed to extract content from the website. Using fallback mode.",
         variant: "destructive",
       });
     }

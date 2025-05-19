@@ -1,6 +1,3 @@
-
-import { Readability } from "@mozilla/readability";
-import { JSDOM } from "jsdom";
 import { fetchActualContent } from "./contentSource";
 
 export interface ExtractedContent {
@@ -49,12 +46,16 @@ export async function extractContentFromUrl(url: string): Promise<ExtractedConte
   } catch (error) {
     console.error('API Error:', error);
     
-    if (error instanceof TypeError && error.message === 'Failed to fetch') {
-      console.log('Connection error, using Readability fallback');
-      return await extractUsingReadability(url);
-    } else if (error.name === 'AbortError') {
-      console.log('Request timed out, using Readability fallback');
-      return await extractUsingReadability(url);
+    // Try to fetch actual content directly, bypassing JSDOM/Readability in browser
+    try {
+      console.log("Attempting to fetch content directly from source...");
+      const actualContent = await fetchActualContent(url);
+      if (actualContent) {
+        console.log("Successfully fetched content from source directly");
+        return actualContent;
+      }
+    } catch (directError) {
+      console.error("Error fetching direct content:", directError);
     }
     
     // If we reach here, we need to use fallback content
@@ -62,54 +63,7 @@ export async function extractContentFromUrl(url: string): Promise<ExtractedConte
   }
 }
 
-async function extractUsingReadability(url: string): Promise<ExtractedContent> {
-  try {
-    console.log(`Extracting content from ${url} using Readability`);
-    // Fetch the HTML content of the page
-    const response = await fetch(url);
-    if (!response.ok) {
-      throw new Error(`Failed to fetch ${url}: ${response.statusText}`);
-    }
-    
-    const html = await response.text();
-    
-    // Parse the HTML using JSDOM
-    const dom = new JSDOM(html, { url });
-    const document = dom.window.document;
-    
-    // Use Readability to extract the main content
-    const reader = new Readability(document);
-    const article = reader.parse();
-    
-    if (!article) {
-      throw new Error("Could not parse article content with Readability");
-    }
-    
-    console.log("Readability extraction successful");
-    
-    return {
-      content: article.content,
-      title: article.title || "Website Content",
-      sourceUrl: url
-    };
-  } catch (error) {
-    console.error("Readability extraction error:", error);
-    // If Readability fails, fall back to generated content
-    return generateFallbackContent(url);
-  }
-}
-
-async function generateFallbackContent(url: string): Promise<ExtractedContent> {
-  try {
-    // Try to fetch actual content directly from the source if possible
-    const actualContent = await fetchActualContent(url);
-    if (actualContent) {
-      return actualContent;
-    }
-  } catch (e) {
-    console.log('Failed to fetch actual content, using generated content:', e);
-  }
-
+function generateFallbackContent(url: string): ExtractedContent {
   // Extract hostname and path for more meaningful fallback content
   let hostname = 'example.com';
   let path = '';
