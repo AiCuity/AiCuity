@@ -4,6 +4,14 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
+import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from "@/components/ui/dialog";
 import Hero from "@/components/Hero";
 import WebsiteForm from "@/components/WebsiteForm";
 import FileUploadForm from "@/components/FileUploadForm";
@@ -14,6 +22,9 @@ import ThemeToggle from "@/components/ui/theme-toggle";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<string>("website");
+  const [isCalibrationOpen, setIsCalibrationOpen] = useState(false);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
+  const [isUploadOpen, setIsUploadOpen] = useState(false);
   const { user, signOut } = useAuth();
   
   return (
@@ -24,7 +35,26 @@ const Index = () => {
           
           {user ? (
             <div className="flex items-center gap-4">
-              <CalibrationButton />
+              {/* Calibration button with Dialog */}
+              <Dialog open={isCalibrationOpen} onOpenChange={setIsCalibrationOpen}>
+                <DialogTrigger asChild>
+                  <Button variant="outline" size="sm">
+                    Calibrate Reading
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-[500px]">
+                  <DialogHeader>
+                    <DialogTitle>Reading Calibration</DialogTitle>
+                    <DialogDescription>
+                      Calibrate your reading speed to optimize your experience
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="py-4">
+                    <CalibrationButton />
+                  </div>
+                </DialogContent>
+              </Dialog>
+              
               <Button variant="ghost" size="sm" onClick={() => signOut()}>
                 Sign Out
               </Button>
@@ -51,20 +81,52 @@ const Index = () => {
           <Tabs defaultValue="website" className="w-full" onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3 mb-8">
               <TabsTrigger value="website">Website URL</TabsTrigger>
-              <TabsTrigger value="upload">Upload File</TabsTrigger>
-              <TabsTrigger value="history">Reading History</TabsTrigger>
+              <TabsTrigger value="upload" onClick={() => setIsUploadOpen(true)}>Upload File</TabsTrigger>
+              <TabsTrigger value="history" onClick={() => setIsHistoryOpen(true)}>Reading History</TabsTrigger>
             </TabsList>
             
             <TabsContent value="website">
               <WebsiteForm />
             </TabsContent>
             
+            <Dialog open={isUploadOpen && activeTab === "upload"} onOpenChange={setIsUploadOpen}>
+              <DialogContent className="sm:max-w-[600px]">
+                <DialogHeader>
+                  <DialogTitle>Upload Document</DialogTitle>
+                  <DialogDescription>
+                    Upload a document to start reading with RSVP
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                  <FileUploadForm />
+                </div>
+              </DialogContent>
+            </Dialog>
+            
+            <Dialog open={isHistoryOpen && activeTab === "history"} onOpenChange={setIsHistoryOpen}>
+              <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Reading History</DialogTitle>
+                  <DialogDescription>
+                    View and continue your previous reading sessions
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="py-4">
+                  <ReadingHistory />
+                </div>
+              </DialogContent>
+            </Dialog>
+            
             <TabsContent value="upload">
-              <FileUploadForm />
+              <div className="text-center py-8">
+                <p>Please select the Upload File tab to upload documents</p>
+              </div>
             </TabsContent>
             
             <TabsContent value="history">
-              <ReadingHistory />
+              <div className="text-center py-8">
+                <p>Please select the Reading History tab to view your history</p>
+              </div>
             </TabsContent>
           </Tabs>
         </Card>
