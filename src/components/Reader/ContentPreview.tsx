@@ -1,4 +1,3 @@
-
 import React from "react";
 import ReactMarkdown from "react-markdown";
 
@@ -32,6 +31,23 @@ const ContentPreview = ({ content }: ContentPreviewProps) => {
     // Remove strange character combinations that often appear in extracted text
     .replace(/\\u[\dA-Fa-f]{4}/g, '')
     .replace(/\\x[\dA-Fa-f]{2}/g, '')
+    // Remove CSS class definitions and style information
+    .replace(/\.mw-parser-output[^}]+}/g, '')
+    .replace(/\.[a-zA-Z0-9_-]+{[^}]*}/g, '')
+    // Clean up parenthetical CSS classes
+    .replace(/\([^)]*\.mw-[^)]*\)/g, '')
+    // Preserve legitimate parenthetical foreign language terms (like Japanese)
+    // but clean up CSS contamination within them
+    .replace(/\(([^()]*?\.mw-[^()]*?)\)/g, match => {
+      const inner = match.slice(1, -1);
+      // If it contains foreign characters, clean it and keep only the relevant text
+      if (/[\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\uFF00-\uFFEF\u4E00-\u9FAF]/.test(inner)) {
+        const cleaned = inner.replace(/\.mw-[^,)]*,?/g, '').trim();
+        return cleaned ? `(${cleaned})` : '';
+      }
+      // Otherwise remove the whole thing
+      return '';
+    })
     .trim();
 
   // Convert plain text to markdown-friendly format for better rendering
