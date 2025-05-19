@@ -1,4 +1,3 @@
-
 // Interface for summarization options
 export interface SummarizationOptions {
   maxLength?: number;
@@ -79,15 +78,14 @@ export const summarizeWithFallback = async (
 // Simple extractive summarization algorithm
 const extractiveSummarize = (text: string, options: { maxLength: number, minLength: number }): string => {
   // Split text into sentences
-  const sentences = text.match(/[^\.!\?]+[\.!\?]+/g) || [];
+  const sentences: string[] = text.match(/[^\.!\?]+[\.!\?]+/g) || [];
   
   if (sentences.length === 0) {
     return "Unable to generate a summary from the provided text.";
   }
   
   // Score sentences based on simple heuristics
-  // Use explicit typing for the array of tuples
-  const sentenceScores = sentences.map((sentence: string): [string, number] => {
+  const sentenceScores: Array<[string, number]> = sentences.map((sentence: string): [string, number] => {
     let score = 0;
     
     // Longer sentences (but not too long) might be more informative
@@ -107,7 +105,7 @@ const extractiveSummarize = (text: string, options: { maxLength: number, minLeng
     });
     
     // Sentences at the beginning or end might be more important
-    const position = sentences.indexOf(sentence);
+    const position: number = sentences.indexOf(sentence);
     if (position < Math.ceil(sentences.length * 0.2)) {
       score += 2; // Beginning of text
     }
@@ -127,13 +125,11 @@ const extractiveSummarize = (text: string, options: { maxLength: number, minLeng
   let currentLength = 0;
   
   // Original positions of sentences for proper ordering
-  // Explicitly type the array to match sentenceScores
   const selectedSentences: Array<[string, number]> = [];
   
   for (const [sentence, _score] of sentenceScores) {
     if (currentLength + sentence.length <= options.maxLength || currentLength < options.minLength) {
-      // Use type assertion to ensure TypeScript knows the index exists
-      const position = sentences.indexOf(sentence);
+      const position: number = sentences.indexOf(sentence);
       selectedSentences.push([sentence, position]);
       currentLength += sentence.length;
     }
@@ -147,7 +143,7 @@ const extractiveSummarize = (text: string, options: { maxLength: number, minLeng
   selectedSentences.sort((a, b) => a[1] - b[1]);
   
   // Join sentences back together
-  summary = selectedSentences.map((item) => item[0]).join(' ');
+  summary = selectedSentences.map((item: [string, number]): string => item[0]).join(' ');
   
   return summary;
 };
