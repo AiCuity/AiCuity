@@ -27,15 +27,22 @@ const ReadingHistoryTable = ({ history, onDeleteClick, calculateProgress }: Read
   const handleContinueReading = (item: ReadingHistoryEntry) => {
     console.log("Continuing reading for item:", item);
     
-    // First, make sure we set the content in session storage so the reader can find it
+    // Before navigating, store the content in sessionStorage for the reader to load
     if (item.parsed_text) {
+      console.log("Storing parsed text in sessionStorage:", item.parsed_text.substring(0, 100) + "...");
       sessionStorage.setItem('readerContent', item.parsed_text);
       sessionStorage.setItem('contentTitle', item.title);
       if (item.source) {
         sessionStorage.setItem('contentSource', item.source);
       }
+      
+      // Store the content ID for the reader to identify which content this is
+      sessionStorage.setItem('currentContentId', item.content_id);
+    } else {
+      console.warn("No parsed text available for this history entry:", item.id);
     }
     
+    // Navigate to the reader page with the content ID
     navigate(`/reader/${item.content_id}`);
   };
 

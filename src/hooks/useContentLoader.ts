@@ -11,7 +11,12 @@ export const useContentLoader = (contentId?: string) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSimulated, setIsSimulated] = useState(false);
   const { toast } = useToast();
-  const { history } = useReadingHistory();
+  const { history, fetchHistory } = useReadingHistory();
+
+  useEffect(() => {
+    // Refresh history when component loads to ensure we have the latest data
+    fetchHistory();
+  }, []);
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -28,6 +33,12 @@ export const useContentLoader = (contentId?: string) => {
           setSource(historyEntry.source || "");
           setIsLoading(false);
           return;
+        }
+        
+        // Check if contentId from sessionStorage matches the route contentId
+        const storedContentId = sessionStorage.getItem('currentContentId');
+        if (storedContentId && storedContentId === contentId) {
+          console.log("ContentID matches stored value, using sessionStorage content");
         }
         
         // If not in history, check other sources
@@ -89,12 +100,25 @@ export const useContentLoader = (contentId?: string) => {
           setTitle(title);
           setSource(`Wikipedia: ${title}`);
         } else {
-          // For other content types
-          toast({
-            title: "Unknown content type",
-            description: "The requested content type is not supported.",
-            variant: "destructive",
-          });
+          // For other content types - could be from reading history
+          // Try to load from sessionStorage as a fallback
+          const storedContent = sessionStorage.getItem('readerContent');
+          const storedTitle = sessionStorage.getItem('contentTitle');
+          const storedSource = sessionStorage.getItem('contentSource');
+          
+          if (storedContent && storedTitle) {
+            console.log("Loading content from sessionStorage as fallback");
+            setContent(storedContent);
+            setTitle(storedTitle);
+            if (storedSource) setSource(storedSource);
+          } else {
+            console.warn("Unknown content type and no sessionStorage content:", contentId);
+            toast({
+              title: "Unknown content type",
+              description: "The requested content type is not supported.",
+              variant: "destructive",
+            });
+          }
         }
       } catch (error) {
         console.error("Error fetching content:", error);

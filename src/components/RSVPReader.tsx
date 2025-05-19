@@ -48,7 +48,30 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
   
   const { isFullscreen, toggleFullscreen } = useFullscreen(readerRef);
 
-  const togglePlay = () => setIsPlaying(!isPlaying);
+  // Modified togglePlay function to save position when play state changes
+  const togglePlay = () => {
+    const newPlayState = !isPlaying;
+    setIsPlaying(newPlayState);
+    
+    // Save position when toggling play/pause
+    if (!newPlayState && currentWordIndex > 0) {
+      // Only save when pausing and we've read some content
+      savePosition();
+    }
+  };
+  
+  // Modified navigation functions to save position
+  const handleGoToNext = () => {
+    goToNextWord();
+    // No need to immediately save here as it would be excessive
+    // The auto-save interval will handle periodic saves
+  };
+  
+  const handleGoToPrevious = () => {
+    goToPreviousWord();
+    // No need to immediately save here as it would be excessive
+    // The auto-save interval will handle periodic saves
+  };
   
   // Save position when user exits the page
   useEffect(() => {
@@ -63,6 +86,15 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
     };
   }, [currentWordIndex, contentId]);
   
+  // Save position when reader is unmounted
+  useEffect(() => {
+    return () => {
+      if (currentWordIndex > 0) {
+        savePosition();
+      }
+    };
+  }, []);
+  
   return (
     <div 
       ref={readerRef} 
@@ -74,8 +106,8 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
     >
       <KeyboardControls 
         onPlayPause={togglePlay}
-        onNext={goToNextWord}
-        onPrevious={goToPreviousWord}
+        onNext={handleGoToNext}
+        onPrevious={handleGoToPrevious}
       />
       
       <TitleBar 
@@ -119,8 +151,8 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
         <PlaybackControls 
           isPlaying={isPlaying}
           onPlayPause={togglePlay}
-          onPrevious={goToPreviousWord}
-          onNext={goToNextWord}
+          onPrevious={handleGoToPrevious}
+          onNext={handleGoToNext}
           onRestart={restartReading}
           disablePrevious={currentWordIndex <= 0}
           disableNext={currentWordIndex >= words.length - 1}

@@ -88,13 +88,37 @@ export function useHistoryTracker(
   useEffect(() => {
     if (!isPlaying && contentId && currentWordIndex > 0) {
       const debounceTimer = setTimeout(() => {
-        console.log("Auto-saving position:", currentWordIndex, "progress:", progressPercentage + "%");
+        console.log("Auto-saving position after stopping:", currentWordIndex, "progress:", progressPercentage + "%");
         savePosition();
       }, 3000); // Save 3 seconds after stopping
       
       return () => clearTimeout(debounceTimer);
     }
   }, [isPlaying, contentId, currentWordIndex]);
+  
+  // Auto-save position when user starts reading
+  useEffect(() => {
+    if (isPlaying && contentId && currentWordIndex > 0) {
+      console.log("Auto-saving position when starting to read:", currentWordIndex, "progress:", progressPercentage + "%");
+      savePosition();
+    }
+  }, [isPlaying]);
+  
+  // Auto-save periodically while reading (every 30 seconds)
+  useEffect(() => {
+    let saveInterval: NodeJS.Timeout;
+    
+    if (isPlaying && contentId && currentWordIndex > 0) {
+      saveInterval = setInterval(() => {
+        console.log("Auto-saving position during reading:", currentWordIndex, "progress:", progressPercentage + "%");
+        savePosition();
+      }, 30000); // Save every 30 seconds while reading
+    }
+    
+    return () => {
+      if (saveInterval) clearInterval(saveInterval);
+    };
+  }, [isPlaying, contentId, currentWordIndex, progressPercentage]);
 
   return { savePosition };
 }
