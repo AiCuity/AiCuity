@@ -20,21 +20,21 @@ const WordDisplay = ({
         <div className="flex justify-end overflow-hidden" style={{ 
           width: "12ch", 
           textAlign: "right",
-          wordBreak: "break-word",
-          overflowWrap: "break-word",
-          hyphens: "auto"
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+          textOverflow: "ellipsis"
         }}>
-          <span className="truncate">{before}</span>
+          <span>{before}</span>
         </div>
         <span className="text-red-500 font-bold">{highlight}</span>
         <div className="flex justify-start overflow-hidden" style={{ 
           width: "12ch", 
           textAlign: "left",
-          wordBreak: "break-word",
-          overflowWrap: "break-word",
-          hyphens: "auto"
+          overflow: "hidden",
+          whiteSpace: "nowrap",
+          textOverflow: "ellipsis"
         }}>
-          <span className="truncate">{after}</span>
+          <span>{after}</span>
         </div>
       </div>
     </div>

@@ -78,12 +78,12 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
           <div className="py-6">
             {!isFinished ? (
               <>
-                <div className="flex justify-center items-center h-40 text-4xl">
-                  {/* Using a more efficient layout with pre-allocated space to prevent layout shifts */}
-                  <div className="flex items-center relative text-center">
-                    <div className="text-right opacity-70 min-w-[120px] mr-1">{formattedWord.before}</div>
+                <div className="flex justify-center items-center h-40">
+                  {/* Using font-mono to ensure consistent letter width */}
+                  <div className="font-mono text-center text-4xl flex items-center">
+                    <div className="text-right opacity-70 min-w-[120px] mr-1 overflow-hidden whitespace-nowrap text-ellipsis">{formattedWord.before}</div>
                     <div className="text-red-500 font-bold">{formattedWord.highlight}</div>
-                    <div className="text-left opacity-70 min-w-[120px] ml-1">{formattedWord.after}</div>
+                    <div className="text-left opacity-70 min-w-[120px] ml-1 overflow-hidden whitespace-nowrap text-ellipsis">{formattedWord.after}</div>
                   </div>
                 </div>
                 <Progress value={progress} className="my-4 h-2" />
