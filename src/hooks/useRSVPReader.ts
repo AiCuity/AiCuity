@@ -10,15 +10,18 @@ import {
 } from "@/utils/rsvp-word-utils";
 import { calculateMsPerWord, shouldAdvanceWord } from "@/utils/rsvp-timing";
 import { RSVPReaderOptions, RSVPReaderHook } from "@/utils/rsvp-types";
+import { useReadingHistory } from "@/hooks/useReadingHistory";
 
 export function useRSVPReader({ 
   text,
   initialWpm = 300,
   initialSmartPacing = true,
-  initialShowToasts = true
+  initialShowToasts = true,
+  initialPosition = 0,
+  contentId
 }: RSVPReaderOptions): RSVPReaderHook {
   const [words, setWords] = useState<string[]>([]);
-  const [currentWordIndex, setCurrentWordIndex] = useState(0);
+  const [currentWordIndex, setCurrentWordIndex] = useState(initialPosition);
   const [isPlaying, setIsPlaying] = useState(false);
   const [baseWpm, setBaseWpm] = useState(initialWpm);
   const [effectiveWpm, setEffectiveWpm] = useState(initialWpm);
@@ -29,6 +32,7 @@ export function useRSVPReader({
   const animationRef = useRef<number | null>(null);
   const lastUpdateTimeRef = useRef<number | null>(null);
   const { toast } = useToast();
+  const { saveHistoryEntry } = useReadingHistory();
 
   // Process text into words on component mount or when text changes
   useEffect(() => {
@@ -167,6 +171,58 @@ export function useRSVPReader({
     }
   };
 
+  // Save current position to history
+  const savePosition = async () => {
+    if (contentId) {
+      try {
+        await saveHistoryEntry({
+          content_id: contentId,
+          title: "Reading Session", // This should be replaced with actual title if available
+          source: null,
+          source_type: "unknown",
+          source_input: "",
+          current_position: currentWordIndex,
+          wpm: baseWpm,
+          calibrated: false,
+          summary: null,
+          parsed_text: text,
+        });
+        
+        if (showToasts) {
+          toast({
+            title: "Progress Saved",
+            description: "Your reading position has been saved.",
+          });
+        }
+        
+        return true;
+      } catch (error) {
+        console.error("Error saving position:", error);
+        if (showToasts) {
+          toast({
+            title: "Error Saving Progress",
+            description: "Failed to save your reading position.",
+            variant: "destructive",
+          });
+        }
+        return false;
+      }
+    }
+    return false;
+  };
+
+  // Auto-save position when user stops reading
+  useEffect(() => {
+    // If user was reading but stopped, save position
+    if (!isPlaying && currentWordIndex > 0 && contentId) {
+      const debounceTimer = setTimeout(() => {
+        savePosition();
+      }, 3000); // Save 3 seconds after stopping
+      
+      return () => clearTimeout(debounceTimer);
+    }
+  }, [isPlaying, contentId]);
+
   // Handle WPM change
   const handleWpmChange = (value: number[]) => {
     setBaseWpm(value[0]);
@@ -195,6 +251,7 @@ export function useRSVPReader({
     progress,
     restartReading,
     setShowToasts,
-    showToasts
+    showToasts,
+    savePosition
   };
 }

@@ -30,13 +30,14 @@ const Reader = () => {
   } = useSummarization(content);
   const { profile } = useProfile();
   const { user } = useAuth();
-  const { saveHistoryEntry } = useReadingHistory();
+  const { saveHistoryEntry, history } = useReadingHistory();
   
   const [showReader, setShowReader] = useState(false);
   const [useFullText, setUseFullText] = useState(true);
   const [apiKey, setApiKey] = useState<string>("");
   const [useOpenAI, setUseOpenAI] = useState<boolean>(false);
   const [historySaved, setHistorySaved] = useState(false);
+  const [initialPosition, setInitialPosition] = useState(0);
 
   // Load API key and preferences from localStorage
   useEffect(() => {
@@ -46,6 +47,21 @@ const Reader = () => {
     setApiKey(savedApiKey);
     setUseOpenAI(savedUseOpenAI);
   }, []);
+
+  // Check for existing reading position
+  useEffect(() => {
+    if (contentId && history.length > 0) {
+      const existingEntry = history.find(entry => 
+        entry.content_id === contentId && 
+        entry.current_position !== null && 
+        entry.current_position > 0
+      );
+      
+      if (existingEntry && existingEntry.current_position) {
+        setInitialPosition(existingEntry.current_position);
+      }
+    }
+  }, [contentId, history]);
 
   // Save reading session to history
   useEffect(() => {
@@ -122,7 +138,8 @@ const Reader = () => {
           text={useFullText ? content : summary} 
           contentId={contentId || ""} 
           title={title}
-          source={source} 
+          source={source}
+          initialPosition={initialPosition}
         />
       </div>
     );
@@ -145,6 +162,14 @@ const Reader = () => {
             <AlertTriangle className="h-4 w-4 mr-2" />
             <AlertDescription>
               Using simulated content. The app couldn't access the actual content from this website.
+            </AlertDescription>
+          </Alert>
+        )}
+
+        {initialPosition > 0 && (
+          <Alert className="mb-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
+            <AlertDescription>
+              You have a saved reading position at {Math.round((initialPosition / (content.split(/\s+/).length || 1)) * 100)}% through this content.
             </AlertDescription>
           </Alert>
         )}

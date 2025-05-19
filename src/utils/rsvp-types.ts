@@ -14,6 +14,8 @@ export interface RSVPReaderOptions {
   initialWpm?: number;
   initialSmartPacing?: boolean;
   initialShowToasts?: boolean;
+  initialPosition?: number;
+  contentId?: string;
 }
 
 export interface RSVPReaderState {
@@ -37,6 +39,7 @@ export interface RSVPReaderControls {
   handleWpmChange: (value: number[]) => void;
   restartReading: () => void;
   setShowToasts: (show: boolean) => void;
+  savePosition: () => Promise<void>;
 }
 
 export type RSVPReaderHook = RSVPReaderState & RSVPReaderControls;

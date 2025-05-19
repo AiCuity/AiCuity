@@ -1,5 +1,5 @@
 
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { useRSVPReader } from "@/hooks/useRSVPReader";
 import { useFullscreen } from "@/hooks/useFullscreen";
 import KeyboardControls from "./RSVPReader/KeyboardControls";
@@ -9,15 +9,18 @@ import WordDisplay from "./RSVPReader/WordDisplay";
 import ProgressBar from "./RSVPReader/ProgressBar";
 import PlaybackControls from "./RSVPReader/PlaybackControls";
 import SpeedControl from "./RSVPReader/SpeedControl";
+import { Button } from "./ui/button";
+import { BookmarkIcon } from "lucide-react";
 
 interface RSVPReaderProps {
   text: string;
   contentId: string;
   title: string;
   source?: string;
+  initialPosition?: number;
 }
 
-const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
+const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSVPReaderProps) => {
   const readerRef = useRef<HTMLDivElement>(null);
   
   const {
@@ -35,12 +38,30 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
     handleWpmChange,
     formattedWord,
     progress,
-    restartReading
-  } = useRSVPReader({ text });
+    restartReading,
+    savePosition
+  } = useRSVPReader({ 
+    text, 
+    initialPosition, 
+    contentId 
+  });
   
   const { isFullscreen, toggleFullscreen } = useFullscreen(readerRef);
 
   const togglePlay = () => setIsPlaying(!isPlaying);
+  
+  // Save position when user exits the page
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      savePosition();
+    };
+    
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+      savePosition();
+    };
+  }, [currentWordIndex, contentId]);
   
   return (
     <div 
@@ -64,6 +85,19 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
       />
       
       <SourceLink source={source} isFullscreen={isFullscreen} />
+
+      {/* Save position button */}
+      <div className="absolute top-4 right-4 z-10">
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className={`${isFullscreen ? 'bg-gray-800 hover:bg-gray-700' : ''}`}
+          onClick={() => savePosition()}
+        >
+          <BookmarkIcon className="w-4 h-4 mr-2" />
+          Save Position
+        </Button>
+      </div>
 
       {/* Main reading area */}
       <div className={`flex flex-col items-center justify-center ${
