@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
@@ -26,8 +27,13 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
     formattedWord,
     progress,
     words,
-    handleWpmChange
-  } = useRSVPReader({ text });
+    handleWpmChange,
+    smartPacingEnabled, 
+    toggleSmartPacing
+  } = useRSVPReader({ 
+    text,
+    initialSmartPacing: false // Disable smart pacing for calibration to ensure consistent WPM
+  });
 
   // Set the WPM when the component mounts or when wpm prop changes
   useEffect(() => {
@@ -35,14 +41,18 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
     handleWpmChange([wpm]);
   }, [wpm, handleWpmChange]);
 
-  useEffect(() => {
-    // Check if we've reached the end
+  // Optimize completion check with useCallback
+  const checkCompletion = useCallback(() => {
     if (isStarted && words.length > 0 && currentWordIndex >= words.length - 1) {
       setIsFinished(true);
       setIsPlaying(false);
       onComplete();
     }
   }, [currentWordIndex, words, isStarted, onComplete, setIsPlaying]);
+
+  useEffect(() => {
+    checkCompletion();
+  }, [checkCompletion]);
 
   const handleStart = () => {
     setIsStarted(true);
@@ -69,7 +79,7 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
             {!isFinished ? (
               <>
                 <div className="flex justify-center items-center h-40 text-4xl">
-                  {/* Using a more structured layout to keep the highlighted letter in a consistent position */}
+                  {/* Using a more efficient layout with pre-allocated space to prevent layout shifts */}
                   <div className="flex items-center relative text-center">
                     <div className="text-right opacity-70 min-w-[120px] mr-1">{formattedWord.before}</div>
                     <div className="text-red-500 font-bold">{formattedWord.highlight}</div>
