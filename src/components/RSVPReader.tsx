@@ -21,9 +21,10 @@ interface RSVPReaderProps {
   text: string;
   contentId: string;
   title: string;
+  source?: string; // Added source as an optional prop
 }
 
-const RSVPReader = ({ text, contentId, title }: RSVPReaderProps) => {
+const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
   const [words, setWords] = useState<string[]>([]);
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -211,6 +212,20 @@ const RSVPReader = ({ text, contentId, title }: RSVPReaderProps) => {
           <span className="text-sm">{words.length} words</span>
         </div>
       </div>
+      
+      {/* Display source URL if available */}
+      {source && (
+        <div className={`px-4 pb-2 text-center ${isFullscreen ? "hidden" : ""}`}>
+          <a 
+            href={source} 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+          >
+            Source: {source}
+          </a>
+        </div>
+      )}
 
       {/* Main reading area */}
       <div className={`flex flex-col items-center justify-center ${
