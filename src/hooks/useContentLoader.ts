@@ -16,7 +16,7 @@ export const useContentLoader = (contentId?: string) => {
       
       try {
         if (contentId?.startsWith('file-')) {
-          // For file uploads, get content from sessionStorage
+          // For file uploads, get content from sessionStorage (now using modularized server endpoint)
           const storedContent = sessionStorage.getItem('readerContent');
           const storedTitle = sessionStorage.getItem('contentTitle') || 'Uploaded document';
           
@@ -32,7 +32,7 @@ export const useContentLoader = (contentId?: string) => {
             });
           }
         } else if (contentId?.startsWith('website-')) {
-          // For website content
+          // For website content using modularized API
           const storedContent = sessionStorage.getItem('readerContent');
           const storedTitle = sessionStorage.getItem('contentTitle') || 'Website content';
           const storedSource = sessionStorage.getItem('contentSource') || '';

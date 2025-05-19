@@ -1,4 +1,3 @@
-
 import { fetchActualContent } from "./contentSource";
 import { generateFallbackContent } from "./fallbackContent";
 import { ExtractedContent } from "./types";
@@ -23,7 +22,7 @@ export async function extractContentFromUrl(url: string): Promise<ExtractedConte
     console.error("Error fetching direct content:", directError);
   }
   
-  // If direct fetching fails, try the API
+  // If direct fetching fails, try the API (now modularized)
   try {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     console.log(`Attempting to connect to ${apiUrl}/api/scrape for URL: ${url}`);
