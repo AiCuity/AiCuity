@@ -29,6 +29,11 @@ export function useHistoryTracker(
     ? Math.min(Math.round((currentWordIndex / totalWords) * 100), 100)
     : 0;
 
+  // Refresh history when component mounts
+  useEffect(() => {
+    fetchHistory();
+  }, []);
+
   // Save current position to history
   const savePosition = async () => {
     // Don't save if we don't have a valid contentId
@@ -46,6 +51,8 @@ export function useHistoryTracker(
         console.log("Not saving insignificant session with no summary");
         return false;
       }
+      
+      console.log(`Saving reading progress for ${contentId}: ${currentWordIndex}/${totalWords} (${progressPercentage}%)`);
       
       // Prepare the entry data
       const entryData = {
@@ -96,10 +103,10 @@ export function useHistoryTracker(
     }
   }, [isPlaying, contentId, currentWordIndex]);
   
-  // Auto-save position when user starts reading
+  // Auto-save position when user changes play status (start/stop reading)
   useEffect(() => {
-    if (isPlaying && contentId && currentWordIndex > 0) {
-      console.log("Auto-saving position when starting to read:", currentWordIndex, "progress:", progressPercentage + "%");
+    if (contentId && currentWordIndex > 0) {
+      console.log("Auto-saving position on play status change:", currentWordIndex, "progress:", progressPercentage + "%");
       savePosition();
     }
   }, [isPlaying]);

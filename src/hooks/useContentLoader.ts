@@ -23,11 +23,14 @@ export const useContentLoader = (contentId?: string) => {
       setIsLoading(true);
       
       try {
+        console.log("Loading content for ID:", contentId);
+        console.log("Current session storage content ID:", sessionStorage.getItem('currentContentId'));
+        
         // First check if we have this content in history with parsed_text
         const historyEntry = contentId ? history.find(entry => entry.content_id === contentId && entry.parsed_text) : null;
         
         if (historyEntry?.parsed_text) {
-          console.log("Loading content from history:", contentId);
+          console.log("Loading content from history for ID:", contentId);
           setContent(historyEntry.parsed_text);
           setTitle(historyEntry.title);
           setSource(historyEntry.source || "");
@@ -37,11 +40,24 @@ export const useContentLoader = (contentId?: string) => {
         
         // Check if contentId from sessionStorage matches the route contentId
         const storedContentId = sessionStorage.getItem('currentContentId');
+        
         if (storedContentId && storedContentId === contentId) {
           console.log("ContentID matches stored value, using sessionStorage content");
+          const storedContent = sessionStorage.getItem('readerContent');
+          const storedTitle = sessionStorage.getItem('contentTitle') || 'Stored content';
+          const storedSource = sessionStorage.getItem('contentSource') || '';
+          
+          if (storedContent) {
+            console.log("Loading content from sessionStorage for matching ID");
+            setContent(storedContent);
+            setTitle(storedTitle);
+            setSource(storedSource);
+            setIsLoading(false);
+            return;
+          }
         }
         
-        // If not in history, check other sources
+        // If not in history or matching session storage, process based on content type
         if (contentId?.startsWith('file-')) {
           // For file uploads, get content from sessionStorage
           const storedContent = sessionStorage.getItem('readerContent');
@@ -101,6 +117,8 @@ export const useContentLoader = (contentId?: string) => {
           setSource(`Wikipedia: ${title}`);
         } else {
           // For other content types - could be from reading history
+          console.log("Unknown content type, looking for any available data:", contentId);
+          
           // Try to load from sessionStorage as a fallback
           const storedContent = sessionStorage.getItem('readerContent');
           const storedTitle = sessionStorage.getItem('contentTitle');

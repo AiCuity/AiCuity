@@ -12,6 +12,9 @@ interface ProgressBarProps {
 }
 
 const ProgressBar = ({ progress, complexity = 0 }: ProgressBarProps) => {
+  // Ensure the progress value is within the valid range
+  const normalizedProgress = Math.max(0, Math.min(100, progress));
+  
   // Determine color based on complexity (0-1)
   // Lower complexity = blue, medium = green, higher complexity = amber, highest = red
   const getBarColor = () => {
@@ -36,12 +39,12 @@ const ProgressBar = ({ progress, complexity = 0 }: ProgressBarProps) => {
             <div className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <div
                 className={`h-full ${getBarColor()} transition-all duration-300`}
-                style={{ width: `${progress}%` }}
+                style={{ width: `${normalizedProgress}%` }}
               />
             </div>
           </TooltipTrigger>
           <TooltipContent>
-            <p>Progress: {Math.round(progress)}% - {getComplexityLabel()}</p>
+            <p>Progress: {Math.round(normalizedProgress)}% - {getComplexityLabel()}</p>
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>

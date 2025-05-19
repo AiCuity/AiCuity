@@ -29,7 +29,15 @@ const ReadingHistoryTable = ({ history, onDeleteClick, calculateProgress }: Read
     
     // Before navigating, store the content in sessionStorage for the reader to load
     if (item.parsed_text) {
-      console.log("Storing parsed text in sessionStorage:", item.parsed_text.substring(0, 100) + "...");
+      console.log("Storing parsed text in sessionStorage for content ID:", item.content_id);
+      
+      // Clear any existing reader content in session storage
+      sessionStorage.removeItem('readerContent');
+      sessionStorage.removeItem('contentTitle');
+      sessionStorage.removeItem('contentSource');
+      sessionStorage.removeItem('currentContentId');
+      
+      // Store this item's content
       sessionStorage.setItem('readerContent', item.parsed_text);
       sessionStorage.setItem('contentTitle', item.title);
       if (item.source) {
@@ -38,6 +46,8 @@ const ReadingHistoryTable = ({ history, onDeleteClick, calculateProgress }: Read
       
       // Store the content ID for the reader to identify which content this is
       sessionStorage.setItem('currentContentId', item.content_id);
+      
+      console.log("Content ID stored:", item.content_id);
     } else {
       console.warn("No parsed text available for this history entry:", item.id);
     }
