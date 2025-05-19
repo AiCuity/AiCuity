@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
+import { useAuth } from "@/context/AuthContext";
 
 export function useHistoryTracker(
   contentId: string | undefined,
@@ -13,6 +14,7 @@ export function useHistoryTracker(
 ): { savePosition: () => Promise<boolean> } {
   const { toast } = useToast();
   const { saveHistoryEntry } = useReadingHistory();
+  const { user } = useAuth(); // Get the current authenticated user
 
   // Save current position to history
   const savePosition = async () => {
@@ -56,15 +58,15 @@ export function useHistoryTracker(
 
   // Auto-save position when user stops reading
   useEffect(() => {
-    // If user was reading but stopped, save position
-    if (!isPlaying && currentWordIndex > 0 && contentId) {
+    // Only attempt to save if the user is logged in
+    if (!isPlaying && currentWordIndex > 0 && contentId && user) {
       const debounceTimer = setTimeout(() => {
         savePosition();
       }, 3000); // Save 3 seconds after stopping
       
       return () => clearTimeout(debounceTimer);
     }
-  }, [isPlaying, contentId, currentWordIndex]);
+  }, [isPlaying, contentId, currentWordIndex, user]); // Add user to dependency array
 
   return { savePosition };
 }

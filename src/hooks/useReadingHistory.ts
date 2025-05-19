@@ -22,6 +22,7 @@ export function useReadingHistory() {
         const { data, error } = await supabase
           .from('reading_history')
           .select('*')
+          .eq('user_id', user.id) // Only fetch history for current user
           .order('updated_at', { ascending: false });
 
         if (error) {
@@ -115,6 +116,7 @@ export function useReadingHistory() {
               updated_at: new Date().toISOString()
             })
             .eq('id', existingEntry.id)
+            .eq('user_id', user.id) // Ensure we only update entries belonging to this user
             .select()
             .single();
 
@@ -148,7 +150,7 @@ export function useReadingHistory() {
               wpm: entry.wpm,
               current_position: entry.current_position,
               summary: entry.summary,
-              user_id: user.id
+              user_id: user.id // Ensure the user_id is set to the current user
             })
             .select()
             .single();
@@ -256,7 +258,8 @@ export function useReadingHistory() {
         const { error } = await supabase
           .from('reading_history')
           .delete()
-          .eq('id', id);
+          .eq('id', id)
+          .eq('user_id', user.id); // Ensure we only delete entries belonging to this user
 
         if (error) {
           throw error;
@@ -309,7 +312,7 @@ export function useReadingHistory() {
   // Load history on component mount or when user changes
   useEffect(() => {
     fetchHistory();
-  }, [user]);
+  }, [user]); // Fetch history when user changes
 
   return {
     history,

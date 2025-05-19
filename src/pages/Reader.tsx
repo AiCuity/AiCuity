@@ -45,9 +45,9 @@ const Reader = () => {
     setUseOpenAI(savedUseOpenAI);
   }, []);
 
-  // Check for existing reading position
+  // Check for existing reading position, but only if user is authenticated
   useEffect(() => {
-    if (contentId && history.length > 0) {
+    if (contentId && history.length > 0 && user) {
       const existingEntry = history.find(entry => 
         entry.content_id === contentId && 
         entry.current_position !== null && 
@@ -58,12 +58,15 @@ const Reader = () => {
         setInitialPosition(existingEntry.current_position);
       }
     }
-  }, [contentId, history]);
+  }, [contentId, history, user]);
 
   // Save reading session to history
   useEffect(() => {
     const saveToHistory = async () => {
-      if (content && title && !historySaved) {
+      if (content && title && !historySaved && contentId) {
+        // Don't attempt to save if no user is logged in and we aren't ready to save to localStorage
+        if (!user && !content) return;
+        
         // Determine source type based on contentId
         let sourceType = 'url';
         if (contentId?.startsWith('file-')) {
@@ -80,7 +83,7 @@ const Reader = () => {
           source,
           source_type: sourceType,
           source_input: source || title,
-          content_id: contentId || '',
+          content_id: contentId,
           wpm,
           current_position: 0,
           calibrated: profile?.calibration_status === 'completed',
@@ -93,19 +96,26 @@ const Reader = () => {
     };
     
     saveToHistory();
-  }, [content, title, contentId]);
+  }, [content, title, contentId, user]);
 
   // Update history with summary when generated
   useEffect(() => {
     const updateHistoryWithSummary = async () => {
-      if (summary && historySaved && contentId) {
-        // Logic to update history entry with summary
-        console.log("Summary generated, would update history entry");
+      if (summary && historySaved && contentId && user) {
+        // Find the existing entry and update it with the summary
+        const existingEntry = history.find(entry => entry.content_id === contentId);
+        if (existingEntry) {
+          await saveHistoryEntry({
+            ...existingEntry,
+            summary,
+          });
+          console.log("Updated history with summary");
+        }
       }
     };
     
     updateHistoryWithSummary();
-  }, [summary]);
+  }, [summary, user]);
 
   const handleStartReading = (useFull: boolean) => {
     setUseFullText(useFull);
