@@ -7,7 +7,7 @@ interface ContentPreviewProps {
 }
 
 const ContentPreview = ({ content }: ContentPreviewProps) => {
-  // Clean any remaining HTML tags and format the content better
+  // Enhanced cleaning of content to remove problematic characters and format better
   const cleanContent = content
     // Remove HTML tags
     .replace(/<[^>]*>/g, '')
@@ -17,14 +17,31 @@ const ContentPreview = ({ content }: ContentPreviewProps) => {
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
+    .replace(/&#39;/g, "'")
+    // Remove non-printable and control characters
+    .replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '')
+    // Remove excessive whitespace
+    .replace(/[ \t]+/g, ' ')
+    // Fix multiple line breaks (more than 2) to just double line breaks
+    .replace(/\n{3,}/g, '\n\n')
+    // Remove brackets with numbers (citation references)
+    .replace(/\[\d+\]/g, '')
+    // Clean up Unicode replacement characters and question marks in boxes
+    .replace(/�/g, '')
+    .replace(/\uFFFD/g, '')
+    // Remove strange character combinations that often appear in extracted text
+    .replace(/\\u[\dA-Fa-f]{4}/g, '')
+    .replace(/\\x[\dA-Fa-f]{2}/g, '')
+    .trim();
 
-  // Convert plain text to markdown-friendly format
+  // Convert plain text to markdown-friendly format for better rendering
   const formattedContent = cleanContent
     // Replace double line breaks with markdown paragraph breaks
     .replace(/\n\n/g, '\n\n')
     // Ensure headers have proper spacing
-    .replace(/\n(#+\s)/g, '\n\n$1');
+    .replace(/\n(#+\s)/g, '\n\n$1')
+    // Fix list items to ensure they render properly
+    .replace(/\n- /g, '\n\n- ');
 
   return (
     <div className="bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-800 p-6">

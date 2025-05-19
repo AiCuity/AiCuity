@@ -73,7 +73,7 @@ export async function extractContentFromUrl(url: string): Promise<ExtractedConte
   }
 }
 
-// Function to clean any remaining HTML tags from content
+// Enhanced function to clean HTML content and remove problematic characters
 function cleanHtmlContent(content: string): string {
   return content
     // Remove HTML tags
@@ -85,10 +85,20 @@ function cleanHtmlContent(content: string): string {
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
-    // Remove excess whitespace
-    .replace(/\s+/g, ' ')
+    // Remove non-printable and control characters
+    .replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '')
+    // Remove excessive whitespace
+    .replace(/[ \t]+/g, ' ')
     // Fix paragraph breaks (convert multiple newlines to double newlines)
     .replace(/\n{3,}/g, '\n\n')
     .replace(/\s*\n\s*/g, '\n')
+    // Remove brackets with numbers (citation references)
+    .replace(/\[\d+\]/g, '')
+    // Clean up Unicode replacement characters and question marks in boxes
+    .replace(/�/g, '')
+    .replace(/\uFFFD/g, '')
+    // Remove strange character combinations that often appear in extracted text
+    .replace(/\\u[\dA-Fa-f]{4}/g, '')
+    .replace(/\\x[\dA-Fa-f]{2}/g, '')
     .trim();
 }
