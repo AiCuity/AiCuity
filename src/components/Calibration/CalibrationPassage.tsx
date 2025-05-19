@@ -20,6 +20,8 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
 }) => {
   const [isStarted, setIsStarted] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
+  const [isLastWordDisplayed, setIsLastWordDisplayed] = useState(false);
+  
   const { 
     isPlaying, 
     setIsPlaying, 
@@ -41,18 +43,25 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
     handleWpmChange([wpm]);
   }, [wpm, handleWpmChange]);
 
-  // Optimize completion check with useCallback
-  const checkCompletion = useCallback(() => {
-    if (isStarted && words.length > 0 && currentWordIndex >= words.length - 1) {
-      setIsFinished(true);
-      setIsPlaying(false);
-      onComplete();
-    }
-  }, [currentWordIndex, words, isStarted, onComplete, setIsPlaying]);
-
+  // Detect when we reach the last word
   useEffect(() => {
-    checkCompletion();
-  }, [checkCompletion]);
+    if (isStarted && words.length > 0 && currentWordIndex >= words.length - 1) {
+      // We're at the last word - mark it as displayed but don't finish yet
+      setIsLastWordDisplayed(true);
+      
+      // Only stop playing after a delay to ensure the last word is visible
+      if (isLastWordDisplayed) {
+        // Add a short delay to ensure the last word is seen by the user
+        const timer = setTimeout(() => {
+          setIsFinished(true);
+          setIsPlaying(false);
+          onComplete();
+        }, 1000); // 1 second delay to show the last word
+        
+        return () => clearTimeout(timer);
+      }
+    }
+  }, [currentWordIndex, words, isStarted, isLastWordDisplayed, setIsPlaying, onComplete]);
 
   const handleStart = () => {
     setIsStarted(true);
