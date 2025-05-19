@@ -7,6 +7,7 @@ import NotFoundState from "@/components/Reader/NotFoundState";
 import ReaderAlerts from "@/components/Reader/ReaderAlerts";
 import ContentContainer from "@/components/Reader/ContentContainer";
 import RSVPReaderContainer from "@/components/Reader/RSVPReaderContainer";
+import ThemeToggle from "@/components/ui/theme-toggle";
 import { useContentLoader } from "@/hooks/useContentLoader";
 import { useSummarization } from "@/hooks/useSummarization";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
@@ -149,7 +150,10 @@ const Reader = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <ContentHeader content={contentObject} />
+        <div className="flex justify-between items-center mb-4">
+          <ContentHeader content={contentObject} />
+          <ThemeToggle />
+        </div>
 
         <ReaderAlerts 
           isSimulated={isSimulated} 

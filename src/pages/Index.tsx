@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,6 +10,7 @@ import FileUploadForm from "@/components/FileUploadForm";
 import ReadingHistory from "@/components/ReadingHistory";
 import { useAuth } from "@/context/AuthContext";
 import CalibrationButton from "@/components/CalibrationButton";
+import ThemeToggle from "@/components/ui/theme-toggle";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<string>("website");
@@ -17,7 +19,9 @@ const Index = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8 md:py-12">
-        <div className="flex justify-end mb-4">
+        <div className="flex justify-between mb-4">
+          <ThemeToggle />
+          
           {user ? (
             <div className="flex items-center gap-4">
               <CalibrationButton />

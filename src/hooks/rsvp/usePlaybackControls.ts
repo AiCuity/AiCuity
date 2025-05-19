@@ -1,149 +1,130 @@
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
+import { calculateDelay, calculateComplexity } from "@/utils/rsvp-timing";
 import { useToast } from "@/components/ui/use-toast";
-import { 
-  formatWord, 
-  getAdjustedWpm, 
-  getWordComplexityData, 
-  calculateProgress 
-} from "@/utils/rsvp-word-utils";
-import { calculateMsPerWord, shouldAdvanceWord } from "@/utils/rsvp-timing";
-import { PlaybackState, PlaybackControls, PlaybackRefs } from "./types";
+import { PlaybackRefs, PlaybackControls } from "./types";
 
 export function usePlaybackControls(
   words: string[],
-  baseWpm: number, 
+  baseWpm: number,
   smartPacingEnabled: boolean,
   showToasts: boolean,
-  setCurrentWordIndex: (index: number | ((prev: number) => number)) => void,
-  setIsPlaying: (isPlaying: boolean) => void,
-  setEffectiveWpm: (wpm: number) => void,
-  setCurrentComplexity: (complexity: number) => void
+  setCurrentWordIndex: React.Dispatch<React.SetStateAction<number>>,
+  setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>,
+  setEffectiveWpm: React.Dispatch<React.SetStateAction<number>>,
+  setCurrentComplexity: React.Dispatch<React.SetStateAction<number>>
 ): [PlaybackRefs, PlaybackControls] {
   const animationRef = useRef<number | null>(null);
   const lastUpdateTimeRef = useRef<number | null>(null);
   const { toast } = useToast();
 
-  // Start the reading animation
+  // Function to start reading
   const startReading = () => {
-    if (animationRef.current) {
+    if (words.length === 0) {
+      console.warn("No text to read");
+      return;
+    }
+    
+    setIsPlaying(true);
+    lastUpdateTimeRef.current = null;
+    
+    // Cancel any existing animation frame
+    if (animationRef.current !== null) {
       cancelAnimationFrame(animationRef.current);
     }
     
-    lastUpdateTimeRef.current = performance.now();
+    // Start the animation frame loop
     animationRef.current = requestAnimationFrame(updateReading);
   };
 
-  // Stop the reading animation
+  // Function to stop reading
   const stopReading = () => {
-    if (animationRef.current) {
+    setIsPlaying(false);
+    
+    if (animationRef.current !== null) {
       cancelAnimationFrame(animationRef.current);
       animationRef.current = null;
     }
-    lastUpdateTimeRef.current = null;
   };
 
-  // Update the current word based on WPM
+  // Function to update reading position
   const updateReading = (timestamp: number) => {
-    if (!lastUpdateTimeRef.current) {
+    // If this is the first frame or after a pause, just record the time and wait for next frame
+    if (lastUpdateTimeRef.current === null) {
       lastUpdateTimeRef.current = timestamp;
       animationRef.current = requestAnimationFrame(updateReading);
       return;
     }
     
-    // Get current and previous words
-    let currentWordIndex = 0;
-    setCurrentWordIndex((prev) => {
-      currentWordIndex = prev;
-      return prev;
-    });
-    
-    const currentWord = words[currentWordIndex];
-    const previousWord = currentWordIndex > 0 ? words[currentWordIndex - 1] : null;
-    
-    const currentAdjustedWpm = getAdjustedWpm(
-      currentWord, 
-      previousWord, 
-      baseWpm, 
-      smartPacingEnabled
-    );
-    
-    const msPerWord = calculateMsPerWord(currentAdjustedWpm);
-    
-    // Set effective WPM for display
-    setEffectiveWpm(currentAdjustedWpm);
-    
-    // Calculate and handle word complexity
-    const { complexity, shouldShowToast, reason } = getWordComplexityData(
-      currentWord,
-      smartPacingEnabled,
-      showToasts
-    );
-    
-    setCurrentComplexity(complexity);
-    
-    if (shouldShowToast && reason) {
-      toast({
-        title: "Slowing down",
-        description: `Reading slower for ${reason}: "${currentWord}"`,
-        duration: 1500,
-      });
-    }
-    
-    if (shouldAdvanceWord(timestamp, lastUpdateTimeRef.current, msPerWord)) {
-      lastUpdateTimeRef.current = timestamp;
-      
-      if (currentWordIndex < words.length - 1) {
-        setCurrentWordIndex(prev => prev + 1);
-      } else {
-        setIsPlaying(false);
+    setCurrentWordIndex(currentIndex => {
+      // Safety check - stop if end reached
+      if (currentIndex >= words.length - 1) {
+        stopReading();
         if (showToasts) {
           toast({
             title: "Reading Complete",
-            description: "You've reached the end of the content.",
+            description: "You've reached the end of the text.",
           });
         }
+        return currentIndex;
       }
-    }
-    
-    let isCurrentlyPlaying = false;
-    setIsPlaying((prev) => {
-      isCurrentlyPlaying = prev;
-      return prev;
+      
+      const word = words[currentIndex];
+      const complexity = calculateComplexity(word);
+      
+      // Calculate the delay based on word complexity
+      const delay = calculateDelay(baseWpm, complexity, smartPacingEnabled);
+      
+      // Calculate effective WPM
+      const effectiveWpm = Math.round((60 * 1000) / delay);
+      setEffectiveWpm(effectiveWpm);
+      setCurrentComplexity(complexity);
+      
+      // Check if enough time has passed to move to the next word
+      const elapsedTime = timestamp - lastUpdateTimeRef.current!;
+      if (elapsedTime >= delay) {
+        lastUpdateTimeRef.current = timestamp;
+        return currentIndex + 1;
+      }
+      
+      return currentIndex;
     });
     
-    if (isCurrentlyPlaying && currentWordIndex < words.length - 1) {
-      animationRef.current = requestAnimationFrame(updateReading);
-    }
+    // Continue the animation loop
+    animationRef.current = requestAnimationFrame(updateReading);
   };
 
-  // Navigation controls
+  // Function to jump to the next word
   const goToNextWord = () => {
-    setCurrentWordIndex(prev => {
-      if (prev < words.length - 1) {
-        return prev + 1;
+    setCurrentWordIndex(prevIndex => {
+      const nextIndex = prevIndex + 1;
+      if (nextIndex < words.length) {
+        return nextIndex;
       }
-      return prev;
+      return prevIndex;
     });
   };
 
+  // Function to go to the previous word
   const goToPreviousWord = () => {
-    setCurrentWordIndex(prev => {
-      if (prev > 0) {
-        return prev - 1;
+    setCurrentWordIndex(prevIndex => {
+      const nextIndex = prevIndex - 1;
+      if (nextIndex >= 0) {
+        return nextIndex;
       }
-      return prev;
+      return prevIndex;
     });
   };
 
-  // Restart reading
+  // Function to restart reading
   const restartReading = () => {
     setCurrentWordIndex(0);
+    // Fix for TS error - explicitly set boolean instead of using function
     setIsPlaying(false);
     if (showToasts) {
       toast({
-        title: "Reading Restarted",
-        description: "Starting from the beginning.",
+        title: "Restarted",
+        description: "Reading has been reset to the beginning.",
       });
     }
   };
