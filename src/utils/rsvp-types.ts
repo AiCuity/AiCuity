@@ -39,7 +39,7 @@ export interface RSVPReaderControls {
   handleWpmChange: (value: number[]) => void;
   restartReading: () => void;
   setShowToasts: (show: boolean) => void;
-  savePosition: () => Promise<void>;
+  savePosition: () => Promise<boolean>;
 }
 
 export type RSVPReaderHook = RSVPReaderState & RSVPReaderControls;
