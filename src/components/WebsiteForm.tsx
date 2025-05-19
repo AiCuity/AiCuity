@@ -104,20 +104,31 @@ const WebsiteForm = () => {
         await new Promise(resolve => setTimeout(resolve, 1500));
         
         try {
-          // Extract hostname for more meaningful fallback content
+          // Extract hostname and path for more meaningful fallback content
           let hostname = 'example.com';
           let path = '';
           let title = 'Content';
+          let pageTitle = '';
           
           if (processedUrl) {
             const urlObj = new URL(processedUrl);
             hostname = urlObj.hostname;
             path = urlObj.pathname;
             title = hostname + (path !== '/' ? path : '');
+            
+            // Extract topic from Wikipedia URL
+            if (hostname.includes('wikipedia.org')) {
+              // Get the last part of the path which is usually the article title
+              const pathSegments = path.split('/').filter(Boolean);
+              if (pathSegments.length > 0) {
+                // Replace underscores with spaces and decode URI component
+                pageTitle = decodeURIComponent(pathSegments[pathSegments.length - 1].replace(/_/g, ' '));
+              }
+            }
           }
           
           // Generate more meaningful fallback content based on the URL
-          const sampleText = generateFallbackContent(hostname, path);
+          const sampleText = generateFallbackContent(hostname, path, pageTitle);
           
           // Store the fallback content in sessionStorage
           sessionStorage.setItem('readerContent', sampleText);
@@ -148,7 +159,13 @@ const WebsiteForm = () => {
   };
   
   // Function to generate more meaningful fallback content based on URL
-  const generateFallbackContent = (hostname: string, path: string): string => {
+  const generateFallbackContent = (hostname: string, path: string, pageTitle: string = ""): string => {
+    // For Wikipedia articles, generate content based on the specific article title
+    if (hostname.includes('wikipedia.org') && pageTitle) {
+      return generateWikipediaArticle(pageTitle);
+    }
+    
+    // For other specific domains
     const topics: Record<string, string> = {
       'wikipedia.org': `# Wikipedia Article
       
@@ -233,6 +250,43 @@ The website you requested (${hostname}) appears to be about general information.
     return topics.default;
   };
 
+  // Function to generate a Wikipedia article based on the title
+  const generateWikipediaArticle = (title: string): string => {
+    // Generate common sections for a Wikipedia article with the specific title
+    return `# ${title}
+
+## Overview
+This is simulated content for the Wikipedia article about ${title}. This article would normally contain detailed information about this subject, including history, characteristics, significance, and references.
+
+## History
+${title} has a rich and complex history that spans many years. The earliest documented references to ${title} date back to historical texts from various periods. Scholars have debated different aspects of its origins and development over time.
+
+## Characteristics
+The defining features of ${title} include several notable aspects:
+
+1. Distinctive attributes associated with its identity and recognition
+2. Significant developments that have shaped its current form
+3. Notable variations and subcategories that exist within this topic
+4. Relationships to related concepts and fields
+
+## Cultural Significance
+${title} has had considerable influence in various domains:
+
+- Impact on historical events and developments
+- Representation in media, art, and literature
+- Influence on social practices and cultural traditions
+- Contemporary relevance and modern interpretations
+
+## See Also
+- Related topics and concepts
+- Important people associated with ${title}
+- Significant events connected to this subject
+- Broader categories this topic belongs to
+
+## References
+This section would normally contain citations to academic sources, books, articles, and other references that verify the information presented in this article.`;
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {apiError && (
@@ -287,6 +341,7 @@ The website you requested (${hostname}) appears to be about general information.
         <h3 className="text-sm font-medium mb-2">Popular Examples</h3>
         <div className="space-y-2">
           {["https://en.wikipedia.org/wiki/Speed_reading", 
+            "https://en.wikipedia.org/wiki/Ninja",
             "https://www.bbc.com/news/world",
             "https://medium.com/topic/technology"].map((example) => (
             <button
