@@ -3,7 +3,6 @@ import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
 import { useAuth } from "@/context/AuthContext";
-import { calculateProgressPercentage } from "@/hooks/readingHistory/readingHistoryUtils";
 
 export function useHistoryTracker(
   contentId: string | undefined,
