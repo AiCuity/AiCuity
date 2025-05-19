@@ -48,12 +48,12 @@ export function useReadingHistory() {
           title: item.title,
           source: item.source,
           // Add default values for fields that might not exist in the database
-          source_type: item.source_type || 'unknown',
-          source_input: item.source_input || item.source || item.title,
-          parsed_text: item.parsed_text || null,
+          source_type: 'unknown',  // Default value since it doesn't exist in the DB schema
+          source_input: item.source || item.title || '',
+          parsed_text: null,  // Default value since it doesn't exist in the DB schema
           wpm: item.wpm,
           current_position: item.current_position,
-          calibrated: item.calibrated !== null ? item.calibrated : false,
+          calibrated: false,  // Default value since it doesn't exist in the DB schema
           created_at: item.created_at,
           updated_at: item.updated_at,
           summary: item.summary,
@@ -83,7 +83,7 @@ export function useReadingHistory() {
             source: item.source,
             // Add default values for potentially missing fields in localStorage
             source_type: item.source_type || 'unknown',
-            source_input: item.source_input || item.source || item.title,
+            source_input: item.source_input || item.source || item.title || '',
             parsed_text: item.parsed_text || null,
             wpm: item.wpm,
             current_position: item.current_position,
@@ -115,13 +115,9 @@ export function useReadingHistory() {
           .insert({
             title: entry.title,
             source: entry.source,
-            source_type: entry.source_type,
-            source_input: entry.source_input,
-            parsed_text: entry.parsed_text,
             content_id: entry.content_id,
             wpm: entry.wpm,
             current_position: entry.current_position,
-            calibrated: entry.calibrated,
             summary: entry.summary,
             user_id: user.id
           })
