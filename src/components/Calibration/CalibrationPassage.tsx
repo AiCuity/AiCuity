@@ -26,8 +26,15 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
     currentWordIndex, 
     formattedWord,
     progress,
-    words
+    words,
+    handleWpmChange
   } = useRSVPReader({ text });
+
+  // Set the WPM when the component mounts or when wpm prop changes
+  useEffect(() => {
+    // The useRSVPReader hook expects an array for WPM change
+    handleWpmChange([wpm]);
+  }, [wpm, handleWpmChange]);
 
   useEffect(() => {
     // Check if we've reached the end
@@ -64,7 +71,7 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
               <>
                 <div className="flex justify-center items-center h-40 text-4xl">
                   <span className="opacity-70">{formattedWord.before}</span>
-                  <span className="text-primary font-bold">{formattedWord.highlight}</span>
+                  <span className="text-red-500 font-bold">{formattedWord.highlight}</span>
                   <span className="opacity-70">{formattedWord.after}</span>
                 </div>
                 <Progress value={progress} className="my-4 h-2" />
