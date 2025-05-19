@@ -1,3 +1,4 @@
+
 const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
@@ -165,25 +166,60 @@ const extractMainContent = (html, url) => {
   ];
   
   let mainContent = '';
+  
+  // Try to find main content container
   for (const selector of possibleContentSelectors) {
     const selectedContent = $(selector);
     if (selectedContent.length > 0) {
-      // Extract all text from selected element
+      // Get all paragraphs within the container
+      const paragraphs = selectedContent.find('p').map((_, el) => $(el).text().trim()).get();
+      if (paragraphs.length > 0) {
+        mainContent = paragraphs.join('\n\n');
+        break;
+      }
+      
+      // If no paragraphs found, use the container's text
       const text = selectedContent.text().trim();
-      if (text.length > mainContent.length) {
+      if (text.length > 150) {  // Only use if it has substantial content
         mainContent = text;
+        break;
       }
     }
   }
   
-  // If no content found using specific selectors, collect all paragraphs
-  if (!mainContent) {
-    const paragraphs = $('p').map((_, el) => $(el).text().trim()).get();
+  // If no content found using specific selectors, collect all paragraphs from the body
+  if (!mainContent || mainContent.length < 200) {
+    const paragraphs = $('body p').map((_, el) => $(el).text().trim()).get();
     if (paragraphs.length > 0) {
       mainContent = paragraphs.join('\n\n');
     } else {
-      // Last resort: use body text
-      mainContent = $('body').text();
+      // Last resort: use body text with basic cleanup
+      let bodyText = $('body').text();
+      // Remove excess whitespace and line breaks
+      mainContent = bodyText.replace(/\s+/g, ' ').trim();
+    }
+  }
+  
+  // Process content for Wikipedia specifically
+  if (url.includes('wikipedia.org')) {
+    // Focus on the article content
+    const articleContent = $('#mw-content-text').first();
+    if (articleContent.length) {
+      // Remove references, citations, tables
+      articleContent.find('.reference, .citation, table, .hatnote, .mw-editsection, .mw-headline-anchor').remove();
+      
+      // Extract all paragraphs
+      const paragraphs = articleContent.find('p, h2, h3').map((_, el) => {
+        const $el = $(el);
+        if ($el.is('h2') || $el.is('h3')) {
+          return '\n\n## ' + $el.text().trim() + '\n';
+        }
+        return $el.text().trim();
+      }).get().filter(text => text.length > 0);
+      
+      if (paragraphs.length > 0) {
+        mainContent = paragraphs.join('\n\n');
+      }
     }
   }
   

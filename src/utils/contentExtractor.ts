@@ -1,7 +1,6 @@
 
 import { fetchActualContent } from "./contentSource";
 import { generateFallbackContent } from "./fallbackContent";
-import { ExtractedContent } from "./types";
 
 export type { ExtractedContent } from "./types";
 
@@ -42,8 +41,11 @@ export async function extractContentFromUrl(url: string): Promise<ExtractedConte
       throw new Error('Empty content received from API');
     }
     
+    // Clean any remaining HTML
+    const cleanContent = cleanHtmlContent(data.text);
+    
     return {
-      content: data.text,
+      content: cleanContent,
       title: data.title || 'Website content',
       sourceUrl: data.sourceUrl || url
     };
@@ -56,7 +58,10 @@ export async function extractContentFromUrl(url: string): Promise<ExtractedConte
       const actualContent = await fetchActualContent(url);
       if (actualContent) {
         console.log("Successfully fetched content from source directly");
-        return actualContent;
+        return {
+          ...actualContent,
+          content: cleanHtmlContent(actualContent.content)
+        };
       }
     } catch (directError) {
       console.error("Error fetching direct content:", directError);
@@ -65,4 +70,24 @@ export async function extractContentFromUrl(url: string): Promise<ExtractedConte
     // If all else fails, use fallback content
     return generateFallbackContent(url);
   }
+}
+
+// Function to clean any remaining HTML tags from content
+function cleanHtmlContent(content: string): string {
+  return content
+    // Remove HTML tags
+    .replace(/<[^>]*>/g, '')
+    // Fix HTML entities
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    // Remove excess whitespace
+    .replace(/\s+/g, ' ')
+    // Fix paragraph breaks (convert multiple newlines to double newlines)
+    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\s*\n\s*/g, '\n')
+    .trim();
 }
