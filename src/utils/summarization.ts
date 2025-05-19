@@ -67,8 +67,7 @@ export const summarizeWithHuggingFace = async (
     // Setup the summarization pipeline
     const summarizer = await pipeline(
       'summarization',
-      'facebook/bart-large-cnn',
-      { quantized: true } // Use quantized model for better performance
+      'facebook/bart-large-cnn'
     );
     
     // Process each chunk
@@ -78,13 +77,20 @@ export const summarizeWithHuggingFace = async (
       const result = await summarizer(chunk, {
         max_length: options.maxLength || 130,
         min_length: options.minLength || 30,
-        do_sample: false
       });
       
-      if (Array.isArray(result) && result.length > 0) {
-        summaries.push(result[0].summary_text);
-      } else if (typeof result === 'object') {
-        summaries.push(result.summary_text);
+      if (Array.isArray(result) && result.length > 0 && typeof result[0] === 'object') {
+        if ('summary_text' in result[0]) {
+          summaries.push(result[0].summary_text as string);
+        } else if ('generated_text' in result[0]) {
+          summaries.push(result[0].generated_text as string);
+        }
+      } else if (typeof result === 'object' && result !== null) {
+        if ('summary_text' in result) {
+          summaries.push(result.summary_text as string);
+        } else if ('generated_text' in result) {
+          summaries.push(result.generated_text as string);
+        }
       }
     }
     
@@ -96,13 +102,20 @@ export const summarizeWithHuggingFace = async (
       const finalResult = await summarizer(combinedSummary, {
         max_length: options.maxLength || 150,
         min_length: options.minLength || 50,
-        do_sample: false
       });
       
-      if (Array.isArray(finalResult) && finalResult.length > 0) {
-        combinedSummary = finalResult[0].summary_text;
-      } else if (typeof finalResult === 'object') {
-        combinedSummary = finalResult.summary_text;
+      if (Array.isArray(finalResult) && finalResult.length > 0 && typeof finalResult[0] === 'object') {
+        if ('summary_text' in finalResult[0]) {
+          combinedSummary = finalResult[0].summary_text as string;
+        } else if ('generated_text' in finalResult[0]) {
+          combinedSummary = finalResult[0].generated_text as string;
+        }
+      } else if (typeof finalResult === 'object' && finalResult !== null) {
+        if ('summary_text' in finalResult) {
+          combinedSummary = finalResult.summary_text as string;
+        } else if ('generated_text' in finalResult) {
+          combinedSummary = finalResult.generated_text as string;
+        }
       }
     }
     

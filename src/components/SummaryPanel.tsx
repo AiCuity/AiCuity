@@ -5,7 +5,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { FileText, ChevronDown, Summarize } from "lucide-react";
+import { FileText, ChevronDown, Text } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface SummaryPanelProps {
@@ -71,7 +71,7 @@ const SummaryPanel = ({
                     variant="outline" 
                     onClick={() => onStartReading(false)}
                   >
-                    <Summarize className="h-4 w-4 mr-2" />
+                    <Text className="h-4 w-4 mr-2" />
                     Read Summary
                   </Button>
                   <Button 
@@ -94,7 +94,7 @@ const SummaryPanel = ({
                 Summary generation failed. Please try again.
               </p>
               <Button onClick={onRetry} className="mt-4">
-                <Summarize className="h-4 w-4 mr-2" />
+                <Text className="h-4 w-4 mr-2" />
                 Retry Summarization
               </Button>
             </div>

@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import RSVPReader from "@/components/RSVPReader";
@@ -6,7 +5,7 @@ import SummaryPanel from "@/components/SummaryPanel";
 import ApiKeyConfig from "@/components/ApiKeyConfig";
 import { useToast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { Loader2, Summarize } from "lucide-react";
+import { Loader2, Text } from "lucide-react";
 import { summarizeText, SummarizationOptions } from "@/utils/summarization";
 
 const Reader = () => {
@@ -232,7 +231,7 @@ const Reader = () => {
                     </>
                   ) : (
                     <>
-                      <Summarize className="mr-2 h-5 w-5" />
+                      <Text className="mr-2 h-5 w-5" />
                       Summarize Text
                     </>
                   )}
