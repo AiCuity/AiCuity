@@ -65,6 +65,9 @@ const PlaybackControls = ({
     onToggleSmartPacing();
   };
 
+  // Button variant to ensure all buttons have the same style
+  const buttonVariant = "primary";
+
   return (
     <div className="max-w-lg mx-auto">
       {/* Reading controls with tooltips */}
@@ -73,7 +76,7 @@ const PlaybackControls = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
-                variant="outline" 
+                variant={buttonVariant} 
                 size="icon"
                 onClick={handlePrevious}
                 disabled={disablePrevious}
@@ -90,6 +93,7 @@ const PlaybackControls = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
+                variant={buttonVariant}
                 onClick={handlePlayPause}
                 className="w-24"
                 type="button"
@@ -115,7 +119,7 @@ const PlaybackControls = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
-                variant="outline" 
+                variant={buttonVariant} 
                 size="icon"
                 onClick={handleRestart}
                 type="button"
@@ -131,7 +135,7 @@ const PlaybackControls = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
-                variant="outline" 
+                variant={buttonVariant} 
                 size="icon"
                 onClick={handleNext}
                 disabled={disableNext}
@@ -162,7 +166,7 @@ const PlaybackControls = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
-                variant={smartPacingEnabled ? "default" : "outline"}
+                variant={smartPacingEnabled ? buttonVariant : "outline"}
                 size="sm"
                 onClick={handleToggleSmartPacing}
                 className="flex items-center gap-1"
