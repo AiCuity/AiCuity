@@ -36,6 +36,34 @@ const WebsiteForm = () => {
     setIsLoading(true);
     
     try {
+      // For development/testing when backend might not be available
+      // This simulates a successful response with sample text
+      // You can remove this block once your backend API is set up
+      if (!import.meta.env.VITE_API_URL) {
+        console.log('Using fallback content extraction (no API URL configured)');
+        
+        // Simulate API delay
+        await new Promise(resolve => setTimeout(resolve, 1500));
+        
+        // Store sample content
+        const sampleText = `This is a sample text extracted from ${processedUrl}.\n\n` +
+          "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nullam auctor, nisl eget ultricies tincidunt, " +
+          "nisl nisl aliquam nisl, eget aliquam nisl nisl eget nisl. Nullam auctor, nisl eget ultricies tincidunt, " +
+          "nisl nisl aliquam nisl, eget aliquam nisl nisl eget nisl.\n\n" +
+          "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud " +
+          "exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
+        
+        sessionStorage.setItem('readerContent', sampleText);
+        sessionStorage.setItem('contentTitle', `Content from ${new URL(processedUrl).hostname}`);
+        sessionStorage.setItem('contentSource', processedUrl);
+        
+        setIsLoading(false);
+        navigate(`/reader/website-${Date.now()}`);
+        return;
+      }
+      
+      console.log(`Fetching content from ${apiUrl}/api/scrape for URL: ${processedUrl}`);
+      
       const response = await fetch(`${apiUrl}/api/scrape`, {
         method: 'POST',
         headers: {
@@ -44,12 +72,16 @@ const WebsiteForm = () => {
         body: JSON.stringify({ url: processedUrl }),
       });
       
+      console.log('Response status:', response.status);
+      
       if (!response.ok) {
         const errorData = await response.json();
+        console.error('Error response:', errorData);
         throw new Error(errorData.error || 'Failed to extract content');
       }
       
       const data = await response.json();
+      console.log('Extracted data:', data);
       
       // Store the extracted content in sessionStorage
       sessionStorage.setItem('readerContent', data.text);
@@ -133,3 +165,4 @@ const WebsiteForm = () => {
 };
 
 export default WebsiteForm;
+
