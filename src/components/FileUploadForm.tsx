@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
@@ -20,11 +20,7 @@ const FileUploadForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Check if the server is running when component mounts
-  useState(() => {
-    checkServerStatus();
-  });
-
+  // Define checkServerStatus function first
   const checkServerStatus = async () => {
     try {
       const response = await fetch(`${API_URL}/api/health`, { 
@@ -45,6 +41,11 @@ const FileUploadForm = () => {
       setServerStatus('offline');
     }
   };
+
+  // Use useEffect instead of useState for the initial check
+  useEffect(() => {
+    checkServerStatus();
+  }, []);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
