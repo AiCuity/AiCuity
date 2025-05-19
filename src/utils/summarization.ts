@@ -74,13 +74,11 @@ export const summarizeWithHuggingFace = async (
     for (const chunk of chunks) {
       if (chunk.trim().length === 0) continue;
       
-      // Use properly typed generation config object
+      // Use the correct configuration format for the summarizer
       const result = await summarizer(chunk, {
-        generation: {
-          max_new_tokens: options.maxLength || 130,
-          min_new_tokens: options.minLength || 30,
-          do_sample: false
-        }
+        max_new_tokens: options.maxLength || 130,
+        min_new_tokens: options.minLength || 30,
+        do_sample: false
       });
       
       if (Array.isArray(result) && result.length > 0 && typeof result[0] === 'object') {
@@ -104,11 +102,9 @@ export const summarizeWithHuggingFace = async (
     // If we have multiple chunks, summarize the combined summary again for coherence
     if (summaries.length > 1 && combinedSummary.length > 1000) {
       const finalResult = await summarizer(combinedSummary, {
-        generation: {
-          max_new_tokens: options.maxLength || 150,
-          min_new_tokens: options.minLength || 50,
-          do_sample: false
-        }
+        max_new_tokens: options.maxLength || 150,
+        min_new_tokens: options.minLength || 50,
+        do_sample: false
       });
       
       if (Array.isArray(finalResult) && finalResult.length > 0 && typeof finalResult[0] === 'object') {
