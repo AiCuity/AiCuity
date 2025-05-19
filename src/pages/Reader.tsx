@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import RSVPReader from "@/components/RSVPReader";
@@ -20,6 +21,7 @@ const Reader = () => {
   const [useFullText, setUseFullText] = useState(true);
   const [apiKey, setApiKey] = useState<string>("");
   const [useOpenAI, setUseOpenAI] = useState<boolean>(false);
+  const [summarizationError, setSummarizationError] = useState<string | null>(null);
   
   const { contentId } = useParams();
   const { toast } = useToast();
@@ -97,6 +99,7 @@ const Reader = () => {
     if (!content) return;
     
     setIsSummarizing(true);
+    setSummarizationError(null);
     setSummarizationProgress(0);
     
     // Mock progress updates (since we can't get actual progress from the models)
@@ -125,6 +128,7 @@ const Reader = () => {
       });
     } catch (error) {
       console.error("Summarization error:", error);
+      setSummarizationError(error instanceof Error ? error.message : "Unknown error occurred");
       toast({
         title: "Summarization failed",
         description: "Failed to generate a summary. Please try again.",
@@ -218,6 +222,11 @@ const Reader = () => {
               <div className="flex flex-col items-center justify-center gap-4">
                 <p className="text-center text-gray-600 dark:text-gray-400">
                   Generate a summary of this content for faster reading.
+                  {summarizationError && (
+                    <span className="block text-red-500 mt-2">
+                      Error: {summarizationError}
+                    </span>
+                  )}
                 </p>
                 <Button 
                   onClick={handleSummarize} 

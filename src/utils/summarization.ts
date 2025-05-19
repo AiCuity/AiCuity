@@ -1,6 +1,4 @@
 
-import { pipeline } from "@huggingface/transformers";
-
 // Interface for summarization options
 export interface SummarizationOptions {
   maxLength?: number;
@@ -54,86 +52,101 @@ export const summarizeWithOpenAI = async (
   }
 }
 
-// Function to summarize text using Hugging Face transformers
-export const summarizeWithHuggingFace = async (
+// Function to summarize text without using Hugging Face transformers
+// This is a fallback that doesn't rely on external model downloads
+export const summarizeWithFallback = async (
   text: string,
   options: SummarizationOptions = {}
 ): Promise<string> => {
   try {
     // Split text into chunks to handle token limits
     const chunks = splitTextIntoChunks(text, 1000);
-    let summaries: string[] = [];
     
-    // Setup the summarization pipeline
-    const summarizer = await pipeline(
-      'summarization',
-      'facebook/bart-large-cnn'
-    );
+    // Basic extractive summarization algorithm
+    // This is a simple approach that doesn't require external models
+    const summary = extractiveSummarize(chunks.join(' '), {
+      maxLength: options.maxLength || 500,
+      minLength: options.minLength || 200,
+    });
     
-    // Process each chunk
-    for (const chunk of chunks) {
-      if (chunk.trim().length === 0) continue;
-      
-      // Create a config object that matches what the pipeline expects
-      // Using any type to bypass the strict typing requirements for now
-      const config: any = {
-        max_length: options.maxLength || 130,
-        min_length: options.minLength || 30,
-        do_sample: false
-      };
-      
-      const result = await summarizer(chunk, config);
-      
-      if (Array.isArray(result) && result.length > 0 && typeof result[0] === 'object') {
-        if ('summary_text' in result[0]) {
-          summaries.push(result[0].summary_text as string);
-        } else if ('generated_text' in result[0]) {
-          summaries.push(result[0].generated_text as string);
-        }
-      } else if (typeof result === 'object' && result !== null) {
-        if ('summary_text' in result) {
-          summaries.push(result.summary_text as string);
-        } else if ('generated_text' in result) {
-          summaries.push(result.generated_text as string);
-        }
-      }
-    }
-    
-    // Combine all summaries into one
-    let combinedSummary = summaries.join(' ');
-    
-    // If we have multiple chunks, summarize the combined summary again for coherence
-    if (summaries.length > 1 && combinedSummary.length > 1000) {
-      // Create a config object for final summarization
-      const finalConfig: any = {
-        max_length: options.maxLength || 150,
-        min_length: options.minLength || 50,
-        do_sample: false
-      };
-      
-      const finalResult = await summarizer(combinedSummary, finalConfig);
-      
-      if (Array.isArray(finalResult) && finalResult.length > 0 && typeof finalResult[0] === 'object') {
-        if ('summary_text' in finalResult[0]) {
-          combinedSummary = finalResult[0].summary_text as string;
-        } else if ('generated_text' in finalResult[0]) {
-          combinedSummary = finalResult[0].generated_text as string;
-        }
-      } else if (typeof finalResult === 'object' && finalResult !== null) {
-        if ('summary_text' in finalResult) {
-          combinedSummary = finalResult.summary_text as string;
-        } else if ('generated_text' in finalResult) {
-          combinedSummary = finalResult.generated_text as string;
-        }
-      }
-    }
-    
-    return combinedSummary;
+    return summary;
   } catch (error) {
-    console.error('HuggingFace summarization error:', error);
+    console.error('Fallback summarization error:', error);
     throw error;
   }
 }
+
+// Simple extractive summarization algorithm
+const extractiveSummarize = (text: string, options: { maxLength: number, minLength: number }): string => {
+  // Split text into sentences
+  const sentences = text.match(/[^\.!\?]+[\.!\?]+/g) || [];
+  
+  if (sentences.length === 0) {
+    return "Unable to generate a summary from the provided text.";
+  }
+  
+  // Score sentences based on simple heuristics
+  const sentenceScores: [string, number][] = sentences.map(sentence => {
+    let score = 0;
+    
+    // Longer sentences (but not too long) might be more informative
+    score += Math.min(sentence.length / 20, 3);
+    
+    // Sentences that contain common important phrases
+    const importantPhrases = [
+      "important", "significant", "key", "main", "critical", "essential",
+      "finally", "conclusion", "summary", "result", "therefore", 
+      "consequently", "thus", "hence", "in summary", "to summarize"
+    ];
+    
+    importantPhrases.forEach(phrase => {
+      if (sentence.toLowerCase().includes(phrase)) {
+        score += 2;
+      }
+    });
+    
+    // Sentences at the beginning or end might be more important
+    if (sentences.indexOf(sentence) < Math.ceil(sentences.length * 0.2)) {
+      score += 2; // Beginning of text
+    }
+    
+    if (sentences.indexOf(sentence) > sentences.length - Math.ceil(sentences.length * 0.2)) {
+      score += 2; // End of text
+    }
+    
+    return [sentence, score];
+  });
+  
+  // Sort sentences by score
+  sentenceScores.sort((a, b) => b[1] - a[1]);
+  
+  // Select top sentences up to the desired length
+  let summary = "";
+  let currentLength = 0;
+  
+  // Original positions of sentences for proper ordering
+  const selectedSentences: [string, number][] = [];
+  
+  for (const [sentence, _] of sentenceScores) {
+    if (currentLength + sentence.length <= options.maxLength || currentLength < options.minLength) {
+      const position = sentences.indexOf(sentence);
+      selectedSentences.push([sentence, position]);
+      currentLength += sentence.length;
+    }
+    
+    if (currentLength >= options.maxLength && currentLength >= options.minLength) {
+      break;
+    }
+  }
+  
+  // Sort selected sentences by their original position
+  selectedSentences.sort((a, b) => a[1] - b[1]);
+  
+  // Join sentences back together
+  summary = selectedSentences.map(item => item[0].trim()).join(' ');
+  
+  return summary;
+};
 
 // Function to split text into chunks
 const splitTextIntoChunks = (text: string, maxChunkLength: number = 1000): string[] => {
@@ -163,7 +176,8 @@ export const summarizeText = async (
     if (options.useOpenAI && options.apiKey) {
       return await summarizeWithOpenAI(text, options.apiKey, options);
     } else {
-      return await summarizeWithHuggingFace(text, options);
+      // Use our fallback summarization instead of Hugging Face
+      return await summarizeWithFallback(text, options);
     }
   } catch (error) {
     console.error('Summarization error:', error);
