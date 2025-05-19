@@ -1,14 +1,14 @@
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useRSVPReader } from "@/hooks/useRSVPReader";
 import { useFullscreen } from "@/hooks/useFullscreen";
 import KeyboardControls from "./KeyboardControls";
-import TitleBar from "./TitleBar";
-import SourceLink from "./SourceLink";
 import WordDisplay from "./WordDisplay";
 import ProgressBar from "./ProgressBar";
 import PlaybackControls from "./PlaybackControls";
 import SpeedControl from "./SpeedControl";
+import { Button } from "@/components/ui/button";
+import { Refresh, BellOff, Bell } from "lucide-react";
 
 interface RSVPReaderProps {
   text: string;
@@ -19,6 +19,7 @@ interface RSVPReaderProps {
 
 const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
   const readerRef = useRef<HTMLDivElement>(null);
+  const [showNotifications, setShowNotifications] = useState(true);
   
   const {
     words,
@@ -34,12 +35,19 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
     toggleSmartPacing,
     handleWpmChange,
     formattedWord,
-    progress
+    progress,
+    restartReading,
+    setShowToasts
   } = useRSVPReader({ text });
   
   const { isFullscreen, toggleFullscreen } = useFullscreen(readerRef);
 
   const togglePlay = () => setIsPlaying(!isPlaying);
+  
+  const toggleNotifications = () => {
+    setShowNotifications(!showNotifications);
+    setShowToasts(!showNotifications);
+  };
   
   return (
     <div 
@@ -56,14 +64,6 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
         onPrevious={goToPreviousWord}
       />
       
-      <TitleBar 
-        title={title} 
-        wordCount={words.length}
-        isFullscreen={isFullscreen}
-      />
-      
-      <SourceLink source={source} isFullscreen={isFullscreen} />
-
       {/* Main reading area */}
       <div className={`flex flex-col items-center justify-center ${
         isFullscreen ? "h-screen" : "h-[50vh] md:h-[60vh]"
@@ -94,6 +94,37 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
           smartPacingEnabled={smartPacingEnabled}
           onToggleSmartPacing={toggleSmartPacing}
         />
+        
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={restartReading}
+            className="flex items-center gap-1"
+          >
+            <Refresh className="h-4 w-4" />
+            Restart
+          </Button>
+          
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={toggleNotifications}
+            className="flex items-center gap-1"
+          >
+            {showNotifications ? (
+              <>
+                <Bell className="h-4 w-4" />
+                Notifications On
+              </>
+            ) : (
+              <>
+                <BellOff className="h-4 w-4" />
+                Notifications Off
+              </>
+            )}
+          </Button>
+        </div>
         
         <SpeedControl 
           baseWpm={baseWpm}

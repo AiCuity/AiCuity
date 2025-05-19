@@ -15,6 +15,7 @@ export function useRSVPReader({ text }: UseRSVPReaderProps) {
   const [effectiveWpm, setEffectiveWpm] = useState(300);
   const [currentComplexity, setCurrentComplexity] = useState(0);
   const [smartPacingEnabled, setSmartPacingEnabled] = useState(true);
+  const [showToasts, setShowToasts] = useState(true);
   const animationRef = useRef<number | null>(null);
   const lastUpdateTimeRef = useRef<number | null>(null);
   const { toast } = useToast();
@@ -86,7 +87,7 @@ export function useRSVPReader({ text }: UseRSVPReaderProps) {
     setCurrentComplexity(complexity);
     
     // Show toast for highly complex terms or acronyms
-    if ((complexity > 0.7 || isAcronym(currentWord) || isTechnicalTerm(currentWord)) && smartPacingEnabled) {
+    if ((complexity > 0.7 || isAcronym(currentWord) || isTechnicalTerm(currentWord)) && smartPacingEnabled && showToasts) {
       const reason = isAcronym(currentWord) ? "acronym" : 
                     isTechnicalTerm(currentWord) ? "technical term" : "complex word";
       
@@ -132,10 +133,12 @@ export function useRSVPReader({ text }: UseRSVPReaderProps) {
         setCurrentWordIndex(prev => prev + 1);
       } else {
         setIsPlaying(false);
-        toast({
-          title: "Reading Complete",
-          description: "You've reached the end of the content.",
-        });
+        if (showToasts) {
+          toast({
+            title: "Reading Complete",
+            description: "You've reached the end of the content.",
+          });
+        }
       }
     }
     
@@ -169,12 +172,26 @@ export function useRSVPReader({ text }: UseRSVPReaderProps) {
   // Toggle smart pacing
   const toggleSmartPacing = () => {
     setSmartPacingEnabled(prev => !prev);
-    toast({
-      title: smartPacingEnabled ? "Smart Pacing Disabled" : "Smart Pacing Enabled",
-      description: smartPacingEnabled 
-        ? "Reading at constant speed" 
-        : "Speed will adjust based on text complexity",
-    });
+    if (showToasts) {
+      toast({
+        title: smartPacingEnabled ? "Smart Pacing Disabled" : "Smart Pacing Enabled",
+        description: smartPacingEnabled 
+          ? "Reading at constant speed" 
+          : "Speed will adjust based on text complexity",
+      });
+    }
+  };
+
+  // Restart reading
+  const restartReading = () => {
+    setCurrentWordIndex(0);
+    setIsPlaying(false);
+    if (showToasts) {
+      toast({
+        title: "Reading Restarted",
+        description: "Starting from the beginning.",
+      });
+    }
   };
 
   // Handle WPM change
@@ -199,6 +216,8 @@ export function useRSVPReader({ text }: UseRSVPReaderProps) {
     toggleSmartPacing,
     handleWpmChange,
     formattedWord,
-    progress
+    progress,
+    restartReading,
+    setShowToasts
   };
 }

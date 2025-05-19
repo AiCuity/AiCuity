@@ -56,7 +56,7 @@ const Reader = () => {
         <RSVPReader 
           text={useFullText ? content : summary} 
           contentId={contentId || ""} 
-          title={`${useFullText ? '' : '[Summary] '}${title}`}
+          title={title}
           source={source} 
         />
       </div>
