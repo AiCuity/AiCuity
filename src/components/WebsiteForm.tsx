@@ -4,19 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Loader2, Globe } from "lucide-react";
+import { Loader2, Globe, AlertTriangle } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const WebsiteForm = () => {
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setApiError(null);
     
     if (!url) {
       toast({
@@ -36,12 +39,67 @@ const WebsiteForm = () => {
     setIsLoading(true);
     
     try {
-      // For development/testing when backend might not be available
-      // This simulates a successful response with sample text
-      // You can remove this block once your backend API is set up
+      // Always use the fallback for development when connection fails
+      let useFallback = false;
+      
       if (!import.meta.env.VITE_API_URL) {
+        useFallback = true;
         console.log('Using fallback content extraction (no API URL configured)');
-        
+      } else {
+        try {
+          console.log(`Attempting to connect to ${apiUrl}/api/scrape for URL: ${processedUrl}`);
+          
+          // Set a timeout for the fetch operation
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          
+          const response = await fetch(`${apiUrl}/api/scrape`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ url: processedUrl }),
+            signal: controller.signal
+          });
+          
+          clearTimeout(timeoutId);
+          
+          console.log('Response status:', response.status);
+          
+          if (!response.ok) {
+            const errorData = await response.json();
+            console.error('Error response:', errorData);
+            throw new Error(errorData.error || 'Failed to extract content');
+          }
+          
+          const data = await response.json();
+          console.log('Extracted data:', data);
+          
+          // Store the extracted content in sessionStorage
+          sessionStorage.setItem('readerContent', data.text);
+          sessionStorage.setItem('contentTitle', `${data.title || 'Website content'}`);
+          sessionStorage.setItem('contentSource', data.sourceUrl || processedUrl);
+          
+          // Navigate to the reader page
+          setIsLoading(false);
+          navigate(`/reader/website-${Date.now()}`);
+          return;
+        } catch (error) {
+          console.error('API Error:', error);
+          if (error.name === 'AbortError') {
+            console.log('Request timed out, using fallback');
+          } else if (error instanceof TypeError && error.message === 'Failed to fetch') {
+            console.log('Connection error, using fallback');
+            setApiError("Could not connect to the API server. Using fallback mode.");
+          } else {
+            throw error; // Re-throw if it's a different error
+          }
+          useFallback = true;
+        }
+      }
+      
+      // Fallback content extraction
+      if (useFallback) {
         // Simulate API delay
         await new Promise(resolve => setTimeout(resolve, 1500));
         
@@ -53,43 +111,28 @@ const WebsiteForm = () => {
           "Sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud " +
           "exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.";
         
-        sessionStorage.setItem('readerContent', sampleText);
-        sessionStorage.setItem('contentTitle', `Content from ${new URL(processedUrl).hostname}`);
-        sessionStorage.setItem('contentSource', processedUrl);
-        
-        setIsLoading(false);
-        navigate(`/reader/website-${Date.now()}`);
-        return;
+        try {
+          let hostname = 'example.com';
+          if (processedUrl) {
+            hostname = new URL(processedUrl).hostname;
+          }
+          
+          sessionStorage.setItem('readerContent', sampleText);
+          sessionStorage.setItem('contentTitle', `Content from ${hostname}`);
+          sessionStorage.setItem('contentSource', processedUrl);
+          
+          toast({
+            title: "Using Fallback Mode",
+            description: "Connected to sample content as the API server is not available.",
+          });
+          
+          setIsLoading(false);
+          navigate(`/reader/website-${Date.now()}`);
+        } catch (urlError) {
+          console.error('URL parsing error:', urlError);
+          throw new Error('Invalid URL format');
+        }
       }
-      
-      console.log(`Fetching content from ${apiUrl}/api/scrape for URL: ${processedUrl}`);
-      
-      const response = await fetch(`${apiUrl}/api/scrape`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url: processedUrl }),
-      });
-      
-      console.log('Response status:', response.status);
-      
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('Error response:', errorData);
-        throw new Error(errorData.error || 'Failed to extract content');
-      }
-      
-      const data = await response.json();
-      console.log('Extracted data:', data);
-      
-      // Store the extracted content in sessionStorage
-      sessionStorage.setItem('readerContent', data.text);
-      sessionStorage.setItem('contentTitle', `${data.title || 'Website content'}`);
-      sessionStorage.setItem('contentSource', data.sourceUrl || processedUrl);
-      
-      // Navigate to the reader page
-      navigate(`/reader/website-${Date.now()}`);
     } catch (error) {
       console.error('Error:', error);
       setIsLoading(false);
@@ -103,6 +146,14 @@ const WebsiteForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {apiError && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Connection Issue</AlertTitle>
+          <AlertDescription>{apiError}</AlertDescription>
+        </Alert>
+      )}
+      
       <div className="space-y-2">
         <Label htmlFor="website-url">Website URL</Label>
         <div className="flex">
@@ -165,4 +216,3 @@ const WebsiteForm = () => {
 };
 
 export default WebsiteForm;
-
