@@ -111,7 +111,16 @@ export function useReadingHistory() {
         const { data, error } = await supabase
           .from('reading_history')
           .insert({
-            ...entry,
+            title: entry.title,
+            source: entry.source,
+            source_type: entry.source_type,
+            source_input: entry.source_input,
+            parsed_text: entry.parsed_text,
+            content_id: entry.content_id,
+            wpm: entry.wpm,
+            current_position: entry.current_position,
+            calibrated: entry.calibrated,
+            summary: entry.summary,
             user_id: user.id
           })
           .select()
