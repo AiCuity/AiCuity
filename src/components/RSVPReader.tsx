@@ -34,7 +34,8 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
     toggleSmartPacing,
     handleWpmChange,
     formattedWord,
-    progress
+    progress,
+    restartReading
   } = useRSVPReader({ text });
   
   const { isFullscreen, toggleFullscreen } = useFullscreen(readerRef);
@@ -89,6 +90,7 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
           onPlayPause={togglePlay}
           onPrevious={goToPreviousWord}
           onNext={goToNextWord}
+          onRestart={restartReading}
           disablePrevious={currentWordIndex <= 0}
           disableNext={currentWordIndex >= words.length - 1}
           smartPacingEnabled={smartPacingEnabled}
