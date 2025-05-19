@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
@@ -47,7 +46,9 @@ export function useReadingHistory() {
           is_completed: item.is_completed
         }));
 
-        setHistory(transformedData);
+        // Remove potential duplicates (same content_id with different entries)
+        const uniqueEntries = removeDuplicateEntries(transformedData);
+        setHistory(uniqueEntries);
       } catch (error) {
         console.error('Error fetching reading history:', error);
         toast({
@@ -82,7 +83,9 @@ export function useReadingHistory() {
             is_completed: item.is_completed
           }));
           
-          setHistory(transformedLocalData);
+          // Remove potential duplicates (same content_id with different entries)
+          const uniqueEntries = removeDuplicateEntries(transformedLocalData);
+          setHistory(uniqueEntries);
         }
       } catch (error) {
         console.error('Error parsing local reading history:', error);
@@ -93,6 +96,26 @@ export function useReadingHistory() {
     setIsLoading(false);
   };
 
+  // Function to remove duplicate entries, keeping the most recently updated one
+  const removeDuplicateEntries = (entries: ReadingHistoryEntry[]): ReadingHistoryEntry[] => {
+    const uniqueContentIds = new Map<string, ReadingHistoryEntry>();
+    
+    // For each entry, if we haven't seen this content_id before, or if this entry is more recent than 
+    // the one we've seen, update the map with this entry
+    entries.forEach(entry => {
+      if (entry.content_id) {
+        const existing = uniqueContentIds.get(entry.content_id);
+        if (!existing || new Date(entry.updated_at) > new Date(existing.updated_at)) {
+          uniqueContentIds.set(entry.content_id, entry);
+        }
+      }
+    });
+    
+    // Convert the map values back to an array and sort by updated_at
+    return Array.from(uniqueContentIds.values())
+      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+  };
+
   // Check if an entry already exists for the same content
   const findExistingEntry = (contentId: string): ReadingHistoryEntry | undefined => {
     return history.find(entry => entry.content_id === contentId);
@@ -100,6 +123,13 @@ export function useReadingHistory() {
 
   // Save reading history entry
   const saveHistoryEntry = async (entry: Omit<ReadingHistoryEntry, 'id' | 'created_at' | 'updated_at'>) => {
+    // Don't save if this is a short reading session (title is generic and no summary)
+    const isGenericSession = entry.title === "Reading Session" && !entry.summary && entry.current_position < 20;
+    if (isGenericSession) {
+      console.log("Skipping save for short generic reading session");
+      return null;
+    }
+    
     const existingEntry = findExistingEntry(entry.content_id);
     
     if (user) {
@@ -125,17 +155,14 @@ export function useReadingHistory() {
           }
           
           // Update the entry in state
-          setHistory(prev => 
-            prev.map(item => 
+          setHistory(prev => {
+            const updatedEntries = prev.map(item => 
               item.id === existingEntry.id 
                 ? { ...item, current_position: entry.current_position, wpm: entry.wpm, summary: entry.summary || item.summary, updated_at: new Date().toISOString() }
                 : item
-            )
-          );
-
-          toast({
-            title: 'Reading progress updated',
-            description: 'Your reading position has been updated.',
+            );
+            
+            return removeDuplicateEntries(updatedEntries);
           });
 
           return data;
@@ -162,18 +189,16 @@ export function useReadingHistory() {
           // Transform the new entry to match our type
           const newEntry: ReadingHistoryEntry = {
             ...data,
-            source_type: 'unknown',
+            source_type: entry.source_type || 'unknown',
             source_input: data.source || data.title || '',
-            parsed_text: null,
-            calibrated: false,
+            parsed_text: entry.parsed_text || null,
+            calibrated: entry.calibrated || false,
           };
 
-          // Add to history state
-          setHistory(prev => [newEntry, ...prev]);
-
-          toast({
-            title: 'Reading session saved',
-            description: 'Your reading session has been saved to your history.',
+          // Add to history state, ensuring no duplicates
+          setHistory(prev => {
+            const updatedEntries = [newEntry, ...prev];
+            return removeDuplicateEntries(updatedEntries);
           });
 
           return data;
@@ -206,15 +231,11 @@ export function useReadingHistory() {
               : item
           );
           
-          localStorage.setItem('readingHistory', JSON.stringify(updatedHistory));
+          const uniqueHistory = removeDuplicateEntries(updatedHistory);
+          localStorage.setItem('readingHistory', JSON.stringify(uniqueHistory));
           
           // Update state
-          setHistory(updatedHistory);
-          
-          toast({
-            title: 'Reading progress updated',
-            description: 'Your reading position has been updated locally.',
-          });
+          setHistory(uniqueHistory);
           
           return existingEntry;
         } else {
@@ -226,15 +247,12 @@ export function useReadingHistory() {
             updated_at: new Date().toISOString(),
           };
           
-          localStorage.setItem('readingHistory', JSON.stringify([newEntry, ...localHistory]));
+          const updatedHistory = [newEntry, ...localHistory];
+          const uniqueHistory = removeDuplicateEntries(updatedHistory);
+          localStorage.setItem('readingHistory', JSON.stringify(uniqueHistory));
           
           // Update state
-          setHistory(prev => [newEntry as ReadingHistoryEntry, ...prev]);
-          
-          toast({
-            title: 'Reading session saved',
-            description: 'Your reading session has been saved locally.',
-          });
+          setHistory(uniqueHistory);
           
           return newEntry;
         }
@@ -320,5 +338,6 @@ export function useReadingHistory() {
     saveHistoryEntry,
     deleteHistoryEntry,
     refreshHistory: fetchHistory,
+    fetchHistory,
   };
 }
