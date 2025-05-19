@@ -71,7 +71,7 @@ const Reader = () => {
           wpm,
           current_position: 0,
           calibrated: profile?.calibration_status === 'completed',
-          summary: null, // Will be updated after summarization
+          summary: null,
           parsed_text: content,
         });
         

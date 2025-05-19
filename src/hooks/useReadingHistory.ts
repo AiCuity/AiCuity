@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { ReadingHistoryItem } from '@/utils/types';
 
 export type ReadingHistoryEntry = {
   id: string;
@@ -41,7 +42,24 @@ export function useReadingHistory() {
           throw error;
         }
 
-        setHistory(data || []);
+        // Transform data to ensure it matches the ReadingHistoryEntry interface
+        const transformedData: ReadingHistoryEntry[] = (data || []).map(item => ({
+          id: item.id,
+          title: item.title,
+          source: item.source,
+          source_type: item.source_type || 'unknown',
+          source_input: item.source_input || item.source || item.title,
+          parsed_text: item.parsed_text,
+          wpm: item.wpm,
+          current_position: item.current_position,
+          calibrated: item.calibrated !== null ? item.calibrated : false,
+          created_at: item.created_at,
+          updated_at: item.updated_at,
+          summary: item.summary,
+          content_id: item.content_id
+        }));
+
+        setHistory(transformedData);
       } catch (error) {
         console.error('Error fetching reading history:', error);
         toast({
@@ -56,7 +74,25 @@ export function useReadingHistory() {
       try {
         const localHistory = localStorage.getItem('readingHistory');
         if (localHistory) {
-          setHistory(JSON.parse(localHistory));
+          // Transform local data to ensure it matches ReadingHistoryEntry
+          const parsedHistory = JSON.parse(localHistory);
+          const transformedLocalData: ReadingHistoryEntry[] = parsedHistory.map((item: any) => ({
+            id: item.id,
+            title: item.title,
+            source: item.source,
+            source_type: item.source_type || 'unknown',
+            source_input: item.source_input || item.source || item.title,
+            parsed_text: item.parsed_text,
+            wpm: item.wpm,
+            current_position: item.current_position,
+            calibrated: item.calibrated !== null ? item.calibrated : false,
+            created_at: item.created_at,
+            updated_at: item.updated_at,
+            summary: item.summary,
+            content_id: item.content_id
+          }));
+          
+          setHistory(transformedLocalData);
         }
       } catch (error) {
         console.error('Error parsing local reading history:', error);
