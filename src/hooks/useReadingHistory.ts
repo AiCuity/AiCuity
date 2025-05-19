@@ -47,9 +47,10 @@ export function useReadingHistory() {
           id: item.id,
           title: item.title,
           source: item.source,
+          // Add default values for fields that might not exist in the database
           source_type: item.source_type || 'unknown',
           source_input: item.source_input || item.source || item.title,
-          parsed_text: item.parsed_text,
+          parsed_text: item.parsed_text || null,
           wpm: item.wpm,
           current_position: item.current_position,
           calibrated: item.calibrated !== null ? item.calibrated : false,
@@ -80,9 +81,10 @@ export function useReadingHistory() {
             id: item.id,
             title: item.title,
             source: item.source,
+            // Add default values for potentially missing fields in localStorage
             source_type: item.source_type || 'unknown',
             source_input: item.source_input || item.source || item.title,
-            parsed_text: item.parsed_text,
+            parsed_text: item.parsed_text || null,
             wpm: item.wpm,
             current_position: item.current_position,
             calibrated: item.calibrated !== null ? item.calibrated : false,
