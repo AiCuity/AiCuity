@@ -1,4 +1,6 @@
 
+import { calculateComplexity as getTextComplexity } from "./textAnalysis";
+
 /**
  * Calculate milliseconds per word based on words per minute
  */
@@ -54,8 +56,6 @@ export function calculateDelay(
 export function calculateComplexity(word: string): number {
   if (!word) return 0;
   
-  // Get the base complexity from the textAnalysis utility
-  // Import from textAnalysis to avoid circular dependencies
-  const { calculateComplexity: getTextComplexity } = require("../utils/textAnalysis");
+  // Use the imported function directly
   return getTextComplexity(word);
 }
