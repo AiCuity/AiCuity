@@ -6,14 +6,31 @@ import { ExtractedContent } from "./types";
 export type { ExtractedContent } from "./types";
 
 export async function extractContentFromUrl(url: string): Promise<ExtractedContent> {
-  // Try to extract content from API first
+  console.log(`Extracting content from URL: ${url}`);
+  
+  // First, try to fetch content directly using our enhanced methods
+  try {
+    console.log("Attempting to fetch content directly from source...");
+    const actualContent = await fetchActualContent(url);
+    if (actualContent) {
+      console.log("Successfully fetched content from source directly");
+      return {
+        ...actualContent,
+        content: cleanHtmlContent(actualContent.content)
+      };
+    }
+  } catch (directError) {
+    console.error("Error fetching direct content:", directError);
+  }
+  
+  // If direct fetching fails, try the API
   try {
     const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
     console.log(`Attempting to connect to ${apiUrl}/api/scrape for URL: ${url}`);
     
     // Set a timeout for the fetch operation
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 5000); // shorter timeout for faster fallback
     
     const response = await fetch(`${apiUrl}/api/scrape`, {
       method: 'POST',
@@ -53,26 +70,11 @@ export async function extractContentFromUrl(url: string): Promise<ExtractedConte
   } catch (error) {
     console.error('API Error:', error);
     
-    // Try to fetch actual content directly for certain sources like Wikipedia
-    try {
-      console.log("Attempting to fetch content directly from source...");
-      const actualContent = await fetchActualContent(url);
-      if (actualContent) {
-        console.log("Successfully fetched content from source directly");
-        return {
-          ...actualContent,
-          content: cleanHtmlContent(actualContent.content)
-        };
-      }
-    } catch (directError) {
-      console.error("Error fetching direct content:", directError);
-    }
-    
-    // If direct fetching fails, inform the user that we're using fallback content
+    // If both direct fetching and API approach fail, use fallback content
     const fallbackContent = await generateFallbackContent(url);
     
     // Add a notice to the content that this is simulated
-    fallbackContent.content = "⚠️ NOTE: This is simulated content. The content extraction API is currently unavailable or blocked by CORS policies. ⚠️\n\n" + fallbackContent.content;
+    fallbackContent.content = "⚠️ NOTE: This is simulated content. The content extraction failed. ⚠️\n\n" + fallbackContent.content;
     
     return fallbackContent;
   }

@@ -11,10 +11,12 @@ import LoadingState from "@/components/Reader/LoadingState";
 import NotFoundState from "@/components/Reader/NotFoundState";
 import { useContentLoader } from "@/hooks/useContentLoader";
 import { useSummarization } from "@/hooks/useSummarization";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 const Reader = () => {
   const { contentId } = useParams();
-  const { content, title, source, isLoading } = useContentLoader(contentId);
+  const { content, title, source, isLoading, isSimulated } = useContentLoader(contentId);
   const { 
     summary, 
     isSummarizing, 
@@ -74,6 +76,15 @@ const Reader = () => {
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <ContentHeader title={title} source={source} />
+
+        {isSimulated && (
+          <Alert variant="destructive" className="mb-6">
+            <AlertTriangle className="h-4 w-4 mr-2" />
+            <AlertDescription>
+              Using simulated content. The app couldn't access the actual content from this website.
+            </AlertDescription>
+          </Alert>
+        )}
 
         <div className="space-y-6">
           <ApiKeyConfig 

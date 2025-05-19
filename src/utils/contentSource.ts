@@ -1,5 +1,6 @@
 
 import { ExtractedContent } from "./types";
+import { Readability } from "@mozilla/readability";
 
 /**
  * Tries to fetch actual content from sources that allow direct access
@@ -69,9 +70,86 @@ export async function fetchActualContent(url: string): Promise<ExtractedContent 
       };
     }
     
-    // For other URLs, we can't reliably extract content in the browser
-    // You would need a server-side solution or proxy for this
-    return null;
+    // For other websites, try to use a CORS proxy and Readability
+    try {
+      // Use a CORS proxy to fetch the website content
+      const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
+      console.log(`Attempting to fetch website via CORS proxy: ${corsProxyUrl}`);
+      
+      const response = await fetch(corsProxyUrl, {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch via CORS proxy: ${response.statusText}`);
+      }
+      
+      const htmlContent = await response.text();
+      
+      // Use Readability to extract the main content
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlContent, 'text/html');
+      
+      // Get the page title
+      const pageTitle = doc.querySelector('title')?.textContent || new URL(url).hostname;
+      
+      // Use Readability to extract the main content
+      const reader = new Readability(doc);
+      const article = reader.parse();
+      
+      if (!article) {
+        throw new Error('Readability could not extract content');
+      }
+      
+      // Return the extracted content
+      return {
+        content: article.textContent || "No content available",
+        title: article.title || pageTitle,
+        sourceUrl: url
+      };
+    } catch (corsError) {
+      console.error("CORS proxy error:", corsError);
+      
+      // Try another CORS proxy as a fallback
+      try {
+        const allOrigins = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
+        console.log(`Attempting with alternate CORS proxy: ${allOrigins}`);
+        
+        const response = await fetch(allOrigins);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch via alternate CORS proxy: ${response.statusText}`);
+        }
+        
+        const htmlContent = await response.text();
+        
+        // Use Readability to extract the main content
+        const parser = new DOMParser();
+        const doc = parser.parseFromString(htmlContent, 'text/html');
+        
+        // Get the page title
+        const pageTitle = doc.querySelector('title')?.textContent || new URL(url).hostname;
+        
+        // Use Readability to extract the main content
+        const reader = new Readability(doc);
+        const article = reader.parse();
+        
+        if (!article) {
+          throw new Error('Readability could not extract content');
+        }
+        
+        // Return the extracted content
+        return {
+          content: article.textContent || "No content available",
+          title: article.title || pageTitle,
+          sourceUrl: url
+        };
+      } catch (fallbackError) {
+        console.error("Fallback CORS proxy error:", fallbackError);
+        throw fallbackError;
+      }
+    }
   } catch (error) {
     console.error("Error fetching actual content:", error);
     return null;

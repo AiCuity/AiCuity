@@ -7,6 +7,7 @@ export const useContentLoader = (contentId?: string) => {
   const [title, setTitle] = useState<string>("");
   const [source, setSource] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
+  const [isSimulated, setIsSimulated] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
@@ -41,6 +42,12 @@ export const useContentLoader = (contentId?: string) => {
             setContent(storedContent);
             setTitle(storedTitle);
             setSource(storedSource);
+            
+            // Check if this is simulated content
+            setIsSimulated(
+              storedContent.includes('⚠️ NOTE: This is simulated content') || 
+              storedContent.includes('simulated content')
+            );
           } else {
             toast({
               title: "Content not found",
@@ -71,5 +78,5 @@ export const useContentLoader = (contentId?: string) => {
     fetchContent();
   }, [contentId, toast]);
 
-  return { content, title, source, isLoading };
+  return { content, title, source, isLoading, isSimulated };
 };
