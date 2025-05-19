@@ -72,10 +72,6 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
           before={formattedWord.before}
           highlight={formattedWord.highlight}
           after={formattedWord.after}
-          currentWordIndex={currentWordIndex}
-          totalWords={words.length}
-          effectiveWpm={effectiveWpm}
-          smartPacingEnabled={smartPacingEnabled}
           isFullscreen={isFullscreen}
         />
         
@@ -94,6 +90,9 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
           disableNext={currentWordIndex >= words.length - 1}
           smartPacingEnabled={smartPacingEnabled}
           onToggleSmartPacing={toggleSmartPacing}
+          currentWordIndex={currentWordIndex}
+          totalWords={words.length}
+          effectiveWpm={effectiveWpm}
         />
         
         <div className="flex items-center justify-center gap-4 mb-4">

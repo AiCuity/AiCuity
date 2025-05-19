@@ -107,10 +107,6 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
           before={formattedWord.before}
           highlight={formattedWord.highlight}
           after={formattedWord.after}
-          currentWordIndex={currentWordIndex}
-          totalWords={words.length}
-          effectiveWpm={effectiveWpm}
-          smartPacingEnabled={smartPacingEnabled}
           isFullscreen={isFullscreen}
         />
         
@@ -129,6 +125,9 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
           disableNext={currentWordIndex >= words.length - 1}
           smartPacingEnabled={smartPacingEnabled}
           onToggleSmartPacing={toggleSmartPacing}
+          currentWordIndex={currentWordIndex}
+          totalWords={words.length}
+          effectiveWpm={effectiveWpm}
         />
         
         <SpeedControl 

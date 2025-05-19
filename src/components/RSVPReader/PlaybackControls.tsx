@@ -12,6 +12,9 @@ interface PlaybackControlsProps {
   disableNext: boolean;
   smartPacingEnabled: boolean;
   onToggleSmartPacing: () => void;
+  currentWordIndex: number;
+  totalWords: number;
+  effectiveWpm: number;
 }
 
 const PlaybackControls = ({
@@ -23,7 +26,10 @@ const PlaybackControls = ({
   disablePrevious,
   disableNext,
   smartPacingEnabled,
-  onToggleSmartPacing
+  onToggleSmartPacing,
+  currentWordIndex,
+  totalWords,
+  effectiveWpm
 }: PlaybackControlsProps) => {
   return (
     <div className="max-w-lg mx-auto">
@@ -72,6 +78,16 @@ const PlaybackControls = ({
         >
           <ChevronRight className="h-4 w-4" />
         </Button>
+      </div>
+      
+      {/* Word count and effective WPM */}
+      <div className="flex items-center justify-center gap-4 mb-4 text-sm text-gray-500 dark:text-gray-400">
+        <span>Word {currentWordIndex + 1} of {totalWords}</span>
+        {smartPacingEnabled && (
+          <span className="text-blue-600 dark:text-blue-400">
+            Effective: {effectiveWpm} WPM
+          </span>
+        )}
       </div>
       
       <div className="flex items-center justify-center mb-4">
