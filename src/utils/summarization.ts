@@ -144,7 +144,7 @@ const extractiveSummarize = (text: string, options: { maxLength: number, minLeng
   selectedSentences.sort((a, b) => a[1] - b[1]);
   
   // Join sentences back together
-  summary = selectedSentences.map(item => item[0]).join(' ');
+  summary = selectedSentences.map((item): string => item[0]).join(' ');
   
   return summary;
 };
