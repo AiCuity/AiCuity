@@ -106,11 +106,12 @@ const extractiveSummarize = (text: string, options: { maxLength: number, minLeng
     });
     
     // Sentences at the beginning or end might be more important
-    if (sentences.indexOf(sentence) < Math.ceil(sentences.length * 0.2)) {
+    const position = sentences.indexOf(sentence);
+    if (position < Math.ceil(sentences.length * 0.2)) {
       score += 2; // Beginning of text
     }
     
-    if (sentences.indexOf(sentence) > sentences.length - Math.ceil(sentences.length * 0.2)) {
+    if (position > sentences.length - Math.ceil(sentences.length * 0.2)) {
       score += 2; // End of text
     }
     
