@@ -1,15 +1,14 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "react-router-dom";
-import { GaugeCircle } from "lucide-react";
 import Hero from "@/components/Hero";
 import WebsiteForm from "@/components/WebsiteForm";
 import FileUploadForm from "@/components/FileUploadForm";
 import ReadingHistory from "@/components/ReadingHistory";
 import { useAuth } from "@/context/AuthContext";
+import CalibrationButton from "@/components/CalibrationButton";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<string>("website");
@@ -21,12 +20,7 @@ const Index = () => {
         <div className="flex justify-end mb-4">
           {user ? (
             <div className="flex items-center gap-4">
-              <Link to="/calibration">
-                <Button variant="outline" size="sm" className="flex items-center gap-2">
-                  <GaugeCircle className="h-4 w-4" />
-                  Calibration Test
-                </Button>
-              </Link>
+              <CalibrationButton />
               <Button variant="ghost" size="sm" onClick={() => signOut()}>
                 Sign Out
               </Button>
