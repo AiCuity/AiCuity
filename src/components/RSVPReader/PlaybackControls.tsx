@@ -66,7 +66,7 @@ const PlaybackControls = ({
   };
 
   // Button variant to ensure all buttons have the same style
-  const buttonVariant = "primary";
+  const buttonVariant = "default";
 
   return (
     <div className="max-w-lg mx-auto">

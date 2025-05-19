@@ -19,7 +19,7 @@ const SpeedControl = ({ baseWpm, onWpmChange, isFullscreen, onToggleFullscreen }
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium">Base Speed: {baseWpm} WPM</span>
         <Button 
-          variant="primary" 
+          variant="default" 
           size="icon"
           onClick={onToggleFullscreen}
           type="button"
