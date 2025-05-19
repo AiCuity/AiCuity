@@ -74,12 +74,15 @@ export const summarizeWithHuggingFace = async (
     for (const chunk of chunks) {
       if (chunk.trim().length === 0) continue;
       
-      // Use the correct configuration format for the summarizer
-      const result = await summarizer(chunk, {
-        max_new_tokens: options.maxLength || 130,
-        min_new_tokens: options.minLength || 30,
+      // Create a config object that matches what the pipeline expects
+      // Using any type to bypass the strict typing requirements for now
+      const config: any = {
+        max_length: options.maxLength || 130,
+        min_length: options.minLength || 30,
         do_sample: false
-      });
+      };
+      
+      const result = await summarizer(chunk, config);
       
       if (Array.isArray(result) && result.length > 0 && typeof result[0] === 'object') {
         if ('summary_text' in result[0]) {
@@ -101,11 +104,14 @@ export const summarizeWithHuggingFace = async (
     
     // If we have multiple chunks, summarize the combined summary again for coherence
     if (summaries.length > 1 && combinedSummary.length > 1000) {
-      const finalResult = await summarizer(combinedSummary, {
-        max_new_tokens: options.maxLength || 150,
-        min_new_tokens: options.minLength || 50,
+      // Create a config object for final summarization
+      const finalConfig: any = {
+        max_length: options.maxLength || 150,
+        min_length: options.minLength || 50,
         do_sample: false
-      });
+      };
+      
+      const finalResult = await summarizer(combinedSummary, finalConfig);
       
       if (Array.isArray(finalResult) && finalResult.length > 0 && typeof finalResult[0] === 'object') {
         if ('summary_text' in finalResult[0]) {
