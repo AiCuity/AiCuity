@@ -13,7 +13,7 @@ export async function extractContentFromUrl(url: string): Promise<ExtractedConte
     
     // Set a timeout for the fetch operation
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000);
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
     
     const response = await fetch(`${apiUrl}/api/scrape`, {
       method: 'POST',
@@ -37,6 +37,11 @@ export async function extractContentFromUrl(url: string): Promise<ExtractedConte
     const data = await response.json();
     console.log('Extracted data:', data);
     
+    if (!data.text || data.text.trim() === '') {
+      console.error('Empty content received from API');
+      throw new Error('Empty content received from API');
+    }
+    
     return {
       content: data.text,
       title: data.title || 'Website content',
@@ -45,7 +50,7 @@ export async function extractContentFromUrl(url: string): Promise<ExtractedConte
   } catch (error) {
     console.error('API Error:', error);
     
-    // Try to fetch actual content directly, bypassing JSDOM/Readability in browser
+    // Try to fetch actual content directly for certain sources like Wikipedia
     try {
       console.log("Attempting to fetch content directly from source...");
       const actualContent = await fetchActualContent(url);

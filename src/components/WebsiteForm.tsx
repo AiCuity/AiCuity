@@ -9,17 +9,20 @@ import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { extractContentFromUrl } from "../utils/contentExtractor";
+import ContentPreview from "@/components/Reader/ContentPreview";
 
 const WebsiteForm = () => {
   const [url, setUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
+  const [previewContent, setPreviewContent] = useState<string>("");
   const { toast } = useToast();
   const navigate = useNavigate();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setApiError(null);
+    setPreviewContent("");
     
     if (!url) {
       toast({
@@ -43,9 +46,12 @@ const WebsiteForm = () => {
       
       const extractedContent = await extractContentFromUrl(processedUrl);
       
-      if (!extractedContent || !extractedContent.content) {
+      if (!extractedContent || !extractedContent.content || extractedContent.content.trim() === '') {
         throw new Error("Failed to extract any content from the website.");
       }
+      
+      // Show preview of extracted content
+      setPreviewContent(extractedContent.content);
       
       // Store the extracted content in sessionStorage
       sessionStorage.setItem('readerContent', extractedContent.content);
@@ -58,7 +64,6 @@ const WebsiteForm = () => {
       });
       
       setIsLoading(false);
-      navigate(`/reader/website-${Date.now()}`);
     } catch (error) {
       console.error('Error:', error);
       setIsLoading(false);
@@ -69,6 +74,12 @@ const WebsiteForm = () => {
         description: "Failed to extract content from the website. Using fallback mode.",
         variant: "destructive",
       });
+    }
+  };
+
+  const handleReadContent = () => {
+    if (previewContent) {
+      navigate(`/reader/website-${Date.now()}`);
     }
   };
 
@@ -121,6 +132,18 @@ const WebsiteForm = () => {
           )}
         </Button>
       </div>
+      
+      {previewContent && (
+        <div className="mt-6 space-y-4">
+          <ContentPreview content={previewContent} />
+          
+          <div className="flex justify-end">
+            <Button onClick={handleReadContent}>
+              Read Full Content
+            </Button>
+          </div>
+        </div>
+      )}
       
       <Card className="p-4 bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
         <h3 className="text-sm font-medium mb-2">Popular Examples</h3>

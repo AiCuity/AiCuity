@@ -1,4 +1,3 @@
-
 const express = require('express');
 const multer = require('multer');
 const cors = require('cors');
@@ -140,30 +139,60 @@ const fetchHtml = (url) => {
   });
 };
 
-// Extract main content from HTML
-const extractMainContent = (html) => {
+// Enhanced extract main content from HTML using Cheerio
+const extractMainContent = (html, url) => {
   const $ = cheerio.load(html);
   
+  // Extract the page title
+  const pageTitle = $('title').text().trim() || new URL(url).hostname;
+  
   // Remove script, style, nav, header, footer, and other non-content elements
-  $('script, style, nav, header, footer, aside, [role=banner], [role=navigation], iframe, .share, .comments').remove();
+  $('script, style, nav, header, footer, aside, [role=banner], [role=navigation], iframe, .share, .comments, .ad, .advertisement, .sidebar, .menu').remove();
   
   // Find the main content element based on common patterns
-  let mainContent = $('main').text() || 
-                    $('article').text() || 
-                    $('.content, .post-content, .entry-content, .article-content').text() || 
-                    $('#content, #main, #article').text();
+  const possibleContentSelectors = [
+    'main', 
+    'article', 
+    'div[role="main"]',
+    '.content', 
+    '.post-content', 
+    '.entry-content', 
+    '.article-content', 
+    '.article-body',
+    '#content', 
+    '#main', 
+    '#article'
+  ];
   
-  // Fallback: if we couldn't find a specific content element, use the body text
-  if (!mainContent.trim()) {
-    const paragraphs = $('p').map((_, el) => $(el).text()).get().join('\n\n');
-    if (paragraphs.trim()) {
-      mainContent = paragraphs;
+  let mainContent = '';
+  for (const selector of possibleContentSelectors) {
+    const selectedContent = $(selector);
+    if (selectedContent.length > 0) {
+      // Extract all text from selected element
+      const text = selectedContent.text().trim();
+      if (text.length > mainContent.length) {
+        mainContent = text;
+      }
+    }
+  }
+  
+  // If no content found using specific selectors, collect all paragraphs
+  if (!mainContent) {
+    const paragraphs = $('p').map((_, el) => $(el).text().trim()).get();
+    if (paragraphs.length > 0) {
+      mainContent = paragraphs.join('\n\n');
     } else {
+      // Last resort: use body text
       mainContent = $('body').text();
     }
   }
   
-  return cleanText(mainContent);
+  // Clean the text
+  return {
+    text: cleanText(mainContent),
+    title: pageTitle,
+    sourceUrl: url
+  };
 };
 
 // File upload endpoint
@@ -225,20 +254,29 @@ app.post('/api/scrape', async (req, res) => {
       return res.status(400).json({ error: 'Invalid URL format' });
     }
     
-    // Fetch and extract content
-    const html = await fetchHtml(url);
-    const extractedText = extractMainContent(html);
+    // Set timeout for request
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
     
-    // Get the website title from the URL for display
-    const urlObj = new URL(url);
-    const domain = urlObj.hostname.replace('www.', '');
-    
-    res.json({
-      success: true,
-      text: extractedText,
-      title: domain,
-      sourceUrl: url
-    });
+    try {
+      // Fetch and extract content
+      console.log(`Fetching content from URL: ${url}`);
+      const html = await fetchHtml(url);
+      clearTimeout(timeoutId);
+      
+      const extractedData = extractMainContent(html, url);
+      
+      res.json({
+        success: true,
+        text: extractedData.text,
+        title: extractedData.title,
+        sourceUrl: url
+      });
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      console.error(`Error fetching URL: ${url}`, fetchError);
+      res.status(500).json({ error: 'Failed to fetch URL', details: fetchError.message });
+    }
   } catch (error) {
     console.error(`Error scraping website: ${error}`);
     res.status(500).json({ error: 'Failed to scrape website', details: error.message });
