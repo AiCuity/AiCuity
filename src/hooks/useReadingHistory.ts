@@ -10,6 +10,7 @@ export type ReadingHistoryEntry = {
   source: string | null;
   source_type: string;
   source_input: string;
+  parsed_text?: string | null;
   wpm: number;
   current_position: number | null;
   calibrated: boolean | null;

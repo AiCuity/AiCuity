@@ -118,16 +118,16 @@ const ReadingHistory = () => {
               )}
               
               <div className="mt-3">
-                {item.current_position && item.current_position > 0 && (
+                {item.current_position && item.current_position > 0 && item.parsed_text && (
                   <div className="flex items-center gap-2">
                     <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
                       <div 
                         className="h-full bg-blue-500 rounded-full"
-                        style={{ width: `${(item.current_position / (item.parsed_text?.length || 1)) * 100}%` }}
+                        style={{ width: `${(item.current_position / (item.parsed_text.length || 1)) * 100}%` }}
                       />
                     </div>
                     <span className="text-xs font-medium text-gray-500 dark:text-gray-400 min-w-[45px]">
-                      {Math.round((item.current_position / (item.parsed_text?.length || 1)) * 100)}%
+                      {Math.round((item.current_position / (item.parsed_text.length || 1)) * 100)}%
                     </span>
                   </div>
                 )}
