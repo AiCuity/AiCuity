@@ -1,0 +1,17 @@
+
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"  # React app
+      - "5000:5000"  # Express API
+    volumes:
+      - ./src:/app/client/src
+      - ./src/server:/app/server
+    environment:
+      - NODE_ENV=development
+      - VITE_API_URL=http://localhost:5000

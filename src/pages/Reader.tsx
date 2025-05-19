@@ -1,66 +1,55 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
 import RSVPReader from "@/components/RSVPReader";
+import { useToast } from "@/components/ui/use-toast";
 import { Loader2 } from "lucide-react";
 
 const Reader = () => {
-  const { contentId } = useParams<{ contentId: string }>();
-  const [content, setContent] = useState<{ title: string; text: string } | null>(null);
+  const [content, setContent] = useState<string>("");
+  const [title, setTitle] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState("");
+  const { contentId } = useParams();
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchContent = async () => {
-      if (!contentId) {
-        setError("Invalid content ID");
-        setIsLoading(false);
-        return;
-      }
-
+      setIsLoading(true);
+      
       try {
-        // In a full implementation, we would fetch the content from the backend
-        // For now, we'll use mock data
-        setTimeout(() => {
-          const mockContent = {
-            title: contentId.startsWith("website") 
-              ? "The Science Behind Speed Reading" 
-              : "How to Read Faster and Understand More",
-            text: `Speed reading is a collection of reading methods that attempt to increase rates of reading without greatly reducing 
-            comprehension, retention, or enjoyment. Methods include chunking and minimizing subvocalization.
-            
-            Speed reading courses and books often teach such strategies as: Grouping words and using peripheral vision, 
-            Reducing subvocalization, Reducing cognitive resource allocation to non-essential tasks, Skimming text in 
-            a highly strategic, disciplined way, Using a finger or pointer to trace along the line of text as a guide.
-            
-            Scientific research shows that skimming or speed reading results in decreased comprehension: "the available scientific 
-            evidence suggests that speed reading courses are effective at increasing reading speeds, but comprehension typically declines.
-            
-            The typical reading rate for most adults is between 200 and 250 words per minute. Speed readers claim to hit around 
-            1,000 words per minute. World champion speed readers can supposedly read at 4,000 words per minute.
-            
-            The RSVP or Rapid Serial Visual Presentation method presents words sequentially in the same location, typically 
-            in the center of a screen. It eliminates the need for eye movements and their resulting delays, and can reach very high 
-            speeds if the person is able to comprehend the words that are flashed. A 2016 study showed immediate 33% improvement 
-            in reading speed when using RSVP versus traditional reading, but with a corresponding mild decrease in comprehension.
-            
-            The RSVP technique is used by the Spritz speed-reading software, which highlights the "optimal recognition point" 
-            in each word, which is often not the center of the word.`.repeat(5), // Repeating for longer content
-          };
+        if (contentId?.startsWith('file-')) {
+          // For file uploads, get content from sessionStorage
+          const storedContent = sessionStorage.getItem('readerContent');
+          const storedTitle = sessionStorage.getItem('contentTitle') || 'Uploaded document';
           
-          setContent(mockContent);
-          setIsLoading(false);
-        }, 1500);
-      } catch (err) {
-        setError("Failed to load content");
-        setIsLoading(false);
+          if (storedContent) {
+            setContent(storedContent);
+            setTitle(storedTitle);
+          } else {
+            toast({
+              title: "Content not found",
+              description: "The requested content could not be loaded.",
+              variant: "destructive",
+            });
+          }
+        } else {
+          // For website content, you'd fetch from your API or storage
+          // This is a placeholder for future implementation
+          toast({
+            title: "Website content unavailable",
+            description: "Website content extraction is not implemented yet.",
+            variant: "destructive",
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching content:", error);
         toast({
-          title: "Error",
-          description: "Failed to load the reading content",
+          title: "Error loading content",
+          description: "Failed to load the requested content.",
           variant: "destructive",
         });
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -69,30 +58,30 @@ const Reader = () => {
 
   if (isLoading) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center">
+      <div className="min-h-screen flex flex-col items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-gray-400" />
-        <p className="mt-4 text-gray-500">Loading content...</p>
+        <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">Loading content...</p>
       </div>
     );
   }
 
-  if (error || !content) {
+  if (!content) {
     return (
-      <div className="h-screen flex flex-col items-center justify-center">
-        <p className="text-xl text-red-500">{error || "Content not found"}</p>
-        <a href="/" className="mt-4 text-blue-500 hover:underline">
-          Go back to home
-        </a>
+      <div className="min-h-screen flex flex-col items-center justify-center">
+        <div className="text-center p-8 max-w-md">
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">Content Not Found</h2>
+          <p className="text-gray-600 dark:text-gray-400">
+            The requested content could not be loaded. Please try uploading your file again.
+          </p>
+        </div>
       </div>
     );
   }
 
   return (
-    <RSVPReader 
-      text={content.text} 
-      contentId={contentId || ""} 
-      title={content.title}
-    />
+    <div className="min-h-screen bg-white dark:bg-gray-900">
+      <RSVPReader text={content} contentId={contentId || ""} title={title} />
+    </div>
   );
 };
 

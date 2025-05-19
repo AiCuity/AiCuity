@@ -6,10 +6,13 @@ import { useToast } from "@/components/ui/use-toast";
 import { Upload, File, Loader2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
 const FileUploadForm = () => {
   const [file, setFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -69,22 +72,67 @@ const FileUploadForm = () => {
     }
     
     setIsLoading(true);
+    setUploadProgress(0);
     
     try {
-      // In a full implementation, we would upload the file to the backend
-      // For now, we'll navigate to the reader page with a mock file ID
-      setTimeout(() => {
-        setIsLoading(false);
-        navigate(`/reader/file-${Date.now()}`);
-      }, 1500);
-    } catch (error) {
-      setIsLoading(false);
-      toast({
-        title: "Upload failed",
-        description: "Failed to upload and process the file",
-        variant: "destructive",
+      const formData = new FormData();
+      formData.append('file', file);
+      
+      const xhr = new XMLHttpRequest();
+      
+      xhr.upload.addEventListener('progress', (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress(percentComplete);
+        }
       });
+      
+      xhr.onload = function() {
+        if (xhr.status === 200) {
+          const response = JSON.parse(xhr.responseText);
+          
+          // Store the extracted text in sessionStorage to use in the Reader
+          sessionStorage.setItem('readerContent', response.text);
+          sessionStorage.setItem('contentTitle', response.originalFilename);
+          
+          toast({
+            title: "Upload successful",
+            description: "Your file has been processed successfully",
+          });
+          
+          // Navigate to the reader page with a unique content ID
+          navigate(`/reader/file-${Date.now()}`);
+        } else {
+          handleUploadError(new Error(`Upload failed with status ${xhr.status}`));
+        }
+      };
+      
+      xhr.onerror = function() {
+        handleUploadError(new Error('Network error during upload'));
+      };
+      
+      xhr.onabort = function() {
+        handleUploadError(new Error('Upload aborted'));
+      };
+      
+      xhr.open('POST', `${API_URL}/api/upload`, true);
+      xhr.send(formData);
+    } catch (error) {
+      handleUploadError(error as Error);
     }
+  };
+  
+  const handleUploadError = (error: Error) => {
+    setIsLoading(false);
+    setUploadProgress(0);
+    
+    console.error("Upload error:", error);
+    
+    toast({
+      title: "Upload failed",
+      description: "Failed to upload and process the file. Please try again.",
+      variant: "destructive",
+    });
   };
 
   return (
@@ -140,12 +188,24 @@ const FileUploadForm = () => {
         )}
       </div>
       
+      {isLoading && uploadProgress > 0 && uploadProgress < 100 && (
+        <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-4">
+          <div 
+            className="bg-blue-600 h-2.5 rounded-full transition-all duration-300" 
+            style={{ width: `${uploadProgress}%` }}
+          ></div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-center">
+            {uploadProgress}% Uploaded
+          </p>
+        </div>
+      )}
+      
       <div className="flex justify-end pt-2">
         <Button type="submit" disabled={!file || isLoading}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Processing...
+              {uploadProgress >= 100 ? 'Processing...' : 'Uploading...'}
             </>
           ) : (
             "Upload & Process"
