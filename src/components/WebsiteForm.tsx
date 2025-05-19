@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Loader2, Globe, AlertTriangle } from "lucide-react";
+import { Loader2, Globe, AlertTriangle, ExternalLink } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
@@ -16,6 +16,7 @@ const WebsiteForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [apiError, setApiError] = useState<string | null>(null);
   const [previewContent, setPreviewContent] = useState<string>("");
+  const [isSimulatedContent, setIsSimulatedContent] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -23,6 +24,7 @@ const WebsiteForm = () => {
     e.preventDefault();
     setApiError(null);
     setPreviewContent("");
+    setIsSimulatedContent(false);
     
     if (!url) {
       toast({
@@ -50,6 +52,11 @@ const WebsiteForm = () => {
         throw new Error("Failed to extract any content from the website.");
       }
       
+      // Check if this is simulated content
+      const contentIsSimulated = extractedContent.content.includes('simulated content') || 
+                                extractedContent.content.includes('⚠️ NOTE:');
+      setIsSimulatedContent(contentIsSimulated);
+      
       // Show complete preview of extracted content
       setPreviewContent(extractedContent.content);
       
@@ -58,9 +65,14 @@ const WebsiteForm = () => {
       sessionStorage.setItem('contentTitle', extractedContent.title || 'Website content');
       sessionStorage.setItem('contentSource', extractedContent.sourceUrl || processedUrl);
       
+      const toastMessage = contentIsSimulated 
+        ? "Using simulated content because the extraction API couldn't access the website."
+        : `Successfully extracted ${extractedContent.content.length} characters of content.`;
+      
       toast({
-        title: "Content extracted",
-        description: `Successfully extracted ${extractedContent.content.length} characters of content.`,
+        title: contentIsSimulated ? "Using simulated content" : "Content extracted",
+        description: toastMessage,
+        variant: contentIsSimulated ? "default" : "default",
       });
       
       setIsLoading(false);
@@ -83,6 +95,10 @@ const WebsiteForm = () => {
     }
   };
 
+  const openInNewTab = (url: string) => {
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {apiError && (
@@ -90,6 +106,17 @@ const WebsiteForm = () => {
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Connection Issue</AlertTitle>
           <AlertDescription>{apiError}</AlertDescription>
+        </Alert>
+      )}
+      
+      {isSimulatedContent && (
+        <Alert variant="warning" className="mb-4 bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-200">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>Using simulated content</AlertTitle>
+          <AlertDescription>
+            The content extraction API couldn't access the actual website content.
+            This might be due to CORS restrictions or network issues.
+          </AlertDescription>
         </Alert>
       )}
       
@@ -152,14 +179,23 @@ const WebsiteForm = () => {
             "https://en.wikipedia.org/wiki/Ninja",
             "https://www.bbc.com/news/world",
             "https://medium.com/topic/technology"].map((example) => (
-            <button
-              key={example}
-              type="button"
-              className="text-sm text-blue-600 dark:text-blue-400 hover:underline block"
-              onClick={() => setUrl(example)}
-            >
-              {example}
-            </button>
+            <div key={example} className="flex justify-between items-center">
+              <button
+                type="button"
+                className="text-sm text-blue-600 dark:text-blue-400 hover:underline"
+                onClick={() => setUrl(example)}
+              >
+                {example}
+              </button>
+              <button 
+                type="button"
+                onClick={() => openInNewTab(example)}
+                className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                title="Open in new tab"
+              >
+                <ExternalLink className="h-3 w-3" />
+              </button>
+            </div>
           ))}
         </div>
       </Card>

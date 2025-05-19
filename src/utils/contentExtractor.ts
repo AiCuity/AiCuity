@@ -1,3 +1,4 @@
+
 import { fetchActualContent } from "./contentSource";
 import { generateFallbackContent } from "./fallbackContent";
 import { ExtractedContent } from "./types";
@@ -67,8 +68,13 @@ export async function extractContentFromUrl(url: string): Promise<ExtractedConte
       console.error("Error fetching direct content:", directError);
     }
     
-    // If all else fails, use fallback content
-    return generateFallbackContent(url);
+    // If direct fetching fails, inform the user that we're using fallback content
+    const fallbackContent = await generateFallbackContent(url);
+    
+    // Add a notice to the content that this is simulated
+    fallbackContent.content = "⚠️ NOTE: This is simulated content. The content extraction API is currently unavailable or blocked by CORS policies. ⚠️\n\n" + fallbackContent.content;
+    
+    return fallbackContent;
   }
 }
 

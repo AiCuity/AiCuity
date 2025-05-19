@@ -1,3 +1,4 @@
+
 import React from "react";
 import ReactMarkdown from "react-markdown";
 
@@ -59,9 +60,26 @@ const ContentPreview = ({ content }: ContentPreviewProps) => {
     // Fix list items to ensure they render properly
     .replace(/\n- /g, '\n\n- ');
 
+  // Check if this is simulated content
+  const isSimulatedContent = cleanContent.includes('simulated content') || 
+                            cleanContent.includes('⚠️ NOTE:') ||
+                            cleanContent.includes('Connection Issue');
+
   return (
     <div className="bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-800 p-6">
       <h2 className="text-xl font-semibold mb-4">Content Preview</h2>
+      
+      {isSimulatedContent && (
+        <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 text-amber-800 dark:text-amber-200">
+          <p className="text-sm font-medium">
+            ⚠️ This is simulated content. The actual website content could not be extracted.
+          </p>
+          <p className="text-xs mt-1">
+            This may be due to CORS restrictions, network issues, or the content extraction API being unavailable.
+          </p>
+        </div>
+      )}
+      
       <div className="max-h-[calc(100vh-400px)] overflow-y-auto p-4 bg-gray-50 dark:bg-gray-800 rounded-md">
         {(cleanContent.includes('##') || cleanContent.includes('#')) ? (
           <div className="prose prose-sm dark:prose-invert max-w-none">
