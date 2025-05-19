@@ -50,7 +50,7 @@ const WebsiteForm = () => {
         throw new Error("Failed to extract any content from the website.");
       }
       
-      // Show preview of extracted content
+      // Show complete preview of extracted content
       setPreviewContent(extractedContent.content);
       
       // Store the extracted content in sessionStorage

@@ -28,8 +28,8 @@ export async function fetchActualContent(url: string): Promise<ExtractedContent 
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlContent, 'text/html');
       
-      // Extract all paragraphs and headings
-      const contentElements = Array.from(doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6'));
+      // Extract all paragraphs, headings, and lists
+      const contentElements = Array.from(doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6, ul, ol, li'));
       
       // Convert to a readable text format, preserving headers with markdown-style formatting
       let extractedContent = '';
@@ -45,6 +45,12 @@ export async function fetchActualContent(url: string): Promise<ExtractedContent 
           const headerLevel = parseInt(tagName.charAt(1));
           const prefix = '#'.repeat(headerLevel);
           extractedContent += `\n\n${prefix} ${text}\n\n`;
+        } else if (tagName === 'li') {
+          // List items
+          extractedContent += `- ${text}\n`;
+        } else if (tagName === 'ul' || tagName === 'ol') {
+          // Skip direct list containers as we process the list items individually
+          return;
         } else {
           // Regular paragraph
           extractedContent += `${text}\n\n`;

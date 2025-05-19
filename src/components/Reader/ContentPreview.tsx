@@ -33,13 +33,12 @@ const ContentPreview = ({ content }: ContentPreviewProps) => {
         {(cleanContent.includes('##') || cleanContent.includes('#')) ? (
           <div className="prose prose-sm dark:prose-invert max-w-none">
             <ReactMarkdown>
-              {cleanContent.length > 5000 ? `${cleanContent.substring(0, 5000)}...\n\n*[Content truncated for preview, full content available when reading]*` : cleanContent}
+              {formattedContent}
             </ReactMarkdown>
           </div>
         ) : (
           <div className="whitespace-pre-wrap text-sm">
-            {cleanContent.substring(0, 5000)}
-            {cleanContent.length > 5000 && '...\n\n[Content truncated for preview, full content available when reading]'}
+            {cleanContent}
           </div>
         )}
       </div>
