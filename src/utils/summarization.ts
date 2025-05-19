@@ -269,7 +269,7 @@ const splitTextIntoChunks = (text: string, maxChunkLength: number = 1000): strin
   
   if (currentChunk) chunks.push(currentChunk.trim());
   return chunks;
-}
+};
 
 // Main summarization function that selects the appropriate method
 export const summarizeText = async (
@@ -287,4 +287,4 @@ export const summarizeText = async (
     console.error('Summarization error:', error);
     throw error;
   }
-}
+};
