@@ -89,6 +89,7 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
           onPlayPause={togglePlay}
           onPrevious={goToPreviousWord}
           onNext={goToNextWord}
+          onRestart={restartReading}
           disablePrevious={currentWordIndex <= 0}
           disableNext={currentWordIndex >= words.length - 1}
           smartPacingEnabled={smartPacingEnabled}
