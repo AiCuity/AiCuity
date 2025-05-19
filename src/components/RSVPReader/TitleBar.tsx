@@ -23,7 +23,7 @@ const TitleBar = ({ title, wordCount, isFullscreen }: TitleBarProps) => {
         <ArrowLeft className="h-4 w-4 mr-2" />
         Back
       </Button>
-      <h2 className="text-lg font-medium truncate max-w-[70%]">{title}</h2>
+      <h2 className="text-lg font-medium truncate max-w-[50%]">{title}</h2>
       <div className="flex items-center gap-3">
         <ThemeToggle />
         <div className="flex items-center gap-2">
