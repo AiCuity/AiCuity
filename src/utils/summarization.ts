@@ -86,7 +86,7 @@ const extractiveSummarize = (text: string, options: { maxLength: number, minLeng
   }
   
   // Score sentences based on simple heuristics
-  const sentenceScores: [string, number][] = sentences.map(sentence => {
+  const sentenceScores: Array<[string, number]> = sentences.map(sentence => {
     let score = 0;
     
     // Longer sentences (but not too long) might be more informative
@@ -115,7 +115,7 @@ const extractiveSummarize = (text: string, options: { maxLength: number, minLeng
       score += 2; // End of text
     }
     
-    return [sentence, score] as [string, number];
+    return [sentence, score];
   });
   
   // Sort sentences by score
@@ -126,7 +126,7 @@ const extractiveSummarize = (text: string, options: { maxLength: number, minLeng
   let currentLength = 0;
   
   // Original positions of sentences for proper ordering
-  const selectedSentences: [string, number][] = [];
+  const selectedSentences: Array<[string, number]> = [];
   
   for (const [sentence, _score] of sentenceScores) {
     if (currentLength + sentence.length <= options.maxLength || currentLength < options.minLength) {
