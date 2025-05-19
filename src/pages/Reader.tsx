@@ -20,7 +20,8 @@ const Reader = () => {
     isSummarizing, 
     summarizationProgress, 
     summarizationError, 
-    handleSummarize 
+    handleSummarize,
+    setSummary 
   } = useSummarization(content);
   
   const [showReader, setShowReader] = useState(false);
@@ -40,6 +41,12 @@ const Reader = () => {
   const handleStartReading = (useFull: boolean) => {
     setUseFullText(useFull);
     setShowReader(true);
+  };
+
+  const handleRetrySummarization = () => {
+    // Clear previous summary and regenerate
+    setSummary("");
+    handleSummarize(apiKey, useOpenAI);
   };
 
   if (isLoading) {
@@ -85,7 +92,7 @@ const Reader = () => {
               isLoading={isSummarizing}
               progress={summarizationProgress}
               onStartReading={handleStartReading}
-              onRetry={() => handleSummarize(apiKey, useOpenAI)}
+              onRetry={handleRetrySummarization}
             />
           ) : (
             <SummarizePrompt

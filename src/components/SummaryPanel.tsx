@@ -5,7 +5,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Separator } from "@/components/ui/separator";
 import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { FileText, ChevronDown, Text } from "lucide-react";
+import { FileText, ChevronDown, Text, RefreshCw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface SummaryPanelProps {
@@ -32,6 +32,13 @@ const SummaryPanel = ({
   const [isCollapsed, setIsCollapsed] = useState(false);
   const navigate = useNavigate();
   
+  const handleRetry = () => {
+    // Call parent's retry function
+    if (onRetry && typeof onRetry === 'function') {
+      onRetry();
+    }
+  };
+  
   return (
     <div className="bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-800 p-4 mb-6">
       <div className="flex items-center justify-between mb-4">
@@ -54,7 +61,7 @@ const SummaryPanel = ({
               </p>
               <Progress value={progress} className="w-full" />
               <p className="text-xs text-gray-500 dark:text-gray-400 text-right">
-                {progress}% complete
+                {Math.round(progress)}% complete
               </p>
             </div>
           ) : summary ? (
@@ -62,7 +69,7 @@ const SummaryPanel = ({
               <Textarea 
                 value={summary} 
                 readOnly 
-                className="w-full h-48 mb-4 resize-none"
+                className="w-full h-64 mb-4 resize-none"
               />
               
               <div className="flex flex-wrap justify-between items-center gap-2 mt-4">
@@ -83,7 +90,13 @@ const SummaryPanel = ({
                   </Button>
                 </div>
                 
-                <Button variant="ghost" size="sm" onClick={onRetry}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleRetry}
+                  disabled={isLoading}
+                >
+                  <RefreshCw className="h-4 w-4 mr-1" />
                   Regenerate
                 </Button>
               </div>
@@ -93,8 +106,8 @@ const SummaryPanel = ({
               <p className="text-gray-500 dark:text-gray-400">
                 Summary generation failed. Please try again.
               </p>
-              <Button onClick={onRetry} className="mt-4">
-                <Text className="h-4 w-4 mr-2" />
+              <Button onClick={handleRetry} className="mt-4">
+                <RefreshCw className="h-4 w-4 mr-2" />
                 Retry Summarization
               </Button>
             </div>

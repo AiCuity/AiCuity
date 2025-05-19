@@ -1,6 +1,6 @@
 
 import { useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { summarizeText, SummarizationOptions } from "@/utils/summarization";
 
 export const useSummarization = (content: string) => {
@@ -11,7 +11,14 @@ export const useSummarization = (content: string) => {
   const { toast } = useToast();
 
   const handleSummarize = async (apiKey: string, useOpenAI: boolean) => {
-    if (!content) return;
+    if (!content) {
+      toast({
+        title: "Error",
+        description: "No content available to summarize.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     setIsSummarizing(true);
     setSummarizationError(null);
@@ -27,8 +34,8 @@ export const useSummarization = (content: string) => {
     
     try {
       const options: SummarizationOptions = {
-        maxLength: 500,
-        minLength: 100,
+        maxLength: 1200,  // Increased for better quality summaries
+        minLength: 400,   // Increased for better quality summaries
         apiKey,
         useOpenAI,
       };
