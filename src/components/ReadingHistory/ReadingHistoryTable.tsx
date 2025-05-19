@@ -25,6 +25,17 @@ const ReadingHistoryTable = ({ history, onDeleteClick, calculateProgress }: Read
   const navigate = useNavigate();
 
   const handleContinueReading = (item: ReadingHistoryEntry) => {
+    console.log("Continuing reading for item:", item);
+    
+    // First, make sure we set the content in session storage so the reader can find it
+    if (item.parsed_text) {
+      sessionStorage.setItem('readerContent', item.parsed_text);
+      sessionStorage.setItem('contentTitle', item.title);
+      if (item.source) {
+        sessionStorage.setItem('contentSource', item.source);
+      }
+    }
+    
     navigate(`/reader/${item.content_id}`);
   };
 

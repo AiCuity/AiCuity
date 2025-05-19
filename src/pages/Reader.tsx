@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import ContentHeader from "@/components/Reader/ContentHeader";
@@ -6,7 +7,6 @@ import NotFoundState from "@/components/Reader/NotFoundState";
 import ReaderAlerts from "@/components/Reader/ReaderAlerts";
 import ContentContainer from "@/components/Reader/ContentContainer";
 import RSVPReaderContainer from "@/components/Reader/RSVPReaderContainer";
-import ThemeToggle from "@/components/ui/theme-toggle";
 import { useContentLoader } from "@/hooks/useContentLoader";
 import { useSummarization } from "@/hooks/useSummarization";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
@@ -26,7 +26,7 @@ const Reader = () => {
   } = useSummarization(content);
   const { profile } = useProfile();
   const { user } = useAuth();
-  const { saveHistoryEntry, history } = useReadingHistory();
+  const { saveHistoryEntry, history, fetchHistory } = useReadingHistory();
   
   const [showReader, setShowReader] = useState(false);
   const [useFullText, setUseFullText] = useState(true);
@@ -44,9 +44,14 @@ const Reader = () => {
     setUseOpenAI(savedUseOpenAI);
   }, []);
 
-  // Check for existing reading position, but only if user is authenticated
+  // Refresh history when component loads
   useEffect(() => {
-    if (contentId && history.length > 0 && user) {
+    fetchHistory();
+  }, []);
+
+  // Check for existing reading position, but only if content is loaded
+  useEffect(() => {
+    if (contentId && history.length > 0) {
       const existingEntry = history.find(entry => 
         entry.content_id === contentId && 
         entry.current_position !== null && 
@@ -54,10 +59,11 @@ const Reader = () => {
       );
       
       if (existingEntry && existingEntry.current_position) {
+        console.log("Found existing position:", existingEntry.current_position);
         setInitialPosition(existingEntry.current_position);
       }
     }
-  }, [contentId, history, user]);
+  }, [contentId, history, content]);
 
   // Save reading session to history
   useEffect(() => {

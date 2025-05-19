@@ -1,6 +1,8 @@
 
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
+import { generateWikipediaArticle } from "@/utils/wikiContent";
+import { useReadingHistory } from "@/hooks/useReadingHistory";
 
 export const useContentLoader = (contentId?: string) => {
   const [content, setContent] = useState<string>("");
@@ -9,14 +11,28 @@ export const useContentLoader = (contentId?: string) => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSimulated, setIsSimulated] = useState(false);
   const { toast } = useToast();
+  const { history } = useReadingHistory();
 
   useEffect(() => {
     const fetchContent = async () => {
       setIsLoading(true);
       
       try {
+        // First check if we have this content in history with parsed_text
+        const historyEntry = contentId ? history.find(entry => entry.content_id === contentId && entry.parsed_text) : null;
+        
+        if (historyEntry?.parsed_text) {
+          console.log("Loading content from history:", contentId);
+          setContent(historyEntry.parsed_text);
+          setTitle(historyEntry.title);
+          setSource(historyEntry.source || "");
+          setIsLoading(false);
+          return;
+        }
+        
+        // If not in history, check other sources
         if (contentId?.startsWith('file-')) {
-          // For file uploads, get content from sessionStorage (now using modularized server endpoint)
+          // For file uploads, get content from sessionStorage
           const storedContent = sessionStorage.getItem('readerContent');
           const storedTitle = sessionStorage.getItem('contentTitle') || 'Uploaded document';
           
@@ -65,6 +81,13 @@ export const useContentLoader = (contentId?: string) => {
               variant: "destructive",
             });
           }
+        } else if (contentId?.includes('wiki-')) {
+          // For Wikipedia content
+          const title = contentId.replace('wiki-', '');
+          const wikiContent = generateWikipediaArticle(title);
+          setContent(wikiContent);
+          setTitle(title);
+          setSource(`Wikipedia: ${title}`);
         } else {
           // For other content types
           toast({
@@ -86,7 +109,7 @@ export const useContentLoader = (contentId?: string) => {
     };
 
     fetchContent();
-  }, [contentId, toast]);
+  }, [contentId, toast, history]);
 
   return { content, title, source, isLoading, isSimulated };
 };
