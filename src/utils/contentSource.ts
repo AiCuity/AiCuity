@@ -1,5 +1,5 @@
 
-import { ExtractedContent } from "./contentExtractor";
+import { ExtractedContent } from "./types";
 
 /**
  * Tries to fetch actual content from sources that allow direct access
@@ -10,20 +10,55 @@ export async function fetchActualContent(url: string): Promise<ExtractedContent 
     if (url.includes('wikipedia.org/wiki/')) {
       // Extract the article title from the URL
       const articleName = url.split('/wiki/')[1].split('#')[0].split('?')[0];
-      const apiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${articleName}`;
       
-      console.log(`Fetching Wikipedia article via API: ${apiUrl}`);
+      // Use the full content API instead of the summary API
+      const apiUrl = `https://en.wikipedia.org/api/rest_v1/page/html/${articleName}`;
+      
+      console.log(`Fetching full Wikipedia article via API: ${apiUrl}`);
       
       const response = await fetch(apiUrl);
       if (!response.ok) {
         throw new Error(`Wikipedia API error: ${response.statusText}`);
       }
       
-      const data = await response.json();
+      // Get the HTML content
+      const htmlContent = await response.text();
+      
+      // Parse the HTML to extract the main content
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlContent, 'text/html');
+      
+      // Extract all paragraphs and headings
+      const contentElements = Array.from(doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6'));
+      
+      // Convert to a readable text format, preserving headers with markdown-style formatting
+      let extractedContent = '';
+      
+      contentElements.forEach(element => {
+        const tagName = element.tagName.toLowerCase();
+        const text = element.textContent?.trim();
+        
+        if (!text) return;
+        
+        if (tagName.startsWith('h')) {
+          // Add markdown-style headers
+          const headerLevel = parseInt(tagName.charAt(1));
+          const prefix = '#'.repeat(headerLevel);
+          extractedContent += `\n\n${prefix} ${text}\n\n`;
+        } else {
+          // Regular paragraph
+          extractedContent += `${text}\n\n`;
+        }
+      });
+      
+      // Get the page title from meta tags or the first heading
+      const title = doc.querySelector('title')?.textContent || 
+                   doc.querySelector('h1')?.textContent || 
+                   articleName.replace(/_/g, ' ');
       
       return {
-        content: data.extract_html || data.extract || "No content available",
-        title: data.title || articleName,
+        content: extractedContent || "No content available",
+        title: title || articleName,
         sourceUrl: url
       };
     }

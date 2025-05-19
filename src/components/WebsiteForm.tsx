@@ -60,7 +60,7 @@ const WebsiteForm = () => {
       
       toast({
         title: "Content extracted",
-        description: "Successfully extracted content from the website.",
+        description: `Successfully extracted ${extractedContent.content.length} characters of content.`,
       });
       
       setIsLoading(false);
