@@ -11,7 +11,6 @@ import PlaybackControls from "./RSVPReader/PlaybackControls";
 import SpeedControl from "./RSVPReader/SpeedControl";
 import { Button } from "./ui/button";
 import { BookmarkIcon } from "lucide-react";
-import ThemeToggle from "@/components/ui/theme-toggle";
 
 interface RSVPReaderProps {
   text: string;
@@ -87,9 +86,8 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
       
       <SourceLink source={source} isFullscreen={isFullscreen} />
 
-      {/* Theme toggle and Save position buttons */}
-      <div className="absolute top-4 right-4 z-10 flex items-center gap-2">
-        <ThemeToggle />
+      {/* Save position button */}
+      <div className="absolute top-4 right-4 z-10">
         <Button 
           variant="outline" 
           size="sm" 

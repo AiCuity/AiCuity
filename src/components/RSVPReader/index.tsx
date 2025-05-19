@@ -9,7 +9,6 @@ import PlaybackControls from "./PlaybackControls";
 import SpeedControl from "./SpeedControl";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, BellOff, Bell } from "lucide-react";
-import ThemeToggle from "@/components/ui/theme-toggle";
 
 interface RSVPReaderProps {
   text: string;
@@ -64,13 +63,6 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
         onNext={goToNextWord}
         onPrevious={goToPreviousWord}
       />
-      
-      {/* Theme toggle in top-right corner */}
-      {!isFullscreen && (
-        <div className="absolute top-4 right-4 z-10">
-          <ThemeToggle />
-        </div>
-      )}
       
       {/* Main reading area */}
       <div className={`flex flex-col items-center justify-center ${
