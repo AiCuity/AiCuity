@@ -86,7 +86,7 @@ const extractiveSummarize = (text: string, options: { maxLength: number, minLeng
   }
   
   // Score sentences based on simple heuristics
-  const sentenceScores: Array<[string, number]> = sentences.map(sentence => {
+  const sentenceScores = sentences.map((sentence): [string, number] => {
     let score = 0;
     
     // Longer sentences (but not too long) might be more informative
