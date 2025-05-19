@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,6 +75,10 @@ const WebsiteForm = () => {
         variant: contentIsSimulated ? "default" : "default",
       });
       
+      // Automatically navigate to the reader page after successful extraction
+      const contentId = `website-${Date.now()}`;
+      navigate(`/reader/${contentId}`);
+      
       setIsLoading(false);
     } catch (error) {
       console.error('Error:', error);
@@ -85,12 +90,6 @@ const WebsiteForm = () => {
         description: "Failed to extract content from the website. Using fallback mode.",
         variant: "destructive",
       });
-    }
-  };
-
-  const handleReadContent = () => {
-    if (previewContent) {
-      navigate(`/reader/website-${Date.now()}`);
     }
   };
 
@@ -160,14 +159,8 @@ const WebsiteForm = () => {
       </div>
       
       {previewContent && (
-        <div className="mt-6 space-y-4">
+        <div className="mt-6">
           <ContentPreview content={previewContent} />
-          
-          <div className="flex justify-end">
-            <Button onClick={handleReadContent}>
-              Read Full Content
-            </Button>
-          </div>
         </div>
       )}
       
