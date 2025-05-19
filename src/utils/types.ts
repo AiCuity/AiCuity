@@ -10,3 +10,10 @@ export interface Content {
   source: string;
   url?: string;
 }
+
+export interface FileProcessingResult {
+  success: boolean;
+  text: string;
+  originalFilename: string;
+  error?: string;
+}

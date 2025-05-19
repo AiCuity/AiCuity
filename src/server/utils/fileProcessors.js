@@ -20,10 +20,11 @@ const processPdfFile = async (filePath) => {
   return cleanText(data.text);
 };
 
-// Process EPUB files (using Python subprocess)
+// Process EPUB files using Python script
 const processEpubFile = (filePath) => {
   return new Promise((resolve, reject) => {
-    const pythonScript = path.join(__dirname, '..', 'scripts', 'epub_converter.py');
+    // Get the absolute path to the Python script
+    const pythonScript = path.resolve(__dirname, '..', 'scripts', 'epub_converter.py');
     
     // Create scripts directory if it doesn't exist
     const scriptsDir = path.join(__dirname, '..', 'scripts');
@@ -31,10 +32,28 @@ const processEpubFile = (filePath) => {
       fs.mkdirSync(scriptsDir, { recursive: true });
     }
     
-    exec(`python ${pythonScript} "${filePath}"`, (error, stdout, stderr) => {
+    // Log the command being executed to help with debugging
+    const command = `python3 "${pythonScript}" "${filePath}"`;
+    console.log(`Executing command: ${command}`);
+    
+    // Try with python3 first (common on Linux/Mac)
+    exec(command, (error, stdout, stderr) => {
       if (error) {
-        console.error(`Error processing EPUB file: ${error}`);
-        reject(error);
+        console.error(`Error processing EPUB with python3: ${error.message}`);
+        // Fall back to 'python' command (common on Windows)
+        exec(`python "${pythonScript}" "${filePath}"`, (fallbackError, fallbackStdout, fallbackStderr) => {
+          if (fallbackError) {
+            console.error(`Error processing EPUB with python fallback: ${fallbackError.message}`);
+            reject(fallbackError);
+            return;
+          }
+          
+          if (fallbackStderr) {
+            console.error(`EPUB processing stderr (python fallback): ${fallbackStderr}`);
+          }
+          
+          resolve(cleanText(fallbackStdout));
+        });
         return;
       }
       

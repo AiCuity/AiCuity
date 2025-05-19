@@ -33,10 +33,16 @@ const storage = multer.diskStorage({
 const fileFilter = (req, file, cb) => {
   // Accept only specific file types
   const allowedMimeTypes = ['text/plain', 'application/pdf', 'application/epub+zip'];
+  const allowedExtensions = ['.txt', '.pdf', '.epub'];
   
-  if (allowedMimeTypes.includes(file.mimetype)) {
+  // Get file extension
+  const ext = path.extname(file.originalname).toLowerCase();
+  
+  // Check if the file has a valid MIME type or valid extension
+  if (allowedMimeTypes.includes(file.mimetype) || allowedExtensions.includes(ext)) {
     cb(null, true);
   } else {
+    console.log(`Rejected file: ${file.originalname} (${file.mimetype})`);
     cb(new Error('Invalid file type. Only .txt, .pdf, and .epub files are allowed.'), false);
   }
 };
@@ -44,7 +50,7 @@ const fileFilter = (req, file, cb) => {
 const upload = multer({ 
   storage, 
   fileFilter,
-  limits: { fileSize: 10 * 1024 * 1024 } // 10MB limit
+  limits: { fileSize: 50 * 1024 * 1024 } // 50MB limit (increased for larger EPUB files)
 });
 
 // File upload endpoint
@@ -54,25 +60,38 @@ router.post('/upload', upload.single('file'), async (req, res) => {
       return res.status(400).json({ error: 'No file uploaded' });
     }
 
+    console.log(`Processing file: ${req.file.originalname} (${req.file.mimetype})`);
     const filePath = req.file.path;
     const fileType = path.extname(req.file.originalname).toLowerCase();
     
     let extractedText = '';
     
     // Process different file types
+    console.log(`File type detected: ${fileType}`);
     switch (fileType) {
       case '.txt':
+        console.log('Processing as TXT file');
         extractedText = await processTextFile(filePath);
         break;
       case '.pdf':
+        console.log('Processing as PDF file');
         extractedText = await processPdfFile(filePath);
         break;
       case '.epub':
+        console.log('Processing as EPUB file');
         extractedText = await processEpubFile(filePath);
         break;
       default:
+        console.log(`Unsupported file type: ${fileType}`);
         return res.status(400).json({ error: 'Unsupported file type' });
     }
+
+    // Check if we got any content
+    if (!extractedText || extractedText.trim() === '') {
+      throw new Error('Failed to extract text from file');
+    }
+    
+    console.log(`Successfully extracted ${extractedText.length} characters from ${fileType} file`);
 
     // Cleanup: delete the uploaded file
     fs.unlink(filePath, (err) => {
@@ -86,7 +105,19 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     });
   } catch (error) {
     console.error(`Error processing file: ${error}`);
-    res.status(500).json({ error: 'Failed to process file', details: error.message });
+    
+    // Try to clean up the uploaded file if it exists
+    if (req.file && req.file.path) {
+      fs.unlink(req.file.path, (err) => {
+        if (err) console.error(`Error deleting file after error: ${err}`);
+      });
+    }
+    
+    res.status(500).json({ 
+      error: 'Failed to process file', 
+      details: error.message,
+      stack: process.env.NODE_ENV !== 'production' ? error.stack : undefined 
+    });
   }
 });
 
@@ -137,18 +168,31 @@ router.post('/scrape', async (req, res) => {
 
 // Python script health check endpoint
 router.get('/check-python', (req, res) => {
-  exec('python --version', (error, stdout, stderr) => {
+  // First try python3
+  exec('python3 --version', (error, stdout, stderr) => {
     if (error) {
-      return res.status(500).json({ 
-        status: 'error', 
-        message: 'Python is not installed or accessible',
-        error: error.message
+      // Fall back to python
+      exec('python --version', (fallbackError, fallbackStdout, fallbackStderr) => {
+        if (fallbackError) {
+          return res.status(500).json({ 
+            status: 'error', 
+            message: 'Python is not installed or accessible',
+            error: fallbackError.message
+          });
+        }
+        
+        res.json({ 
+          status: 'ok',
+          message: 'Python is accessible',
+          version: fallbackStdout.trim()
+        });
       });
+      return;
     }
     
     res.json({ 
       status: 'ok',
-      message: 'Python is accessible',
+      message: 'Python3 is accessible',
       version: stdout.trim()
     });
   });

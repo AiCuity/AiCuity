@@ -3,8 +3,9 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
-import { Upload, File, Loader2 } from "lucide-react";
+import { Upload, File, Loader2, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -13,6 +14,7 @@ const FileUploadForm = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
 
@@ -47,7 +49,13 @@ const FileUploadForm = () => {
     const validTypes = ['application/pdf', 'text/plain', 'application/epub+zip'];
     const fileType = file.type;
     
-    if (!validTypes.includes(fileType)) {
+    console.log("File type:", fileType);
+    
+    // Check for EPUB files with different MIME types
+    const isEpub = fileType === 'application/epub+zip' || 
+                  file.name.toLowerCase().endsWith('.epub');
+    
+    if (!validTypes.includes(fileType) && !isEpub) {
       toast({
         title: "Invalid file type",
         description: "Please upload a PDF, TXT, or EPUB file",
@@ -57,6 +65,7 @@ const FileUploadForm = () => {
     }
     
     setFile(file);
+    setUploadError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -73,6 +82,7 @@ const FileUploadForm = () => {
     
     setIsLoading(true);
     setUploadProgress(0);
+    setUploadError(null);
     
     try {
       const formData = new FormData();
@@ -89,32 +99,44 @@ const FileUploadForm = () => {
       
       xhr.onload = function() {
         if (xhr.status === 200) {
-          const response = JSON.parse(xhr.responseText);
-          
-          // Store the extracted text in sessionStorage to use in the Reader
-          sessionStorage.setItem('readerContent', response.text);
-          sessionStorage.setItem('contentTitle', response.originalFilename);
-          
-          toast({
-            title: "Upload successful",
-            description: "Your file has been processed successfully",
-          });
-          
-          // Navigate to the reader page with a unique content ID
-          navigate(`/reader/file-${Date.now()}`);
+          try {
+            const response = JSON.parse(xhr.responseText);
+            
+            // Store the extracted text in sessionStorage to use in the Reader
+            sessionStorage.setItem('readerContent', response.text);
+            sessionStorage.setItem('contentTitle', response.originalFilename);
+            
+            toast({
+              title: "Upload successful",
+              description: "Your file has been processed successfully",
+            });
+            
+            // Navigate to the reader page with a unique content ID
+            navigate(`/reader/file-${Date.now()}`);
+          } catch (parseError) {
+            handleUploadError(new Error('Failed to parse server response'));
+          }
         } else {
-          handleUploadError(new Error(`Upload failed with status ${xhr.status}`));
+          let errorMessage = 'Upload failed';
+          try {
+            const errorResponse = JSON.parse(xhr.responseText);
+            errorMessage = errorResponse.error || errorMessage;
+          } catch (e) {
+            // If we can't parse the response, use the default error message
+          }
+          handleUploadError(new Error(`${errorMessage} (Status: ${xhr.status})`));
         }
       };
       
       xhr.onerror = function() {
-        handleUploadError(new Error('Network error during upload'));
+        handleUploadError(new Error('Network error during upload. Please check if the server is running.'));
       };
       
       xhr.onabort = function() {
         handleUploadError(new Error('Upload aborted'));
       };
       
+      console.log(`Uploading to ${API_URL}/api/upload`);
       xhr.open('POST', `${API_URL}/api/upload`, true);
       xhr.send(formData);
     } catch (error) {
@@ -127,10 +149,11 @@ const FileUploadForm = () => {
     setUploadProgress(0);
     
     console.error("Upload error:", error);
+    setUploadError(error.message);
     
     toast({
       title: "Upload failed",
-      description: "Failed to upload and process the file. Please try again.",
+      description: error.message || "Failed to upload and process the file. Please try again.",
       variant: "destructive",
     });
   };
@@ -187,6 +210,13 @@ const FileUploadForm = () => {
           </div>
         )}
       </div>
+      
+      {uploadError && (
+        <Alert variant="destructive" className="mt-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>{uploadError}</AlertDescription>
+        </Alert>
+      )}
       
       {isLoading && uploadProgress > 0 && uploadProgress < 100 && (
         <div className="w-full bg-gray-200 rounded-full h-2.5 dark:bg-gray-700 mt-4">
