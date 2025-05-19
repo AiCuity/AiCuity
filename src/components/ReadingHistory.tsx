@@ -1,74 +1,37 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CalendarIcon, TrashIcon, FileText, Globe } from "lucide-react";
+import { CalendarIcon, TrashIcon, FileText, Globe, BookOpen, Search } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-
-type HistoryItem = {
-  id: string;
-  title: string;
-  source: "website" | "file";
-  sourceUrl?: string;
-  fileName?: string;
-  wordCount: number;
-  dateAccessed: string;
-  readingProgress: number;
-};
+import { useReadingHistory, ReadingHistoryEntry } from "@/hooks/useReadingHistory";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const ReadingHistory = () => {
-  const [history, setHistory] = useState<HistoryItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const { history, isLoading, deleteHistoryEntry } = useReadingHistory();
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    // In a full implementation, we would fetch the reading history from Supabase
-    // For now, we'll use mock data
-    const mockHistory: HistoryItem[] = [
-      {
-        id: "website-123",
-        title: "The Science Behind Speed Reading",
-        source: "website",
-        sourceUrl: "https://en.wikipedia.org/wiki/Speed_reading",
-        wordCount: 3240,
-        dateAccessed: "2025-05-18T15:30:00Z",
-        readingProgress: 45,
-      },
-      {
-        id: "file-456",
-        title: "How to Read Faster and Understand More",
-        source: "file",
-        fileName: "speed_reading_techniques.pdf",
-        wordCount: 5621,
-        dateAccessed: "2025-05-17T09:15:00Z",
-        readingProgress: 78,
-      },
-      {
-        id: "website-789",
-        title: "Latest Developments in AI and Machine Learning",
-        source: "website",
-        sourceUrl: "https://medium.com/topic/technology",
-        wordCount: 2189,
-        dateAccessed: "2025-05-15T14:20:00Z",
-        readingProgress: 100,
-      },
-    ];
-    
-    setTimeout(() => {
-      setHistory(mockHistory);
-      setIsLoading(false);
-    }, 1000);
-  }, []);
-
-  const handleContinueReading = (id: string) => {
-    navigate(`/reader/${id}`);
+  const handleContinueReading = (contentId: string) => {
+    navigate(`/reader/${contentId}`);
   };
 
-  const handleDeleteItem = (id: string) => {
-    // In a full implementation, we would delete the item from Supabase
-    // For now, we'll just update the local state
-    setHistory(history.filter(item => item.id !== id));
+  const handleDeleteConfirm = async () => {
+    if (deletingId) {
+      await deleteHistoryEntry(deletingId);
+      setDeletingId(null);
+    }
   };
 
   const formatDate = (dateString: string) => {
@@ -80,12 +43,29 @@ const ReadingHistory = () => {
     });
   };
 
+  const getSourceIcon = (entry: ReadingHistoryEntry) => {
+    const sourceType = entry.source_type || (entry.source?.startsWith('http') ? 'website' : 'file');
+    
+    switch (sourceType) {
+      case 'website':
+      case 'url':
+        return <Globe className="h-4 w-4 text-blue-500" />;
+      case 'upload':
+      case 'file':
+        return <FileText className="h-4 w-4 text-green-500" />;
+      case 'search':
+        return <Search className="h-4 w-4 text-purple-500" />;
+      default:
+        return <BookOpen className="h-4 w-4 text-gray-500" />;
+    }
+  };
+
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
         <div className="animate-pulse space-y-4 w-full">
           {[1, 2, 3].map(i => (
-            <div key={i} className="bg-gray-200 dark:bg-gray-700 h-24 rounded-md" />
+            <Skeleton key={i} className="h-24 w-full rounded-md" />
           ))}
         </div>
       </div>
@@ -108,37 +88,49 @@ const ReadingHistory = () => {
       {history.map((item) => (
         <Card key={item.id} className="p-4 hover:shadow-md transition-shadow">
           <div className="flex items-start justify-between">
-            <div>
+            <div className="flex-1">
               <div className="flex items-center gap-2">
                 <div className="rounded-full bg-gray-100 p-1 dark:bg-gray-800">
-                  {item.source === "website" ? (
-                    <Globe className="h-4 w-4 text-blue-500" />
-                  ) : (
-                    <FileText className="h-4 w-4 text-green-500" />
-                  )}
+                  {getSourceIcon(item)}
                 </div>
-                <h3 className="font-medium text-gray-900 dark:text-gray-100">{item.title}</h3>
+                <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">{item.title}</h3>
               </div>
               
-              <div className="mt-2 text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
-                <CalendarIcon className="h-3 w-3" />
-                <span>{formatDate(item.dateAccessed)}</span>
+              <div className="mt-2 text-sm text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-2">
+                <div className="flex items-center gap-1">
+                  <CalendarIcon className="h-3 w-3" />
+                  <span>{formatDate(item.created_at)}</span>
+                </div>
                 <span>•</span>
-                <span>{item.wordCount.toLocaleString()} words</span>
+                <span>{item.wpm} WPM</span>
+                {item.calibrated && (
+                  <>
+                    <span>•</span>
+                    <span className="text-green-600 dark:text-green-400">Calibrated</span>
+                  </>
+                )}
               </div>
+              
+              {item.summary && (
+                <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
+                  {item.summary}
+                </p>
+              )}
               
               <div className="mt-3">
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-blue-500 rounded-full"
-                      style={{ width: `${item.readingProgress}%` }}
-                    />
+                {item.current_position && item.current_position > 0 && (
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-blue-500 rounded-full"
+                        style={{ width: `${(item.current_position / (item.parsed_text?.length || 1)) * 100}%` }}
+                      />
+                    </div>
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 min-w-[45px]">
+                      {Math.round((item.current_position / (item.parsed_text?.length || 1)) * 100)}%
+                    </span>
                   </div>
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 min-w-[45px]">
-                    {item.readingProgress}%
-                  </span>
-                </div>
+                )}
               </div>
             </div>
             
@@ -147,7 +139,7 @@ const ReadingHistory = () => {
                 variant="destructive"
                 size="sm"
                 className="h-8 w-8 p-0"
-                onClick={() => handleDeleteItem(item.id)}
+                onClick={() => setDeletingId(item.id)}
               >
                 <TrashIcon className="h-4 w-4" />
               </Button>
@@ -160,13 +152,29 @@ const ReadingHistory = () => {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => handleContinueReading(item.id)}
+              onClick={() => handleContinueReading(item.content_id)}
             >
               Continue Reading
             </Button>
           </div>
         </Card>
       ))}
+
+      <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will permanently delete this reading history entry.
+              This action cannot be undone.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteConfirm}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };

@@ -11,8 +11,11 @@ import LoadingState from "@/components/Reader/LoadingState";
 import NotFoundState from "@/components/Reader/NotFoundState";
 import { useContentLoader } from "@/hooks/useContentLoader";
 import { useSummarization } from "@/hooks/useSummarization";
+import { useReadingHistory } from "@/hooks/useReadingHistory";
+import { useProfile } from "@/hooks/useProfile";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle } from "lucide-react";
+import { useAuth } from "@/context/AuthContext";
 
 const Reader = () => {
   const { contentId } = useParams();
@@ -25,11 +28,15 @@ const Reader = () => {
     handleSummarize,
     setSummary 
   } = useSummarization(content);
+  const { profile } = useProfile();
+  const { user } = useAuth();
+  const { saveHistoryEntry } = useReadingHistory();
   
   const [showReader, setShowReader] = useState(false);
   const [useFullText, setUseFullText] = useState(true);
   const [apiKey, setApiKey] = useState<string>("");
   const [useOpenAI, setUseOpenAI] = useState<boolean>(false);
+  const [historySaved, setHistorySaved] = useState(false);
 
   // Load API key and preferences from localStorage
   useEffect(() => {
@@ -39,6 +46,55 @@ const Reader = () => {
     setApiKey(savedApiKey);
     setUseOpenAI(savedUseOpenAI);
   }, []);
+
+  // Save reading session to history
+  useEffect(() => {
+    const saveToHistory = async () => {
+      if (content && title && !historySaved) {
+        // Determine source type based on contentId
+        let sourceType = 'url';
+        if (contentId?.startsWith('file-')) {
+          sourceType = 'upload';
+        } else if (contentId?.includes('search-')) {
+          sourceType = 'search';
+        }
+        
+        // Use preferred WPM from profile if available
+        const wpm = profile?.preferred_wpm || 300;
+        
+        await saveHistoryEntry({
+          title,
+          source,
+          source_type: sourceType,
+          source_input: source || title,
+          content_id: contentId || '',
+          wpm,
+          current_position: 0,
+          calibrated: profile?.calibration_status === 'completed',
+          summary: null, // Will be updated after summarization
+          parsed_text: content,
+        });
+        
+        setHistorySaved(true);
+      }
+    };
+    
+    saveToHistory();
+  }, [content, title, contentId]);
+
+  // Update history with summary when generated
+  useEffect(() => {
+    const updateHistoryWithSummary = async () => {
+      if (summary && historySaved && contentId) {
+        // Logic to update history entry with summary
+        // For now, we'll leave this as a placeholder
+        // In a full implementation we would update the history entry
+        console.log("Summary generated, would update history entry");
+      }
+    };
+    
+    updateHistoryWithSummary();
+  }, [summary]);
 
   const handleStartReading = (useFull: boolean) => {
     setUseFullText(useFull);
