@@ -132,6 +132,13 @@ export function useReadingHistory() {
     
     const existingEntry = findExistingEntry(entry.content_id);
     
+    // Calculate progress percentage for logging
+    const totalWords = entry.parsed_text ? entry.parsed_text.split(/\s+/).filter(word => word.length > 0).length : 0;
+    const progressPct = totalWords > 0 
+      ? Math.min(Math.round((entry.current_position / totalWords) * 100), 100)
+      : 0;
+    console.log(`Saving entry for ${entry.title} at position ${entry.current_position} (${progressPct}%)`);
+    
     if (user) {
       try {
         // Save to Supabase if user is logged in
@@ -158,7 +165,13 @@ export function useReadingHistory() {
           setHistory(prev => {
             const updatedEntries = prev.map(item => 
               item.id === existingEntry.id 
-                ? { ...item, current_position: entry.current_position, wpm: entry.wpm, summary: entry.summary || item.summary, updated_at: new Date().toISOString() }
+                ? { 
+                    ...item, 
+                    current_position: entry.current_position, 
+                    wpm: entry.wpm, 
+                    summary: entry.summary || item.summary, 
+                    updated_at: new Date().toISOString() 
+                  }
                 : item
             );
             

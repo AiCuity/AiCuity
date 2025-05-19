@@ -1,7 +1,7 @@
 
 import React from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
+import { AlertTriangle, Bookmark } from "lucide-react";
 
 interface ReaderAlertsProps {
   isSimulated: boolean;
@@ -10,6 +10,12 @@ interface ReaderAlertsProps {
 }
 
 const ReaderAlerts = ({ isSimulated, initialPosition, content }: ReaderAlertsProps) => {
+  // Calculate progress percentage more accurately
+  const totalWords = content ? content.split(/\s+/).filter(word => word.length > 0).length : 0;
+  const progressPercentage = totalWords > 0 
+    ? Math.min(Math.round((initialPosition / totalWords) * 100), 100)
+    : 0;
+  
   return (
     <>
       {isSimulated && (
@@ -23,9 +29,12 @@ const ReaderAlerts = ({ isSimulated, initialPosition, content }: ReaderAlertsPro
 
       {initialPosition > 0 && (
         <Alert className="mb-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-          <AlertDescription>
-            You have a saved reading position at {Math.round((initialPosition / (content.split(/\s+/).length || 1)) * 100)}% through this content.
-          </AlertDescription>
+          <div className="flex items-center">
+            <Bookmark className="h-4 w-4 mr-2 text-blue-500" />
+            <AlertDescription>
+              You have a saved reading position at {progressPercentage}% through this content.
+            </AlertDescription>
+          </div>
         </Alert>
       )}
     </>
