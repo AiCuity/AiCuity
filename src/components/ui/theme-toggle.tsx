@@ -14,6 +14,20 @@ export default function ThemeToggle() {
     setMounted(true);
   }, []);
 
+  // Apply dark mode class directly to document element when theme changes
+  useEffect(() => {
+    if (mounted) {
+      const isDark = theme === "dark" || 
+                    (theme === "system" && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      
+      if (isDark) {
+        document.documentElement.classList.add("dark");
+      } else {
+        document.documentElement.classList.remove("dark");
+      }
+    }
+  }, [theme, mounted]);
+
   if (!mounted) {
     return (
       <Button variant="outline" size="icon" className="w-9 h-9">
