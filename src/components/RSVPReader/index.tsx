@@ -38,7 +38,10 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
     progress,
     restartReading,
     setShowToasts
-  } = useRSVPReader({ text });
+  } = useRSVPReader({ 
+    text,
+    initialShowToasts: showNotifications
+  });
   
   const { isFullscreen, toggleFullscreen } = useFullscreen(readerRef);
 

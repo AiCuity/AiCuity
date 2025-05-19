@@ -42,7 +42,8 @@ export function calculateDelay(
   
   // Apply complexity-based adjustment
   // Higher complexity = longer delay (slower reading)
-  const adjustmentFactor = 1 + (complexity * 1.5); // Max 2.5x slower for very complex words
+  // Adjust the adjustment factor to be less aggressive at higher WPM
+  const adjustmentFactor = 1 + (complexity * Math.max(0.3, 1.5 - (baseWpm / 1000))); 
   
   return Math.round(baseDelay * adjustmentFactor);
 }
