@@ -9,7 +9,7 @@ type AuthContextType = {
   session: Session | null;
   isLoading: boolean;
   signUp: (email: string, password: string) => Promise<void>;
-  signIn: (email: string, password: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signOut: () => Promise<void>;
 };
 
@@ -83,12 +83,21 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     
     if (error) {
+      let errorMessage = error.message;
+      
+      // Handle email confirmation error specifically
+      if (error.message === 'Email not confirmed') {
+        errorMessage = 'Please check your email and confirm your account before signing in.';
+      }
+      
       toast({
         title: 'Sign In Error',
-        description: error.message,
+        description: errorMessage,
         variant: 'destructive'
       });
-      throw error;
+      
+      setIsLoading(false);
+      return { error: errorMessage };
     }
     
     toast({
@@ -96,6 +105,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       description: 'You have successfully signed in.',
     });
     setIsLoading(false);
+    return {};
   };
 
   const signOut = async () => {

@@ -14,9 +14,10 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const formSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -28,6 +29,7 @@ const Login = () => {
   const location = useLocation();
   const { signIn } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [authError, setAuthError] = useState<string | null>(null);
 
   const from = location.state?.from || '/';
 
@@ -41,10 +43,16 @@ const Login = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
+    setAuthError(null);
     
     try {
-      await signIn(values.email, values.password);
-      navigate(from);
+      const result = await signIn(values.email, values.password);
+      
+      if (result.error) {
+        setAuthError(result.error);
+      } else {
+        navigate(from);
+      }
     } catch (error) {
       // Error is handled in the auth context
       console.error('Login error:', error);
@@ -63,6 +71,15 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {authError && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {authError}
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
@@ -112,8 +129,9 @@ const Login = () => {
               </Button>
             </form>
           </Form>
-          
-          <div className="mt-6 text-center">
+        </CardContent>
+        <CardFooter className="flex flex-col space-y-4">
+          <div className="text-center w-full">
             <p className="text-sm text-gray-500">
               Don't have an account yet?{' '}
               <Link to="/register" className="text-primary hover:underline">
@@ -121,7 +139,15 @@ const Login = () => {
               </Link>
             </p>
           </div>
-        </CardContent>
+          <div className="text-center w-full">
+            <p className="text-xs text-gray-400">
+              Already registered but didn't receive confirmation email?{' '}
+              <Button variant="link" className="h-auto p-0 text-xs" onClick={() => navigate('/register')}>
+                Register again
+              </Button>
+            </p>
+          </div>
+        </CardFooter>
       </Card>
     </div>
   );
