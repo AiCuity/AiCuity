@@ -9,7 +9,102 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
-      [_ in never]: never
+      calibration_results: {
+        Row: {
+          accuracy_score: number
+          comprehension_score: number
+          created_at: string
+          id: string
+          passage_id: string
+          user_id: string
+          wpm_tested: number
+        }
+        Insert: {
+          accuracy_score: number
+          comprehension_score: number
+          created_at?: string
+          id?: string
+          passage_id: string
+          user_id: string
+          wpm_tested: number
+        }
+        Update: {
+          accuracy_score?: number
+          comprehension_score?: number
+          created_at?: string
+          id?: string
+          passage_id?: string
+          user_id?: string
+          wpm_tested?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          calibration_status: string | null
+          created_at: string
+          id: string
+          preferred_wpm: number | null
+          updated_at: string
+        }
+        Insert: {
+          calibration_status?: string | null
+          created_at?: string
+          id: string
+          preferred_wpm?: number | null
+          updated_at?: string
+        }
+        Update: {
+          calibration_status?: string | null
+          created_at?: string
+          id?: string
+          preferred_wpm?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      reading_history: {
+        Row: {
+          content_id: string
+          created_at: string
+          current_position: number | null
+          id: string
+          is_completed: boolean | null
+          source: string | null
+          summary: string | null
+          title: string
+          updated_at: string
+          user_id: string
+          wpm: number
+        }
+        Insert: {
+          content_id: string
+          created_at?: string
+          current_position?: number | null
+          id?: string
+          is_completed?: boolean | null
+          source?: string | null
+          summary?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+          wpm: number
+        }
+        Update: {
+          content_id?: string
+          created_at?: string
+          current_position?: number | null
+          id?: string
+          is_completed?: boolean | null
+          source?: string | null
+          summary?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+          wpm?: number
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
