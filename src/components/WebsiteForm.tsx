@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
-import { Loader2 } from "lucide-react";
+import { Loader2, Globe } from "lucide-react";
 import { useToast } from "@/components/ui/use-toast";
 import { useNavigate } from "react-router-dom";
 
@@ -13,6 +13,7 @@ const WebsiteForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -26,21 +27,43 @@ const WebsiteForm = () => {
       return;
     }
     
+    // Add http:// if missing
+    let processedUrl = url;
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      processedUrl = 'https://' + url;
+    }
+    
     setIsLoading(true);
     
     try {
-      // In a full implementation, we would call the backend API to scrape the website
-      // For now, we'll navigate to the reader page with a mock content ID
-      setTimeout(() => {
-        // This simulates the API call delay
-        setIsLoading(false);
-        navigate(`/reader/website-${Date.now()}`);
-      }, 1500);
+      const response = await fetch(`${apiUrl}/api/scrape`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ url: processedUrl }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to extract content');
+      }
+      
+      const data = await response.json();
+      
+      // Store the extracted content in sessionStorage
+      sessionStorage.setItem('readerContent', data.text);
+      sessionStorage.setItem('contentTitle', `${data.title || 'Website content'}`);
+      sessionStorage.setItem('contentSource', data.sourceUrl || processedUrl);
+      
+      // Navigate to the reader page
+      navigate(`/reader/website-${Date.now()}`);
     } catch (error) {
+      console.error('Error:', error);
       setIsLoading(false);
       toast({
         title: "Error",
-        description: "Failed to extract content from the website",
+        description: error instanceof Error ? error.message : "Failed to extract content from the website",
         variant: "destructive",
       });
     }
@@ -50,15 +73,25 @@ const WebsiteForm = () => {
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="space-y-2">
         <Label htmlFor="website-url">Website URL</Label>
-        <Input
-          id="website-url"
-          type="url"
-          placeholder="https://example.com/article"
-          value={url}
-          onChange={(e) => setUrl(e.target.value)}
-          required
-          className="w-full"
-        />
+        <div className="flex">
+          <div className="relative flex-grow">
+            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500">
+              <Globe className="h-4 w-4" />
+            </div>
+            <Input
+              id="website-url"
+              type="text"
+              placeholder="example.com/article"
+              value={url}
+              onChange={(e) => setUrl(e.target.value)}
+              required
+              className="pl-10 w-full"
+            />
+          </div>
+        </div>
+        <p className="text-xs text-gray-500">
+          Enter the URL with or without http(s):// prefix
+        </p>
       </div>
       
       <div className="flex justify-between items-center pt-2">

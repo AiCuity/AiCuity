@@ -8,6 +8,9 @@ const { promisify } = require('util');
 const pdfParse = require('pdf-parse');
 const { exec } = require('child_process');
 const { v4: uuidv4 } = require('uuid');
+const cheerio = require('cheerio');
+const https = require('https');
+const http = require('http');
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -106,6 +109,63 @@ const processEpubFile = (filePath) => {
   });
 };
 
+// Fetch HTML from URL
+const fetchHtml = (url) => {
+  return new Promise((resolve, reject) => {
+    const protocol = url.startsWith('https') ? https : http;
+    
+    protocol.get(url, (response) => {
+      if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
+        // Handle redirects
+        fetchHtml(response.headers.location).then(resolve).catch(reject);
+        return;
+      }
+      
+      if (response.statusCode !== 200) {
+        reject(new Error(`Failed to fetch URL: ${response.statusCode}`));
+        return;
+      }
+      
+      let data = '';
+      response.on('data', (chunk) => {
+        data += chunk;
+      });
+      
+      response.on('end', () => {
+        resolve(data);
+      });
+    }).on('error', (err) => {
+      reject(err);
+    });
+  });
+};
+
+// Extract main content from HTML
+const extractMainContent = (html) => {
+  const $ = cheerio.load(html);
+  
+  // Remove script, style, nav, header, footer, and other non-content elements
+  $('script, style, nav, header, footer, aside, [role=banner], [role=navigation], iframe, .share, .comments').remove();
+  
+  // Find the main content element based on common patterns
+  let mainContent = $('main').text() || 
+                    $('article').text() || 
+                    $('.content, .post-content, .entry-content, .article-content').text() || 
+                    $('#content, #main, #article').text();
+  
+  // Fallback: if we couldn't find a specific content element, use the body text
+  if (!mainContent.trim()) {
+    const paragraphs = $('p').map((_, el) => $(el).text()).get().join('\n\n');
+    if (paragraphs.trim()) {
+      mainContent = paragraphs;
+    } else {
+      mainContent = $('body').text();
+    }
+  }
+  
+  return cleanText(mainContent);
+};
+
 // File upload endpoint
 app.post('/api/upload', upload.single('file'), async (req, res) => {
   try {
@@ -146,6 +206,42 @@ app.post('/api/upload', upload.single('file'), async (req, res) => {
   } catch (error) {
     console.error(`Error processing file: ${error}`);
     res.status(500).json({ error: 'Failed to process file', details: error.message });
+  }
+});
+
+// Website scraping endpoint
+app.post('/api/scrape', async (req, res) => {
+  try {
+    const { url } = req.body;
+    
+    if (!url) {
+      return res.status(400).json({ error: 'No URL provided' });
+    }
+
+    // Check URL format
+    try {
+      new URL(url);
+    } catch (e) {
+      return res.status(400).json({ error: 'Invalid URL format' });
+    }
+    
+    // Fetch and extract content
+    const html = await fetchHtml(url);
+    const extractedText = extractMainContent(html);
+    
+    // Get the website title from the URL for display
+    const urlObj = new URL(url);
+    const domain = urlObj.hostname.replace('www.', '');
+    
+    res.json({
+      success: true,
+      text: extractedText,
+      title: domain,
+      sourceUrl: url
+    });
+  } catch (error) {
+    console.error(`Error scraping website: ${error}`);
+    res.status(500).json({ error: 'Failed to scrape website', details: error.message });
   }
 });
 

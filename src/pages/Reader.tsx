@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 const Reader = () => {
   const [content, setContent] = useState<string>("");
   const [title, setTitle] = useState<string>("");
+  const [source, setSource] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const { contentId } = useParams();
   const { toast } = useToast();
@@ -32,12 +33,28 @@ const Reader = () => {
               variant: "destructive",
             });
           }
+        } else if (contentId?.startsWith('website-')) {
+          // For website content
+          const storedContent = sessionStorage.getItem('readerContent');
+          const storedTitle = sessionStorage.getItem('contentTitle') || 'Website content';
+          const storedSource = sessionStorage.getItem('contentSource') || '';
+          
+          if (storedContent) {
+            setContent(storedContent);
+            setTitle(storedTitle);
+            setSource(storedSource);
+          } else {
+            toast({
+              title: "Content not found",
+              description: "The requested website content could not be loaded.",
+              variant: "destructive",
+            });
+          }
         } else {
-          // For website content, you'd fetch from your API or storage
-          // This is a placeholder for future implementation
+          // For other content types
           toast({
-            title: "Website content unavailable",
-            description: "Website content extraction is not implemented yet.",
+            title: "Unknown content type",
+            description: "The requested content type is not supported.",
             variant: "destructive",
           });
         }
@@ -71,7 +88,7 @@ const Reader = () => {
         <div className="text-center p-8 max-w-md">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-gray-200 mb-4">Content Not Found</h2>
           <p className="text-gray-600 dark:text-gray-400">
-            The requested content could not be loaded. Please try uploading your file again.
+            The requested content could not be loaded. Please try uploading your file or entering a URL again.
           </p>
         </div>
       </div>
@@ -80,7 +97,12 @@ const Reader = () => {
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
-      <RSVPReader text={content} contentId={contentId || ""} title={title} />
+      <RSVPReader 
+        text={content} 
+        contentId={contentId || ""} 
+        title={title}
+        source={source} 
+      />
     </div>
   );
 };
