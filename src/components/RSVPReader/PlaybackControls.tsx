@@ -37,6 +37,34 @@ const PlaybackControls = ({
   totalWords,
   effectiveWpm
 }: PlaybackControlsProps) => {
+  // Function to handle play/pause that prevents default behavior
+  const handlePlayPause = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    onPlayPause();
+  };
+
+  // Functions to prevent default behavior for all controls
+  const handlePrevious = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onPrevious();
+  };
+
+  const handleNext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onNext();
+  };
+
+  const handleRestart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onRestart();
+  };
+
+  const handleToggleSmartPacing = (e: React.MouseEvent) => {
+    e.preventDefault();
+    onToggleSmartPacing();
+  };
+
   return (
     <div className="max-w-lg mx-auto">
       {/* Reading controls with tooltips */}
@@ -47,8 +75,9 @@ const PlaybackControls = ({
               <Button 
                 variant="outline" 
                 size="icon"
-                onClick={onPrevious}
+                onClick={handlePrevious}
                 disabled={disablePrevious}
+                type="button"
               >
                 <ChevronLeft className="h-4 w-4" />
               </Button>
@@ -61,8 +90,9 @@ const PlaybackControls = ({
           <Tooltip>
             <TooltipTrigger asChild>
               <Button 
-                onClick={onPlayPause}
+                onClick={handlePlayPause}
                 className="w-24"
+                type="button"
               >
                 {isPlaying ? (
                   <>
@@ -87,7 +117,8 @@ const PlaybackControls = ({
               <Button 
                 variant="outline" 
                 size="icon"
-                onClick={onRestart}
+                onClick={handleRestart}
+                type="button"
               >
                 <RefreshCw className="h-4 w-4" />
               </Button>
@@ -102,8 +133,9 @@ const PlaybackControls = ({
               <Button 
                 variant="outline" 
                 size="icon"
-                onClick={onNext}
+                onClick={handleNext}
                 disabled={disableNext}
+                type="button"
               >
                 <ChevronRight className="h-4 w-4" />
               </Button>
@@ -132,8 +164,9 @@ const PlaybackControls = ({
               <Button
                 variant={smartPacingEnabled ? "default" : "outline"}
                 size="sm"
-                onClick={onToggleSmartPacing}
+                onClick={handleToggleSmartPacing}
                 className="flex items-center gap-1"
+                type="button"
               >
                 <Gauge className="h-4 w-4" />
                 {smartPacingEnabled ? "Smart Pacing On" : "Smart Pacing Off"}
