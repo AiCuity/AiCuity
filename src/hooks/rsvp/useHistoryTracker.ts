@@ -23,8 +23,12 @@ export function useHistoryTracker(
   // Check if this is a significant reading session
   const isSignificantSession = currentWordIndex >= MIN_WORDS_READ;
   
-  // Calculate progress percentage using the utility function
-  const progressPercentage = calculateProgressPercentage(currentWordIndex, text);
+  // Calculate progress percentage
+  const words = text.split(/\s+/).filter(word => word.length > 0);
+  const totalWords = words.length;
+  const progressPercentage = totalWords > 0 
+    ? Math.min(Math.round((currentWordIndex / totalWords) * 100), 100)
+    : 0;
 
   // Save current position to history
   const savePosition = async () => {

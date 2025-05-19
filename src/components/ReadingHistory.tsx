@@ -1,7 +1,7 @@
+
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import { 
   CalendarIcon, 
   TrashIcon, 
@@ -9,7 +9,6 @@ import {
   Globe, 
   BookOpen, 
   Search, 
-  Bookmark,
   PlayCircle
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -27,11 +26,11 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Progress } from "@/components/ui/progress";
 
 const ReadingHistory = () => {
   const { history, isLoading, deleteHistoryEntry } = useReadingHistory();
   const [deletingId, setDeletingId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
   const navigate = useNavigate();
 
   const handleContinueReading = (item: ReadingHistoryEntry) => {
@@ -76,16 +75,14 @@ const ReadingHistory = () => {
     if (!entry.current_position || entry.current_position <= 0) return 0;
     if (!entry.parsed_text) return 0;
     
-    const totalWords = entry.parsed_text.split(/\s+/).filter(word => word.length > 0).length;
+    // Count words in parsed_text
+    const words = entry.parsed_text.split(/\s+/).filter(word => word.length > 0);
+    const totalWords = words.length;
+    
     if (totalWords <= 0) return 0;
     
-    return Math.min(Math.round((entry.current_position / totalWords) * 100), 100);
-  };
-
-  // Truncate long text for display
-  const truncateText = (text: string, length = 100): string => {
-    if (!text) return '';
-    return text.length > length ? text.substring(0, length) + '...' : text;
+    const progress = Math.min(Math.round((entry.current_position / totalWords) * 100), 100);
+    return progress;
   };
 
   if (isLoading) {
@@ -115,177 +112,70 @@ const ReadingHistory = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Reading History</h2>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setViewMode('cards')}
-            className={viewMode === 'cards' ? 'bg-primary text-primary-foreground' : ''}
-          >
-            Cards
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setViewMode('table')}
-            className={viewMode === 'table' ? 'bg-primary text-primary-foreground' : ''}
-          >
-            Table
-          </Button>
-        </div>
       </div>
 
-      {viewMode === 'table' ? (
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Title</TableHead>
-                <TableHead>Date</TableHead>
-                <TableHead>WPM</TableHead>
-                <TableHead>Progress</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {history.map((item) => (
-                <TableRow key={item.id}>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <div className="rounded-full bg-gray-100 p-1 dark:bg-gray-800">
-                        {getSourceIcon(item)}
-                      </div>
-                      <span className="font-medium">{truncateText(item.title, 40)}</span>
-                    </div>
-                  </TableCell>
-                  <TableCell>{formatDate(item.created_at)}</TableCell>
-                  <TableCell>{item.wpm} WPM</TableCell>
-                  <TableCell>
-                    {item.current_position && item.current_position > 0 && (
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-20 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-blue-500 rounded-full"
-                            style={{ width: `${calculateProgress(item)}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-medium">{calculateProgress(item)}%</span>
-                      </div>
-                    )}
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleContinueReading(item)}
-                      >
-                        <PlayCircle className="h-4 w-4 mr-1" />
-                        Continue
-                      </Button>
-                      <Button
-                        variant="destructive"
-                        size="sm"
-                        onClick={() => setDeletingId(item.id)}
-                      >
-                        <TrashIcon className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {history.map((item) => (
-            <Card key={item.id} className="p-4 hover:shadow-md transition-shadow">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
+      <div className="rounded-md border">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Date</TableHead>
+              <TableHead>WPM</TableHead>
+              <TableHead>Progress</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {history.map((item) => (
+              <TableRow key={item.id}>
+                <TableCell>
                   <div className="flex items-center gap-2">
                     <div className="rounded-full bg-gray-100 p-1 dark:bg-gray-800">
                       {getSourceIcon(item)}
                     </div>
-                    <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
-                      {item.title}
-                    </h3>
-                    {item.current_position && item.current_position > 0 && (
-                      <Badge variant="outline" className="ml-2 flex items-center gap-1">
-                        <Bookmark className="h-3 w-3" />
-                        <span>{calculateProgress(item)}%</span>
+                    <span className="font-medium">{item.title}</span>
+                    {item.summary && (
+                      <Badge variant="outline" className="ml-1">
+                        Summary
                       </Badge>
                     )}
                   </div>
-                  
-                  <div className="mt-2 text-sm text-gray-500 dark:text-gray-400 flex flex-wrap items-center gap-2">
-                    <div className="flex items-center gap-1">
-                      <CalendarIcon className="h-3 w-3" />
-                      <span>{formatDate(item.created_at)}</span>
-                    </div>
-                    <span>•</span>
-                    <span>{item.wpm} WPM</span>
-                    {item.calibrated && (
-                      <>
-                        <span>•</span>
-                        <span className="text-green-600 dark:text-green-400">Calibrated</span>
-                      </>
-                    )}
+                </TableCell>
+                <TableCell>{formatDate(item.created_at)}</TableCell>
+                <TableCell>{item.wpm} WPM</TableCell>
+                <TableCell>
+                  <div className="flex items-center gap-2">
+                    <Progress 
+                      value={calculateProgress(item)} 
+                      className="h-2 w-20"
+                    />
+                    <span className="text-xs font-medium">{calculateProgress(item)}%</span>
                   </div>
-                  
-                  {item.summary && (
-                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
-                      {item.summary}
-                    </p>
-                  )}
-                  
-                  <div className="mt-3">
-                    {item.current_position && item.current_position > 0 && item.parsed_text && (
-                      <div className="flex items-center gap-2">
-                        <div className="h-2 w-full bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-blue-500 rounded-full"
-                            style={{ width: `${calculateProgress(item)}%` }}
-                          />
-                        </div>
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 min-w-[45px]">
-                          {calculateProgress(item)}%
-                        </span>
-                      </div>
-                    )}
+                </TableCell>
+                <TableCell className="text-right">
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleContinueReading(item)}
+                    >
+                      <PlayCircle className="h-4 w-4 mr-1" />
+                      Continue
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setDeletingId(item.id)}
+                    >
+                      <TrashIcon className="h-4 w-4" />
+                    </Button>
                   </div>
-                </div>
-                
-                <div className="flex gap-2">
-                  <Button 
-                    variant="destructive" 
-                    size="icon" 
-                    className="h-8 w-8 p-0"
-                    onClick={() => setDeletingId(item.id)}
-                  >
-                    <span className="sr-only">Delete</span>
-                    <TrashIcon className="h-4 w-4" />
-                  </Button>
-                </div>
-              </div>
-              
-              <Separator className="my-3" />
-              
-              <div className="flex justify-end">
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={() => handleContinueReading(item)}
-                  className="flex items-center gap-1"
-                >
-                  <PlayCircle className="h-4 w-4" />
-                  {item.current_position && item.current_position > 0 ? 'Continue Reading' : 'Read Again'}
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
-      )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
 
       <AlertDialog open={!!deletingId} onOpenChange={(open) => !open && setDeletingId(null)}>
         <AlertDialogContent>
