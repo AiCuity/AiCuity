@@ -4,3 +4,9 @@ export interface ExtractedContent {
   title: string;
   sourceUrl: string;
 }
+
+export interface Content {
+  title: string;
+  source: string;
+  url?: string;
+}

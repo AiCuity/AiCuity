@@ -72,10 +72,17 @@ const Reader = () => {
     );
   }
 
+  // Create a content object to match the ContentHeader props
+  const contentObject = {
+    title,
+    source,
+    url: source?.startsWith('http') ? source : undefined
+  };
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <ContentHeader title={title} source={source} />
+        <ContentHeader content={contentObject} />
 
         {isSimulated && (
           <Alert variant="destructive" className="mb-6">

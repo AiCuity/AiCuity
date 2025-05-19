@@ -8,7 +8,7 @@ import CalibrationButton from '@/components/CalibrationButton';
 
 interface ContentHeaderProps {
   content: Content;
-  isFullscreen: boolean;
+  isFullscreen?: boolean;
 }
 
 const ContentHeader: React.FC<ContentHeaderProps> = ({ content, isFullscreen }) => {
