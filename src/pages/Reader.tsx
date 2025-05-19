@@ -1,20 +1,16 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
-import RSVPReader from "@/components/RSVPReader";
-import SummaryPanel from "@/components/SummaryPanel";
-import ApiKeyConfig from "@/components/ApiKeyConfig";
 import ContentHeader from "@/components/Reader/ContentHeader";
-import ContentPreview from "@/components/Reader/ContentPreview";
-import SummarizePrompt from "@/components/Reader/SummarizePrompt";
 import LoadingState from "@/components/Reader/LoadingState";
 import NotFoundState from "@/components/Reader/NotFoundState";
+import ReaderAlerts from "@/components/Reader/ReaderAlerts";
+import ContentContainer from "@/components/Reader/ContentContainer";
+import RSVPReaderContainer from "@/components/Reader/RSVPReaderContainer";
 import { useContentLoader } from "@/hooks/useContentLoader";
 import { useSummarization } from "@/hooks/useSummarization";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
 import { useProfile } from "@/hooks/useProfile";
-import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
 const Reader = () => {
@@ -103,8 +99,6 @@ const Reader = () => {
     const updateHistoryWithSummary = async () => {
       if (summary && historySaved && contentId) {
         // Logic to update history entry with summary
-        // For now, we'll leave this as a placeholder
-        // In a full implementation we would update the history entry
         console.log("Summary generated, would update history entry");
       }
     };
@@ -133,15 +127,15 @@ const Reader = () => {
 
   if (showReader) {
     return (
-      <div className="min-h-screen bg-white dark:bg-gray-900">
-        <RSVPReader 
-          text={useFullText ? content : summary} 
-          contentId={contentId || ""} 
-          title={title}
-          source={source}
-          initialPosition={initialPosition}
-        />
-      </div>
+      <RSVPReaderContainer
+        useFullText={useFullText}
+        content={content}
+        summary={summary}
+        contentId={contentId}
+        title={title}
+        source={source}
+        initialPosition={initialPosition}
+      />
     );
   }
 
@@ -157,53 +151,28 @@ const Reader = () => {
       <div className="container mx-auto px-4 py-8 max-w-4xl">
         <ContentHeader content={contentObject} />
 
-        {isSimulated && (
-          <Alert variant="destructive" className="mb-6">
-            <AlertTriangle className="h-4 w-4 mr-2" />
-            <AlertDescription>
-              Using simulated content. The app couldn't access the actual content from this website.
-            </AlertDescription>
-          </Alert>
-        )}
+        <ReaderAlerts 
+          isSimulated={isSimulated} 
+          initialPosition={initialPosition} 
+          content={content} 
+        />
 
-        {initialPosition > 0 && (
-          <Alert className="mb-6 bg-blue-50 dark:bg-blue-900/20 border-blue-200 dark:border-blue-800">
-            <AlertDescription>
-              You have a saved reading position at {Math.round((initialPosition / (content.split(/\s+/).length || 1)) * 100)}% through this content.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        <div className="space-y-6">
-          <ApiKeyConfig 
-            apiKey={apiKey}
-            useOpenAI={useOpenAI}
-            onApiKeyChange={setApiKey}
-            onUseOpenAIChange={setUseOpenAI}
-          />
-          
-          {summary ? (
-            <SummaryPanel
-              summary={summary}
-              fullText={content}
-              title={title}
-              source={source}
-              isLoading={isSummarizing}
-              progress={summarizationProgress}
-              onStartReading={handleStartReading}
-              onRetry={handleRetrySummarization}
-            />
-          ) : (
-            <SummarizePrompt
-              onSummarize={() => handleSummarize(apiKey, useOpenAI)} 
-              onReadFullText={() => handleStartReading(true)}
-              isSummarizing={isSummarizing}
-              summarizationError={summarizationError}
-            />
-          )}
-          
-          <ContentPreview content={content} />
-        </div>
+        <ContentContainer
+          apiKey={apiKey}
+          useOpenAI={useOpenAI}
+          onApiKeyChange={setApiKey}
+          onUseOpenAIChange={setUseOpenAI}
+          summary={summary}
+          content={content}
+          title={title}
+          source={source}
+          isSummarizing={isSummarizing}
+          summarizationProgress={summarizationProgress}
+          summarizationError={summarizationError}
+          onSummarize={() => handleSummarize(apiKey, useOpenAI)}
+          onStartReading={handleStartReading}
+          onRetry={handleRetrySummarization}
+        />
       </div>
     </div>
   );
