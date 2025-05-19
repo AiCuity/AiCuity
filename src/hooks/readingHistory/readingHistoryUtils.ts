@@ -1,4 +1,3 @@
-
 import { ReadingHistoryEntry } from './types';
 
 /**
@@ -30,13 +29,24 @@ export const transformHistoryData = (
 
 /**
  * Removes duplicate entries, keeping the most recently updated one for each content_id
+ * and filtering out entries without summaries and with generic titles
  */
 export const removeDuplicateEntries = (entries: ReadingHistoryEntry[]): ReadingHistoryEntry[] => {
+  // Filter out entries without summaries and with generic titles
+  const filteredEntries = entries.filter(entry => {
+    // Keep entries with summaries
+    if (entry.summary) return true;
+    
+    // Filter out entries with generic titles and no summary
+    const isGenericTitle = entry.title === "Reading Session";
+    return !isGenericTitle;
+  });
+  
   const uniqueContentIds = new Map<string, ReadingHistoryEntry>();
   
   // For each entry, if we haven't seen this content_id before, or if this entry is more recent than 
   // the one we've seen, update the map with this entry
-  entries.forEach(entry => {
+  filteredEntries.forEach(entry => {
     if (entry.content_id) {
       const existing = uniqueContentIds.get(entry.content_id);
       if (!existing || new Date(entry.updated_at) > new Date(existing.updated_at)) {
@@ -57,7 +67,7 @@ export const isSignificantSession = (
   entry: Partial<ReadingHistoryEntry>, 
   minWords: number = 20
 ): boolean => {
-  // Don't save if this is a short reading session (title is generic and no summary)
+  // Don't save if this is a short reading session with no summary and a generic title
   const isGenericSession = entry.title === "Reading Session" && !entry.summary && entry.current_position < minWords;
   return !isGenericSession;
 };

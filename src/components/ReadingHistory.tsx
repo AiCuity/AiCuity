@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -74,9 +73,13 @@ const ReadingHistory = () => {
 
   // Calculate the reading progress based on position and total words
   const calculateProgress = (entry: ReadingHistoryEntry): number => {
-    if (!entry.current_position || !entry.parsed_text) return 0;
-    const totalWords = entry.parsed_text.split(/\s+/).length || 1;
-    return Math.round((entry.current_position / totalWords) * 100);
+    if (!entry.current_position || entry.current_position <= 0) return 0;
+    if (!entry.parsed_text) return 0;
+    
+    const totalWords = entry.parsed_text.split(/\s+/).filter(word => word.length > 0).length;
+    if (totalWords <= 0) return 0;
+    
+    return Math.min(Math.round((entry.current_position / totalWords) * 100), 100);
   };
 
   // Truncate long text for display

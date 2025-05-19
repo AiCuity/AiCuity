@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
@@ -27,7 +28,7 @@ export function useFetchReadingHistory() {
           throw error;
         }
         
-        // Transform and remove duplicates
+        // Transform and remove duplicates and entries without summaries
         const transformedData = transformHistoryData(data || []);
         const uniqueEntries = removeDuplicateEntries(transformedData);
         setHistory(uniqueEntries);

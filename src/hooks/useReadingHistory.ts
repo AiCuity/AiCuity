@@ -1,4 +1,5 @@
-import { useState } from 'react';
+
+import { useState, useEffect } from 'react';
 import { ReadingHistoryEntry } from './readingHistory/types';
 import { useFetchReadingHistory } from './readingHistory/useFetchReadingHistory';
 import { useReadingHistoryOperations } from './readingHistory/useReadingHistoryOperations';
@@ -14,9 +15,11 @@ export function useReadingHistory() {
   const [history, setHistory] = useState<ReadingHistoryEntry[]>(fetchedHistory);
   
   // Update local state when fetched history changes
-  if (JSON.stringify(history) !== JSON.stringify(fetchedHistory)) {
-    setHistory(fetchedHistory);
-  }
+  useEffect(() => {
+    if (JSON.stringify(history) !== JSON.stringify(fetchedHistory)) {
+      setHistory(fetchedHistory);
+    }
+  }, [fetchedHistory]);
   
   // Get history operations
   const { saveHistoryEntry, deleteHistoryEntry, findExistingEntry } = useReadingHistoryOperations(

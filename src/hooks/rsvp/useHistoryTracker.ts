@@ -1,6 +1,6 @@
 
 import { useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
 import { useAuth } from "@/context/AuthContext";
 import { calculateProgressPercentage } from "@/hooks/readingHistory/readingHistoryUtils";
@@ -28,15 +28,21 @@ export function useHistoryTracker(
 
   // Save current position to history
   const savePosition = async () => {
-    // Don't save if we don't have a valid contentId or it's not a significant session
-    if (!contentId || !isSignificantSession || !user) {
-      console.log("Not saving position - missing contentId, insignificant session, or no user");
+    // Don't save if we don't have a valid contentId
+    if (!contentId) {
+      console.log("Not saving position - missing contentId");
       return false;
     }
     
     try {
       // Check if there's already an entry for this content to avoid duplicates
       const existingEntry = history.find(entry => entry.content_id === contentId);
+      
+      // Only save if it's a significant session or if it already has a summary
+      if (!isSignificantSession && !existingEntry?.summary) {
+        console.log("Not saving insignificant session with no summary");
+        return false;
+      }
       
       // Prepare the entry data
       const entryData = {
@@ -75,10 +81,9 @@ export function useHistoryTracker(
     }
   };
 
-  // Auto-save position when user stops reading, but only if it's a significant session
+  // Auto-save position when user stops reading
   useEffect(() => {
-    // Only attempt to save if the user is logged in and it's a significant session
-    if (!isPlaying && isSignificantSession && contentId && user && currentWordIndex > 0) {
+    if (!isPlaying && contentId && currentWordIndex > 0) {
       const debounceTimer = setTimeout(() => {
         console.log("Auto-saving position:", currentWordIndex, "progress:", progressPercentage + "%");
         savePosition();
@@ -86,7 +91,7 @@ export function useHistoryTracker(
       
       return () => clearTimeout(debounceTimer);
     }
-  }, [isPlaying, contentId, currentWordIndex, user, isSignificantSession]);
+  }, [isPlaying, contentId, currentWordIndex]);
 
   return { savePosition };
 }

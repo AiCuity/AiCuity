@@ -74,6 +74,12 @@ export function useReadingHistoryOperations(
 
           return data;
         } else {
+          // Don't create new entries without summaries and with generic titles
+          if (entry.title === "Reading Session" && !entry.summary) {
+            console.log("Skipping creation of generic reading session with no summary");
+            return null;
+          }
+          
           // Create new entry
           const { data, error } = await supabase
             .from('reading_history')
@@ -146,6 +152,12 @@ export function useReadingHistoryOperations(
           
           return existingEntry;
         } else {
+          // Don't create new entries without summaries and with generic titles
+          if (entry.title === "Reading Session" && !entry.summary) {
+            console.log("Skipping local creation of generic reading session with no summary");
+            return null;
+          }
+          
           // Create new entry
           const newEntry = {
             ...entry,
