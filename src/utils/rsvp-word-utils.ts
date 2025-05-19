@@ -4,14 +4,81 @@ import { getSpeedAdjustmentFactor, calculateComplexity, isAcronym, isTechnicalTe
 
 /**
  * Process text into an array of words
+ * Now with improved handling for very long words
  */
 export function processText(text: string): string[] {
   if (!text) return [];
   
-  return text
+  // Split by whitespace and filter out empty strings
+  const initialWords = text
     .replace(/\n/g, " ")
     .split(/\s+/)
     .filter(word => word.length > 0);
+  
+  // Break down extremely long words (more than 25 chars)
+  const processedWords: string[] = [];
+  const MAX_WORD_LENGTH = 25;
+  
+  initialWords.forEach(word => {
+    if (word.length <= MAX_WORD_LENGTH) {
+      processedWords.push(word);
+    } else {
+      // Handle hyphenation for long words
+      let remainingWord = word;
+      while (remainingWord.length > MAX_WORD_LENGTH) {
+        // Look for natural hyphenation points like dashes or camelCase
+        let breakPoint = findBreakPoint(remainingWord, MAX_WORD_LENGTH);
+        
+        // Add hyphen if we're breaking in the middle of a continuous word
+        const firstPart = remainingWord.substring(0, breakPoint);
+        
+        // If breaking at a non-natural division point, add hyphen
+        if (!['_', '-', '/', '.'].includes(remainingWord[breakPoint - 1]) && 
+            breakPoint < remainingWord.length) {
+          processedWords.push(firstPart + "-");
+        } else {
+          processedWords.push(firstPart);
+        }
+        
+        remainingWord = remainingWord.substring(breakPoint);
+      }
+      
+      if (remainingWord.length > 0) {
+        processedWords.push(remainingWord);
+      }
+    }
+  });
+  
+  return processedWords;
+}
+
+/**
+ * Find an appropriate break point for a long word
+ * Prioritizes breaking at punctuation, then camelCase, then position
+ */
+function findBreakPoint(word: string, maxLength: number): number {
+  // First try to find natural dividers like hyphens, underscores, etc.
+  for (let i = maxLength; i > maxLength - 10 && i > 0; i--) {
+    if (i >= word.length) continue;
+    
+    const char = word[i];
+    if (['_', '-', '/', '.'].includes(char)) {
+      return i + 1; // Break after the divider
+    }
+  }
+  
+  // Then look for camelCase or PascalCase transitions
+  for (let i = maxLength; i > maxLength - 10 && i > 1; i--) {
+    if (i >= word.length) continue;
+    
+    // Check for lowercase to uppercase transition (camelCase)
+    if (/[a-z]/.test(word[i-1]) && /[A-Z]/.test(word[i])) {
+      return i;
+    }
+  }
+  
+  // If no natural break is found, break at the maximum allowed length
+  return Math.min(maxLength, word.length);
 }
 
 /**
@@ -24,7 +91,7 @@ export function calculateOlp(word: string): number {
   if (length <= 5) return 1;
   if (length <= 9) return 2;
   if (length <= 13) return 3;
-  return 4;
+  return Math.min(4, Math.floor(length / 3)); // Cap at 4 but ensure it's not out of bounds
 }
 
 /**

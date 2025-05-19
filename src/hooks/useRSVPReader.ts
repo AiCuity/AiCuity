@@ -29,7 +29,15 @@ export function useRSVPReader({
   useEffect(() => {
     const processedWords = processText(text);
     setWords(processedWords);
-  }, [text]);
+    
+    // If we're setting the words for the first time and there's an initialPosition,
+    // make sure it's not out of bounds
+    if (processedWords.length > 0 && initialPosition > 0) {
+      setCurrentWordIndex(prev => 
+        Math.min(prev, processedWords.length - 1)
+      );
+    }
+  }, [text, initialPosition]);
   
   // Get playback controls
   const [playbackRefs, { 
