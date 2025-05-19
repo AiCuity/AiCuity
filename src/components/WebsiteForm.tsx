@@ -1,11 +1,10 @@
-
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Loader2, Globe, AlertTriangle, ExternalLink } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 import { extractContentFromUrl } from "../utils/contentExtractor";
@@ -110,7 +109,7 @@ const WebsiteForm = () => {
       )}
       
       {isSimulatedContent && (
-        <Alert variant="warning" className="mb-4 bg-amber-50 border-amber-200 text-amber-800 dark:bg-amber-900/20 dark:border-amber-800 dark:text-amber-200">
+        <Alert variant="warning" className="mb-4">
           <AlertTriangle className="h-4 w-4" />
           <AlertTitle>Using simulated content</AlertTitle>
           <AlertDescription>
