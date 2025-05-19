@@ -3,7 +3,7 @@ import { fetchActualContent } from "./contentSource";
 import { generateFallbackContent } from "./fallbackContent";
 import { ExtractedContent } from "./types";
 
-export { ExtractedContent } from "./types";
+export type { ExtractedContent } from "./types";
 
 export async function extractContentFromUrl(url: string): Promise<ExtractedContent> {
   // Try to extract content from API first
