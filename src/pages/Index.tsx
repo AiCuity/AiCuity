@@ -31,8 +31,6 @@ const Index = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
       <div className="container mx-auto px-4 py-8 md:py-12">
         <div className="flex justify-between mb-4">
-          <ThemeToggle />
-          
           {user ? (
             <div className="flex items-center gap-4">
               {/* Calibration button with Dialog */}
@@ -55,22 +53,27 @@ const Index = () => {
                 </DialogContent>
               </Dialog>
               
+              <ThemeToggle />
+              
               <Button variant="ghost" size="sm" onClick={() => signOut()}>
                 Sign Out
               </Button>
             </div>
           ) : (
-            <div className="flex items-center gap-2">
-              <Link to="/login">
-                <Button variant="outline" size="sm">
-                  Sign In
-                </Button>
-              </Link>
-              <Link to="/register">
-                <Button size="sm">
-                  Create Account
-                </Button>
-              </Link>
+            <div className="flex items-center gap-4">
+              <ThemeToggle />
+              <div className="flex items-center gap-2">
+                <Link to="/login">
+                  <Button variant="outline" size="sm">
+                    Sign In
+                  </Button>
+                </Link>
+                <Link to="/register">
+                  <Button size="sm">
+                    Create Account
+                  </Button>
+                </Link>
+              </div>
             </div>
           )}
         </div>

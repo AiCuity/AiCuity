@@ -5,6 +5,7 @@ import { ArrowLeft, Bookmark, ExternalLink } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Content } from '@/utils/types';
 import CalibrationButton from '@/components/CalibrationButton';
+import ThemeToggle from '@/components/ui/theme-toggle';
 
 interface ContentHeaderProps {
   content: Content;
@@ -45,6 +46,7 @@ const ContentHeader: React.FC<ContentHeaderProps> = ({ content, isFullscreen }) 
       </div>
       <div className="flex items-center gap-2">
         <CalibrationButton size="sm" />
+        <ThemeToggle />
         <Button variant="ghost" size="icon">
           <Bookmark className="h-5 w-5" />
         </Button>
