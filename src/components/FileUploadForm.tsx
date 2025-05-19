@@ -5,7 +5,8 @@ import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
 import { Upload, File, Loader2, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { FileProcessingResult } from "@/utils/types";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -15,8 +16,35 @@ const FileUploadForm = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [uploadError, setUploadError] = useState<string | null>(null);
+  const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const { toast } = useToast();
   const navigate = useNavigate();
+
+  // Check if the server is running when component mounts
+  useState(() => {
+    checkServerStatus();
+  });
+
+  const checkServerStatus = async () => {
+    try {
+      const response = await fetch(`${API_URL}/api/health`, { 
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        mode: 'cors',
+      });
+      
+      if (response.ok) {
+        console.log("Server is online");
+        setServerStatus('online');
+      } else {
+        console.error("Server returned an error", response.status);
+        setServerStatus('offline');
+      }
+    } catch (error) {
+      console.error("Server appears to be offline:", error);
+      setServerStatus('offline');
+    }
+  };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -46,30 +74,61 @@ const FileUploadForm = () => {
   };
 
   const validateAndSetFile = (file: File) => {
+    // Clear any previous errors
+    setUploadError(null);
+    
     const validTypes = ['application/pdf', 'text/plain', 'application/epub+zip'];
+    const validExtensions = ['.pdf', '.txt', '.epub'];
     const fileType = file.type;
+    const fileName = file.name.toLowerCase();
     
     console.log("File type:", fileType);
     
+    // Check the file extension
+    const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
+    
     // Check for EPUB files with different MIME types
     const isEpub = fileType === 'application/epub+zip' || 
-                  file.name.toLowerCase().endsWith('.epub');
-    
-    if (!validTypes.includes(fileType) && !isEpub) {
+                  fileName.endsWith('.epub') || 
+                  fileType === 'application/octet-stream'; // Some systems might send EPUB as octet-stream
+                  
+    if (!validTypes.includes(fileType) && !hasValidExtension && !isEpub) {
+      const errorMsg = "Please upload a PDF, TXT, or EPUB file";
+      setUploadError(errorMsg);
       toast({
         title: "Invalid file type",
-        description: "Please upload a PDF, TXT, or EPUB file",
+        description: errorMsg,
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    if (file.size > 50 * 1024 * 1024) { // 50MB limit
+      const errorMsg = "File size exceeds the 50MB limit";
+      setUploadError(errorMsg);
+      toast({
+        title: "File too large",
+        description: errorMsg,
         variant: "destructive",
       });
       return;
     }
     
     setFile(file);
-    setUploadError(null);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (serverStatus === 'offline') {
+      setUploadError("The server appears to be offline. Please check if the backend server is running.");
+      toast({
+        title: "Server offline",
+        description: "Cannot connect to the processing server. Please check if the backend server is running.",
+        variant: "destructive",
+      });
+      return;
+    }
     
     if (!file) {
       toast({
@@ -100,7 +159,13 @@ const FileUploadForm = () => {
       xhr.onload = function() {
         if (xhr.status === 200) {
           try {
-            const response = JSON.parse(xhr.responseText);
+            const response = JSON.parse(xhr.responseText) as FileProcessingResult;
+            
+            if (!response.success || !response.text) {
+              const errorMsg = response.error || "Failed to process the file";
+              handleUploadError(new Error(errorMsg));
+              return;
+            }
             
             // Store the extracted text in sessionStorage to use in the Reader
             sessionStorage.setItem('readerContent', response.text);
@@ -120,7 +185,7 @@ const FileUploadForm = () => {
           let errorMessage = 'Upload failed';
           try {
             const errorResponse = JSON.parse(xhr.responseText);
-            errorMessage = errorResponse.error || errorMessage;
+            errorMessage = errorResponse.error || errorResponse.details || errorMessage;
           } catch (e) {
             // If we can't parse the response, use the default error message
           }
@@ -130,10 +195,19 @@ const FileUploadForm = () => {
       
       xhr.onerror = function() {
         handleUploadError(new Error('Network error during upload. Please check if the server is running.'));
+        // Mark server as offline
+        setServerStatus('offline');
       };
       
       xhr.onabort = function() {
         handleUploadError(new Error('Upload aborted'));
+      };
+      
+      xhr.timeout = 30000; // 30 second timeout
+      xhr.ontimeout = function() {
+        handleUploadError(new Error('Request timed out. The server might be busy or offline.'));
+        // Mark server as offline
+        setServerStatus('offline');
       };
       
       console.log(`Uploading to ${API_URL}/api/upload`);
@@ -160,6 +234,17 @@ const FileUploadForm = () => {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {serverStatus === 'offline' && (
+        <Alert variant="destructive" className="mb-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Server Connection Issue</AlertTitle>
+          <AlertDescription>
+            Unable to connect to the processing server. Please make sure the backend server is running at {API_URL}.
+            If you're running locally, check that the server has started with <code>npm run server</code> in a separate terminal.
+          </AlertDescription>
+        </Alert>
+      )}
+      
       <div className="space-y-2">
         <Label htmlFor="file-upload">Upload Document</Label>
         
@@ -187,6 +272,9 @@ const FileUploadForm = () => {
             <p className="text-sm text-gray-600 dark:text-gray-400">
               Drag & drop your PDF, TXT, or EPUB file here, or click to browse
             </p>
+            <p className="text-xs text-gray-500 dark:text-gray-400">
+              Maximum file size: 50MB
+            </p>
           </div>
         </div>
         
@@ -203,7 +291,10 @@ const FileUploadForm = () => {
               type="button" 
               variant="ghost" 
               size="sm"
-              onClick={() => setFile(null)}
+              onClick={() => {
+                setFile(null);
+                setUploadError(null);
+              }}
             >
               Remove
             </Button>
@@ -214,6 +305,7 @@ const FileUploadForm = () => {
       {uploadError && (
         <Alert variant="destructive" className="mt-4">
           <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Upload Error</AlertTitle>
           <AlertDescription>{uploadError}</AlertDescription>
         </Alert>
       )}
@@ -231,7 +323,7 @@ const FileUploadForm = () => {
       )}
       
       <div className="flex justify-end pt-2">
-        <Button type="submit" disabled={!file || isLoading}>
+        <Button type="submit" disabled={!file || isLoading || serverStatus === 'offline'}>
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />

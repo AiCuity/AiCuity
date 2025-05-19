@@ -62,28 +62,57 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 
     console.log(`Processing file: ${req.file.originalname} (${req.file.mimetype})`);
     const filePath = req.file.path;
-    const fileType = path.extname(req.file.originalname).toLowerCase();
+    
+    // Determine file type based on extension and mimetype
+    const fileExtension = path.extname(req.file.originalname).toLowerCase();
+    const mimeType = req.file.mimetype;
+    
+    console.log(`File extension: ${fileExtension}, MIME type: ${mimeType}`);
+    
+    let fileType = '';
+    
+    // Check extension first, then fallback to mimetype
+    if (['.txt'].includes(fileExtension)) {
+      fileType = '.txt';
+    } else if (['.pdf'].includes(fileExtension)) {
+      fileType = '.pdf';
+    } else if (['.epub'].includes(fileExtension)) {
+      fileType = '.epub';
+    } else if (mimeType === 'text/plain') {
+      fileType = '.txt';
+    } else if (mimeType === 'application/pdf') {
+      fileType = '.pdf';
+    } else if (mimeType === 'application/epub+zip' || mimeType === 'application/octet-stream') {
+      // Some systems might send EPUB as octet-stream
+      fileType = '.epub';
+    }
+    
+    if (!fileType) {
+      console.log(`Unsupported file type: extension=${fileExtension}, mime=${mimeType}`);
+      return res.status(400).json({ error: 'Unsupported file type' });
+    }
     
     let extractedText = '';
     
     // Process different file types
-    console.log(`File type detected: ${fileType}`);
-    switch (fileType) {
-      case '.txt':
-        console.log('Processing as TXT file');
-        extractedText = await processTextFile(filePath);
-        break;
-      case '.pdf':
-        console.log('Processing as PDF file');
-        extractedText = await processPdfFile(filePath);
-        break;
-      case '.epub':
-        console.log('Processing as EPUB file');
-        extractedText = await processEpubFile(filePath);
-        break;
-      default:
-        console.log(`Unsupported file type: ${fileType}`);
-        return res.status(400).json({ error: 'Unsupported file type' });
+    console.log(`Processing as ${fileType} file`);
+    try {
+      switch (fileType) {
+        case '.txt':
+          extractedText = await processTextFile(filePath);
+          break;
+        case '.pdf':
+          extractedText = await processPdfFile(filePath);
+          break;
+        case '.epub':
+          extractedText = await processEpubFile(filePath);
+          break;
+        default:
+          throw new Error(`Unsupported file type: ${fileType}`);
+      }
+    } catch (processingError) {
+      console.error(`Error in file processing: ${processingError.message}`);
+      throw new Error(`Failed to extract text: ${processingError.message}`);
     }
 
     // Check if we got any content

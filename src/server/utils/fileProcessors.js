@@ -30,6 +30,13 @@ const processEpubFile = (filePath) => {
     const scriptsDir = path.join(__dirname, '..', 'scripts');
     if (!fs.existsSync(scriptsDir)) {
       fs.mkdirSync(scriptsDir, { recursive: true });
+      
+      // Make sure the Python script is executable
+      try {
+        fs.chmodSync(pythonScript, '755');
+      } catch (err) {
+        console.log('Note: Unable to make script executable, continuing anyway');
+      }
     }
     
     // Log the command being executed to help with debugging
@@ -40,16 +47,34 @@ const processEpubFile = (filePath) => {
     exec(command, (error, stdout, stderr) => {
       if (error) {
         console.error(`Error processing EPUB with python3: ${error.message}`);
+        console.error(`Command was: ${command}`);
+        if (stderr) {
+          console.error(`STDERR: ${stderr}`);
+        }
+        
         // Fall back to 'python' command (common on Windows)
-        exec(`python "${pythonScript}" "${filePath}"`, (fallbackError, fallbackStdout, fallbackStderr) => {
+        const fallbackCommand = `python "${pythonScript}" "${filePath}"`;
+        console.log(`Trying fallback command: ${fallbackCommand}`);
+        
+        exec(fallbackCommand, (fallbackError, fallbackStdout, fallbackStderr) => {
           if (fallbackError) {
             console.error(`Error processing EPUB with python fallback: ${fallbackError.message}`);
-            reject(fallbackError);
+            console.error(`Fallback command was: ${fallbackCommand}`);
+            if (fallbackStderr) {
+              console.error(`STDERR: ${fallbackStderr}`);
+            }
+            
+            reject(new Error(`Failed to process EPUB file: ${fallbackError.message}`));
             return;
           }
           
           if (fallbackStderr) {
             console.error(`EPUB processing stderr (python fallback): ${fallbackStderr}`);
+          }
+          
+          if (!fallbackStdout || fallbackStdout.trim() === '') {
+            reject(new Error('No text extracted from EPUB file'));
+            return;
           }
           
           resolve(cleanText(fallbackStdout));
@@ -59,6 +84,11 @@ const processEpubFile = (filePath) => {
       
       if (stderr) {
         console.error(`EPUB processing stderr: ${stderr}`);
+      }
+      
+      if (!stdout || stdout.trim() === '') {
+        reject(new Error('No text extracted from EPUB file'));
+        return;
       }
       
       resolve(cleanText(stdout));
