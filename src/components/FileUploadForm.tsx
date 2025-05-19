@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/components/ui/use-toast";
@@ -20,9 +20,10 @@ const FileUploadForm = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  // Define checkServerStatus function first
-  const checkServerStatus = async () => {
+  // Define checkServerStatus as a useCallback function
+  const checkServerStatus = useCallback(async () => {
     try {
+      console.log(`Checking server status at ${API_URL}/api/health`);
       const response = await fetch(`${API_URL}/api/health`, { 
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
@@ -40,12 +41,19 @@ const FileUploadForm = () => {
       console.error("Server appears to be offline:", error);
       setServerStatus('offline');
     }
-  };
+  }, []);
 
-  // Use useEffect instead of useState for the initial check
+  // Use useEffect with the callback function
   useEffect(() => {
     checkServerStatus();
-  }, []);
+    
+    // Set up an interval to periodically check server status
+    const intervalId = setInterval(() => {
+      checkServerStatus();
+    }, 30000); // Check every 30 seconds
+    
+    return () => clearInterval(intervalId);
+  }, [checkServerStatus]);
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -122,13 +130,18 @@ const FileUploadForm = () => {
     e.preventDefault();
     
     if (serverStatus === 'offline') {
-      setUploadError("The server appears to be offline. Please check if the backend server is running.");
-      toast({
-        title: "Server offline",
-        description: "Cannot connect to the processing server. Please check if the backend server is running.",
-        variant: "destructive",
-      });
-      return;
+      // Try to check the server once more before giving up
+      await checkServerStatus();
+      
+      if (serverStatus === 'offline') {
+        setUploadError("The server appears to be offline. Please check if the backend server is running.");
+        toast({
+          title: "Server offline",
+          description: "Cannot connect to the processing server. Please check if the backend server is running.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
     
     if (!file) {
@@ -233,6 +246,15 @@ const FileUploadForm = () => {
     });
   };
 
+  const handleRetryConnection = () => {
+    setServerStatus('checking');
+    checkServerStatus();
+    toast({
+      title: "Checking server connection",
+      description: "Attempting to reconnect to the server...",
+    });
+  };
+
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {serverStatus === 'offline' && (
@@ -240,8 +262,16 @@ const FileUploadForm = () => {
           <AlertCircle className="h-4 w-4" />
           <AlertTitle>Server Connection Issue</AlertTitle>
           <AlertDescription>
-            Unable to connect to the processing server. Please make sure the backend server is running at {API_URL}.
-            If you're running locally, check that the server has started with <code>npm run server</code> in a separate terminal.
+            <p className="mb-2">Unable to connect to the processing server. Please make sure the backend server is running at {API_URL}.</p>
+            <p className="mb-2">If you're running locally, check that the server has started with <code>npm run server</code> in a separate terminal.</p>
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleRetryConnection}
+              className="mt-2"
+            >
+              Retry Connection
+            </Button>
           </AlertDescription>
         </Alert>
       )}
@@ -324,7 +354,10 @@ const FileUploadForm = () => {
       )}
       
       <div className="flex justify-end pt-2">
-        <Button type="submit" disabled={!file || isLoading || serverStatus === 'offline'}>
+        <Button 
+          type="submit" 
+          disabled={!file || isLoading || serverStatus === 'offline'}
+        >
           {isLoading ? (
             <>
               <Loader2 className="mr-2 h-4 w-4 animate-spin" />
