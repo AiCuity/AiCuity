@@ -159,10 +159,7 @@ const Reader = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="flex justify-between items-center mb-4">
-          <ContentHeader content={contentObject} />
-          <ThemeToggle />
-        </div>
+        <ContentHeader content={contentObject} />
 
         <ReaderAlerts 
           isSimulated={isSimulated} 
