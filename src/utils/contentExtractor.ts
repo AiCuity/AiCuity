@@ -1,6 +1,7 @@
 
 import { fetchActualContent } from "./contentSource";
 import { generateFallbackContent } from "./fallbackContent";
+import { ExtractedContent } from "./types";
 
 export type { ExtractedContent } from "./types";
 
