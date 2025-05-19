@@ -101,12 +101,25 @@ function cleanHtmlContent(content: string): string {
     .replace(/\s*\n\s*/g, '\n')
     // Remove brackets with numbers (citation references)
     .replace(/\[\d+\]/g, '')
+    // Remove references and citation markers with various formats
+    .replace(/\[citation needed\]/gi, '')
+    .replace(/\[edit\]/gi, '')
+    .replace(/\[note \d+\]/gi, '')
+    .replace(/\[ref\]/gi, '')
+    .replace(/\[clarification needed\]/gi, '')
     // Clean up Unicode replacement characters and question marks in boxes
     .replace(/�/g, '')
     .replace(/\uFFFD/g, '')
     // Remove strange character combinations that often appear in extracted text
     .replace(/\\u[\dA-Fa-f]{4}/g, '')
     .replace(/\\x[\dA-Fa-f]{2}/g, '')
+    // Remove navigation elements that might have been extracted
+    .replace(/(?:Home|Menu|Navigation|Skip to content)[\s]*(?:\||\•|>|→|»)[\s]*/gi, '')
+    .replace(/(?:Main menu|Main content|Main navigation|Search|Log in|Sign up|Register|Subscribe)/gi, '')
+    // Remove footer elements
+    .replace(/(?:Terms of use|Privacy policy|Copyright|All rights reserved|Terms and conditions|© \d{4})/gi, '')
+    // Remove social media text
+    .replace(/(?:Share on|Follow us on|Connect with us|Like us|Facebook|Twitter|Instagram|LinkedIn|Pinterest|YouTube|TikTok)/gi, '')
     // Remove CSS class definitions and style information
     .replace(/\.mw-parser-output[^}]+}/g, '')
     .replace(/\.[a-zA-Z0-9_-]+{[^}]*}/g, '')
@@ -124,5 +137,13 @@ function cleanHtmlContent(content: string): string {
       // Otherwise remove the whole thing
       return '';
     })
+    // Remove common website UI elements that might appear as text
+    .replace(/(?:Skip to main content|Jump to navigation|Search|Menu|Toggle navigation)/gi, '')
+    // Remove lines that are very short (likely menu items)
+    .replace(/^.{1,3}$/gm, '')
+    // Remove cookie notices
+    .replace(/(?:This website uses cookies|We use cookies|Accept cookies|Cookie policy|Cookie consent|Cookie settings)/gi, '')
+    // Fix up spacing issues after cleaning
+    .replace(/\s{2,}/g, ' ')
     .trim();
 }

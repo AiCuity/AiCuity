@@ -26,6 +26,11 @@ const ContentPreview = ({ content }: ContentPreviewProps) => {
     .replace(/\n{3,}/g, '\n\n')
     // Remove brackets with numbers (citation references)
     .replace(/\[\d+\]/g, '')
+    // Remove references and citation markers with various formats
+    .replace(/\[citation needed\]/gi, '')
+    .replace(/\[edit\]/gi, '')
+    .replace(/\[note \d+\]/gi, '')
+    .replace(/\[ref\]/gi, '')
     // Clean up Unicode replacement characters and question marks in boxes
     .replace(/�/g, '')
     .replace(/\uFFFD/g, '')

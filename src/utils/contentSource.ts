@@ -29,6 +29,33 @@ export async function fetchActualContent(url: string): Promise<ExtractedContent 
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlContent, 'text/html');
       
+      // Remove navigation, references, and non-content elements
+      const elementsToRemove = [
+        '.mw-navigation',
+        '.mw-references',
+        '.mw-editsection',
+        '#mw-panel',
+        '#mw-head',
+        '.mw-indicators',
+        '.mw-jump-link',
+        '.mw-disambig',
+        '.reference',
+        '.noprint',
+        '.mbox-image',
+        '.navbox',
+        '.catlinks',
+        '.printfooter',
+        '#siteSub',
+        '#contentSub',
+        '#footer',
+        '#mw-navigation'
+      ];
+      
+      elementsToRemove.forEach(selector => {
+        const elements = doc.querySelectorAll(selector);
+        elements.forEach(el => el.remove());
+      });
+      
       // Extract all paragraphs, headings, and lists
       const contentElements = Array.from(doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6, ul, ol, li'));
       
@@ -92,15 +119,61 @@ export async function fetchActualContent(url: string): Promise<ExtractedContent 
       const parser = new DOMParser();
       const doc = parser.parseFromString(htmlContent, 'text/html');
       
+      // Remove common navigation and non-content elements before running Readability
+      const elementsToRemove = [
+        'nav',
+        'header',
+        'footer',
+        'aside',
+        '.nav',
+        '.navbar',
+        '.navigation',
+        '.menu',
+        '.sidebar',
+        '.comments',
+        '.share',
+        '.social',
+        '.related',
+        '.recommended',
+        '.footer',
+        '.header',
+        '.cookie',
+        '.advertisement',
+        '.ad-container',
+        '#navigation',
+        '#header',
+        '#footer',
+        '#sidebar',
+        '#menu',
+        '[role=navigation]',
+        '[role=banner]',
+        '[role=contentinfo]'
+      ];
+      
+      elementsToRemove.forEach(selector => {
+        try {
+          const elements = doc.querySelectorAll(selector);
+          elements.forEach(el => el.remove());
+        } catch (e) {
+          console.log(`Error removing element with selector ${selector}:`, e);
+        }
+      });
+      
       // Get the page title
       const pageTitle = doc.querySelector('title')?.textContent || new URL(url).hostname;
       
-      // Use Readability to extract the main content
-      const reader = new Readability(doc);
+      // Use Readability with stricter content extraction settings
+      const readerOptions = {
+        classesToPreserve: ['article', 'content', 'post', 'entry'],
+        disableJSONLD: true,
+        serializer: (node: Document) => node.textContent || ""
+      };
+      
+      const reader = new Readability(doc, readerOptions);
       const article = reader.parse();
       
-      if (!article) {
-        throw new Error('Readability could not extract content');
+      if (!article || !article.textContent || article.textContent.trim().length < 100) {
+        throw new Error('Readability could not extract sufficient content');
       }
       
       // Return the extracted content
@@ -128,11 +201,56 @@ export async function fetchActualContent(url: string): Promise<ExtractedContent 
         const parser = new DOMParser();
         const doc = parser.parseFromString(htmlContent, 'text/html');
         
+        // Remove common navigation and non-content elements before running Readability
+        const elementsToRemove = [
+          'nav',
+          'header',
+          'footer',
+          'aside',
+          '.nav',
+          '.navbar',
+          '.navigation',
+          '.menu',
+          '.sidebar',
+          '.comments',
+          '.share',
+          '.social',
+          '.related',
+          '.recommended',
+          '.footer',
+          '.header',
+          '.cookie',
+          '.advertisement',
+          '.ad-container',
+          '#navigation',
+          '#header',
+          '#footer',
+          '#sidebar',
+          '#menu',
+          '[role=navigation]',
+          '[role=banner]',
+          '[role=contentinfo]'
+        ];
+        
+        elementsToRemove.forEach(selector => {
+          try {
+            const elements = doc.querySelectorAll(selector);
+            elements.forEach(el => el.remove());
+          } catch (e) {
+            console.log(`Error removing element with selector ${selector}:`, e);
+          }
+        });
+        
         // Get the page title
         const pageTitle = doc.querySelector('title')?.textContent || new URL(url).hostname;
         
-        // Use Readability to extract the main content
-        const reader = new Readability(doc);
+        // Use Readability with stricter content extraction settings
+        const readerOptions = {
+          classesToPreserve: ['article', 'content', 'post', 'entry'],
+          disableJSONLD: true
+        };
+        
+        const reader = new Readability(doc, readerOptions);
         const article = reader.parse();
         
         if (!article) {

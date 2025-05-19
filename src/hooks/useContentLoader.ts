@@ -39,15 +39,25 @@ export const useContentLoader = (contentId?: string) => {
           
           if (storedContent) {
             console.log("Loaded website content:", storedContent.substring(0, 100) + "...");
+            
+            // Check if this is simulated content
+            const contentIsSimulated = 
+              storedContent.includes('⚠️ NOTE: This is simulated content') || 
+              storedContent.includes('simulated content');
+              
             setContent(storedContent);
             setTitle(storedTitle);
             setSource(storedSource);
+            setIsSimulated(contentIsSimulated);
             
-            // Check if this is simulated content
-            setIsSimulated(
-              storedContent.includes('⚠️ NOTE: This is simulated content') || 
-              storedContent.includes('simulated content')
-            );
+            if (contentIsSimulated) {
+              console.log("Using simulated content");
+              toast({
+                title: "Using simulated content",
+                description: "The actual website content could not be accessed.",
+                variant: "default",
+              });
+            }
           } else {
             toast({
               title: "Content not found",
