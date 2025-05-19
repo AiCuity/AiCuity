@@ -1,356 +1,38 @@
-import { useState, useEffect } from 'react';
-import { supabase } from '@/integrations/supabase/client';
-import { useAuth } from '@/context/AuthContext';
-import { useToast } from '@/hooks/use-toast';
-import { ReadingHistoryItem } from '@/utils/types';
 
-export type ReadingHistoryEntry = ReadingHistoryItem;
+import { useState } from 'react';
+import { ReadingHistoryEntry } from '@/utils/types';
+import { useFetchReadingHistory } from './readingHistory/useFetchReadingHistory';
+import { useReadingHistoryOperations } from './readingHistory/useReadingHistoryOperations';
+
+// Re-export the type for backward compatibility
+export type { ReadingHistoryEntry };
 
 export function useReadingHistory() {
-  const [history, setHistory] = useState<ReadingHistoryEntry[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const { user } = useAuth();
-  const { toast } = useToast();
+  // Fetch history using the dedicated hook
+  const { history: fetchedHistory, isLoading, refreshHistory } = useFetchReadingHistory();
+  
+  // Set up local state to manage history updates
+  const [history, setHistory] = useState<ReadingHistoryEntry[]>(fetchedHistory);
+  
+  // Update local state when fetched history changes
+  if (JSON.stringify(history) !== JSON.stringify(fetchedHistory)) {
+    setHistory(fetchedHistory);
+  }
+  
+  // Get history operations
+  const { saveHistoryEntry, deleteHistoryEntry, findExistingEntry } = useReadingHistoryOperations(
+    history,
+    setHistory,
+    refreshHistory
+  );
 
-  const fetchHistory = async () => {
-    setIsLoading(true);
-
-    if (user) {
-      try {
-        // Fetch from Supabase if user is logged in
-        const { data, error } = await supabase
-          .from('reading_history')
-          .select('*')
-          .eq('user_id', user.id) // Only fetch history for current user
-          .order('updated_at', { ascending: false });
-
-        if (error) {
-          throw error;
-        }
-
-        // Transform data to ensure it matches the ReadingHistoryEntry interface
-        const transformedData: ReadingHistoryEntry[] = (data || []).map(item => ({
-          id: item.id,
-          title: item.title,
-          source: item.source,
-          source_type: 'unknown',  // Default value since it doesn't exist in the DB schema
-          source_input: item.source || item.title || '',
-          parsed_text: null,  // Default value since it doesn't exist in the DB schema
-          wpm: item.wpm,
-          current_position: item.current_position,
-          calibrated: false,  // Default value since it doesn't exist in the DB schema
-          created_at: item.created_at,
-          updated_at: item.updated_at,
-          summary: item.summary,
-          content_id: item.content_id,
-          is_completed: item.is_completed
-        }));
-
-        // Remove potential duplicates (same content_id with different entries)
-        const uniqueEntries = removeDuplicateEntries(transformedData);
-        setHistory(uniqueEntries);
-      } catch (error) {
-        console.error('Error fetching reading history:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to load reading history.',
-          variant: 'destructive',
-        });
-        setHistory([]);
-      }
-    } else {
-      // Fetch from localStorage if user is not logged in
-      try {
-        const localHistory = localStorage.getItem('readingHistory');
-        if (localHistory) {
-          // Transform local data to ensure it matches ReadingHistoryEntry
-          const parsedHistory = JSON.parse(localHistory);
-          const transformedLocalData: ReadingHistoryEntry[] = parsedHistory.map((item: any) => ({
-            id: item.id,
-            title: item.title,
-            source: item.source,
-            // Add default values for potentially missing fields in localStorage
-            source_type: item.source_type || 'unknown',
-            source_input: item.source_input || item.source || item.title || '',
-            parsed_text: item.parsed_text || null,
-            wpm: item.wpm,
-            current_position: item.current_position,
-            calibrated: item.calibrated !== null ? item.calibrated : false,
-            created_at: item.created_at,
-            updated_at: item.updated_at,
-            summary: item.summary,
-            content_id: item.content_id,
-            is_completed: item.is_completed
-          }));
-          
-          // Remove potential duplicates (same content_id with different entries)
-          const uniqueEntries = removeDuplicateEntries(transformedLocalData);
-          setHistory(uniqueEntries);
-        }
-      } catch (error) {
-        console.error('Error parsing local reading history:', error);
-        setHistory([]);
-      }
-    }
-
-    setIsLoading(false);
-  };
-
-  // Function to remove duplicate entries, keeping the most recently updated one
-  const removeDuplicateEntries = (entries: ReadingHistoryEntry[]): ReadingHistoryEntry[] => {
-    const uniqueContentIds = new Map<string, ReadingHistoryEntry>();
-    
-    // For each entry, if we haven't seen this content_id before, or if this entry is more recent than 
-    // the one we've seen, update the map with this entry
-    entries.forEach(entry => {
-      if (entry.content_id) {
-        const existing = uniqueContentIds.get(entry.content_id);
-        if (!existing || new Date(entry.updated_at) > new Date(existing.updated_at)) {
-          uniqueContentIds.set(entry.content_id, entry);
-        }
-      }
-    });
-    
-    // Convert the map values back to an array and sort by updated_at
-    return Array.from(uniqueContentIds.values())
-      .sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
-  };
-
-  // Check if an entry already exists for the same content
-  const findExistingEntry = (contentId: string): ReadingHistoryEntry | undefined => {
-    return history.find(entry => entry.content_id === contentId);
-  };
-
-  // Save reading history entry
-  const saveHistoryEntry = async (entry: Omit<ReadingHistoryEntry, 'id' | 'created_at' | 'updated_at'>) => {
-    // Don't save if this is a short reading session (title is generic and no summary)
-    const isGenericSession = entry.title === "Reading Session" && !entry.summary && entry.current_position < 20;
-    if (isGenericSession) {
-      console.log("Skipping save for short generic reading session");
-      return null;
-    }
-    
-    const existingEntry = findExistingEntry(entry.content_id);
-    
-    // Calculate progress percentage for logging
-    const totalWords = entry.parsed_text ? entry.parsed_text.split(/\s+/).filter(word => word.length > 0).length : 0;
-    const progressPct = totalWords > 0 
-      ? Math.min(Math.round((entry.current_position / totalWords) * 100), 100)
-      : 0;
-    console.log(`Saving entry for ${entry.title} at position ${entry.current_position} (${progressPct}%)`);
-    
-    if (user) {
-      try {
-        // Save to Supabase if user is logged in
-        if (existingEntry) {
-          // Update existing entry
-          const { data, error } = await supabase
-            .from('reading_history')
-            .update({
-              current_position: entry.current_position,
-              wpm: entry.wpm,
-              summary: entry.summary || existingEntry.summary,
-              updated_at: new Date().toISOString()
-            })
-            .eq('id', existingEntry.id)
-            .eq('user_id', user.id) // Ensure we only update entries belonging to this user
-            .select()
-            .single();
-
-          if (error) {
-            throw error;
-          }
-          
-          // Update the entry in state
-          setHistory(prev => {
-            const updatedEntries = prev.map(item => 
-              item.id === existingEntry.id 
-                ? { 
-                    ...item, 
-                    current_position: entry.current_position, 
-                    wpm: entry.wpm, 
-                    summary: entry.summary || item.summary, 
-                    updated_at: new Date().toISOString() 
-                  }
-                : item
-            );
-            
-            return removeDuplicateEntries(updatedEntries);
-          });
-
-          return data;
-        } else {
-          // Create new entry
-          const { data, error } = await supabase
-            .from('reading_history')
-            .insert({
-              title: entry.title,
-              source: entry.source,
-              content_id: entry.content_id,
-              wpm: entry.wpm,
-              current_position: entry.current_position,
-              summary: entry.summary,
-              user_id: user.id // Ensure the user_id is set to the current user
-            })
-            .select()
-            .single();
-
-          if (error) {
-            throw error;
-          }
-
-          // Transform the new entry to match our type
-          const newEntry: ReadingHistoryEntry = {
-            ...data,
-            source_type: entry.source_type || 'unknown',
-            source_input: data.source || data.title || '',
-            parsed_text: entry.parsed_text || null,
-            calibrated: entry.calibrated || false,
-          };
-
-          // Add to history state, ensuring no duplicates
-          setHistory(prev => {
-            const updatedEntries = [newEntry, ...prev];
-            return removeDuplicateEntries(updatedEntries);
-          });
-
-          return data;
-        }
-      } catch (error) {
-        console.error('Error saving reading history:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to save reading session.',
-          variant: 'destructive',
-        });
-        return null;
-      }
-    } else {
-      // Save to localStorage if user is not logged in
-      try {
-        const localHistory: ReadingHistoryEntry[] = JSON.parse(localStorage.getItem('readingHistory') || '[]');
-        
-        if (existingEntry) {
-          // Update existing entry
-          const updatedHistory = localHistory.map(item => 
-            item.id === existingEntry.id 
-              ? { 
-                  ...item, 
-                  current_position: entry.current_position, 
-                  wpm: entry.wpm, 
-                  summary: entry.summary || item.summary,
-                  updated_at: new Date().toISOString()
-                }
-              : item
-          );
-          
-          const uniqueHistory = removeDuplicateEntries(updatedHistory);
-          localStorage.setItem('readingHistory', JSON.stringify(uniqueHistory));
-          
-          // Update state
-          setHistory(uniqueHistory);
-          
-          return existingEntry;
-        } else {
-          // Create new entry
-          const newEntry = {
-            ...entry,
-            id: `local-${Date.now()}`,
-            created_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-          };
-          
-          const updatedHistory = [newEntry, ...localHistory];
-          const uniqueHistory = removeDuplicateEntries(updatedHistory);
-          localStorage.setItem('readingHistory', JSON.stringify(uniqueHistory));
-          
-          // Update state
-          setHistory(uniqueHistory);
-          
-          return newEntry;
-        }
-      } catch (error) {
-        console.error('Error saving local reading history:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to save reading session locally.',
-          variant: 'destructive',
-        });
-        return null;
-      }
-    }
-  };
-
-  // Delete reading history entry
-  const deleteHistoryEntry = async (id: string) => {
-    if (user) {
-      try {
-        // Delete from Supabase if user is logged in
-        const { error } = await supabase
-          .from('reading_history')
-          .delete()
-          .eq('id', id)
-          .eq('user_id', user.id); // Ensure we only delete entries belonging to this user
-
-        if (error) {
-          throw error;
-        }
-
-        setHistory(history.filter(entry => entry.id !== id));
-        
-        toast({
-          title: 'Entry deleted',
-          description: 'Reading history entry has been deleted.',
-        });
-        
-        return true;
-      } catch (error) {
-        console.error('Error deleting reading history:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to delete reading history entry.',
-          variant: 'destructive',
-        });
-        return false;
-      }
-    } else {
-      // Delete from localStorage if user is not logged in
-      try {
-        const localHistory = JSON.parse(localStorage.getItem('readingHistory') || '[]');
-        const updatedHistory = localHistory.filter((entry: ReadingHistoryEntry) => entry.id !== id);
-        
-        localStorage.setItem('readingHistory', JSON.stringify(updatedHistory));
-        setHistory(updatedHistory);
-        
-        toast({
-          title: 'Entry deleted',
-          description: 'Reading history entry has been deleted.',
-        });
-        
-        return true;
-      } catch (error) {
-        console.error('Error deleting local reading history:', error);
-        toast({
-          title: 'Error',
-          description: 'Failed to delete reading history entry.',
-          variant: 'destructive',
-        });
-        return false;
-      }
-    }
-  };
-
-  // Load history on component mount or when user changes
-  useEffect(() => {
-    fetchHistory();
-  }, [user]); // Fetch history when user changes
-
+  // Return all the necessary data and functions
   return {
     history,
     isLoading,
     saveHistoryEntry,
     deleteHistoryEntry,
-    refreshHistory: fetchHistory,
-    fetchHistory,
+    refreshHistory,
+    fetchHistory: refreshHistory,
   };
 }

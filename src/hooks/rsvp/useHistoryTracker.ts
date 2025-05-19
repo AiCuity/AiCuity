@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
 import { useAuth } from "@/context/AuthContext";
+import { calculateProgressPercentage } from "@/hooks/readingHistory/readingHistoryUtils";
 
 export function useHistoryTracker(
   contentId: string | undefined,
@@ -22,12 +23,8 @@ export function useHistoryTracker(
   // Check if this is a significant reading session
   const isSignificantSession = currentWordIndex >= MIN_WORDS_READ;
   
-  // Calculate total words for progress percentage - ensure we have valid text content
-  const totalWords = text ? text.split(/\s+/).filter(word => word.length > 0).length : 0;
-  // Fix progress percentage calculation to handle edge cases
-  const progressPercentage = totalWords > 0 
-    ? Math.min(Math.round((currentWordIndex / totalWords) * 100), 100) 
-    : 0;
+  // Calculate progress percentage using the utility function
+  const progressPercentage = calculateProgressPercentage(currentWordIndex, text);
 
   // Save current position to history
   const savePosition = async () => {
