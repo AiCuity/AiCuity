@@ -8,7 +8,7 @@ import ProgressBar from "./ProgressBar";
 import PlaybackControls from "./PlaybackControls";
 import SpeedControl from "./SpeedControl";
 import { Button } from "@/components/ui/button";
-import { Refresh, BellOff, Bell } from "lucide-react";
+import { RefreshCw, BellOff, Bell } from "lucide-react";
 
 interface RSVPReaderProps {
   text: string;
@@ -102,7 +102,7 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
             onClick={restartReading}
             className="flex items-center gap-1"
           >
-            <Refresh className="h-4 w-4" />
+            <RefreshCw className="h-4 w-4" />
             Restart
           </Button>
           
