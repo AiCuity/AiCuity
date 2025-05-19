@@ -204,7 +204,8 @@ const Calibration = () => {
               {readingMode ? (
                 <CalibrationPassage 
                   text={currentPassage.content} 
-                  wpm={currentPassage.wpm} 
+                  wpm={currentPassage.wpm}
+                  title={currentPassage.title}
                   onComplete={handleReadingComplete}
                 />
               ) : (

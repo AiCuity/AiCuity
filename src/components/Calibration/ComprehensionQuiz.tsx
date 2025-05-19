@@ -9,41 +9,34 @@ interface Question {
   id: string;
   text: string;
   options: string[];
-  correctAnswer: number;
+  correctAnswer: string; // Changed to string to match the data structure
 }
 
 interface ComprehensionQuizProps {
   questions: Question[];
-  passageId: string;
-  onComplete: (passageId: string, score: number) => void;
+  onSubmit: (answers: Record<string, string>) => void; // Changed to match expected usage
+  answers: Record<string, string>;
+  setAnswers: React.Dispatch<React.SetStateAction<Record<string, string>>>;
 }
 
 const ComprehensionQuiz: React.FC<ComprehensionQuizProps> = ({ 
-  questions, 
-  passageId,
-  onComplete 
+  questions,
+  answers,
+  setAnswers, 
+  onSubmit 
 }) => {
-  const [answers, setAnswers] = useState<Record<string, number>>({});
   const [submitted, setSubmitted] = useState(false);
   
-  const handleAnswerChange = (questionId: string, answerIndex: number) => {
+  const handleAnswerChange = (questionId: string, selectedAnswer: string) => {
     setAnswers({
       ...answers,
-      [questionId]: answerIndex
+      [questionId]: selectedAnswer
     });
   };
   
   const handleSubmit = () => {
     setSubmitted(true);
-    
-    // Calculate score (percentage correct)
-    const totalQuestions = questions.length;
-    const correctAnswers = questions.reduce((count, question) => {
-      return answers[question.id] === question.correctAnswer ? count + 1 : count;
-    }, 0);
-    
-    const scorePercentage = (correctAnswers / totalQuestions) * 100;
-    onComplete(passageId, scorePercentage);
+    onSubmit(answers);
   };
   
   const allQuestionsAnswered = questions.every(q => answers[q.id] !== undefined);
@@ -60,8 +53,8 @@ const ComprehensionQuiz: React.FC<ComprehensionQuizProps> = ({
               {index + 1}. {question.text}
             </h3>
             <RadioGroup
-              value={answers[question.id]?.toString()}
-              onValueChange={(value) => handleAnswerChange(question.id, parseInt(value))}
+              value={answers[question.id]}
+              onValueChange={(value) => handleAnswerChange(question.id, value)}
               disabled={submitted}
             >
               {question.options.map((option, optionIndex) => (
@@ -69,15 +62,15 @@ const ComprehensionQuiz: React.FC<ComprehensionQuizProps> = ({
                   key={optionIndex} 
                   className={`flex items-center space-x-2 ${
                     submitted && 
-                    (optionIndex === question.correctAnswer ? 
+                    (option === question.correctAnswer ? 
                       'bg-green-50 p-2 rounded-md border border-green-200' : 
-                      answers[question.id] === optionIndex ? 
+                      answers[question.id] === option ? 
                         'bg-red-50 p-2 rounded-md border border-red-200' : 
                         '')
                   }`}
                 >
                   <RadioGroupItem 
-                    value={optionIndex.toString()} 
+                    value={option} 
                     id={`${question.id}-option-${optionIndex}`} 
                   />
                   <Label htmlFor={`${question.id}-option-${optionIndex}`}>

@@ -6,16 +6,18 @@ import { Progress } from '@/components/ui/progress';
 import { useRSVPReader } from '@/hooks/useRSVPReader';
 
 interface CalibrationPassageProps {
-  passage: {
-    id: string;
-    title: string;
-    content: string;
-    wpm: number;
-  };
-  onComplete: (passageId: string) => void;
+  text: string; // Changed from passage object to direct text
+  wpm: number;  // Direct WPM value
+  title?: string; // Optional title
+  onComplete: () => void; // Changed to simple callback without passageId
 }
 
-const CalibrationPassage: React.FC<CalibrationPassageProps> = ({ passage, onComplete }) => {
+const CalibrationPassage: React.FC<CalibrationPassageProps> = ({ 
+  text, 
+  wpm, 
+  title, 
+  onComplete 
+}) => {
   const [isStarted, setIsStarted] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const { 
@@ -25,16 +27,16 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({ passage, onComp
     formattedWord,
     progress,
     words
-  } = useRSVPReader({ text: passage.content });
+  } = useRSVPReader({ text });
 
   useEffect(() => {
     // Check if we've reached the end
     if (isStarted && words.length > 0 && currentWordIndex >= words.length - 1) {
       setIsFinished(true);
       setIsPlaying(false);
-      onComplete(passage.id);
+      onComplete();
     }
-  }, [currentWordIndex, words, isStarted, passage.id, onComplete, setIsPlaying]);
+  }, [currentWordIndex, words, isStarted, onComplete, setIsPlaying]);
 
   const handleStart = () => {
     setIsStarted(true);
@@ -45,14 +47,14 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({ passage, onComp
     <Card className="mb-6">
       <CardContent className="p-6">
         <div className="mb-4">
-          <h3 className="text-lg font-medium mb-2">{passage.title}</h3>
-          <p className="text-sm text-gray-500">Speed: {passage.wpm} WPM</p>
+          <h3 className="text-lg font-medium mb-2">{title || `Reading Test at ${wpm} WPM`}</h3>
+          <p className="text-sm text-gray-500">Speed: {wpm} WPM</p>
         </div>
 
         {!isStarted ? (
           <div className="text-center py-10">
             <p className="mb-4">
-              You'll read a short passage at {passage.wpm} WPM. After reading, you'll answer questions about the content.
+              You'll read a short passage at {wpm} WPM. After reading, you'll answer questions about the content.
             </p>
             <Button onClick={handleStart}>Start Reading</Button>
           </div>
