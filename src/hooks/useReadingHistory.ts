@@ -1,25 +1,10 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
 import { ReadingHistoryItem } from '@/utils/types';
 
-export type ReadingHistoryEntry = {
-  id: string;
-  title: string;
-  source: string | null;
-  source_type: string;
-  source_input: string;
-  parsed_text?: string | null;
-  wpm: number;
-  current_position: number | null;
-  calibrated: boolean | null;
-  created_at: string;
-  updated_at: string;
-  summary: string | null;
-  content_id: string;
-};
+export type ReadingHistoryEntry = ReadingHistoryItem;
 
 export function useReadingHistory() {
   const [history, setHistory] = useState<ReadingHistoryEntry[]>([]);
@@ -47,7 +32,6 @@ export function useReadingHistory() {
           id: item.id,
           title: item.title,
           source: item.source,
-          // Add default values for fields that might not exist in the database
           source_type: 'unknown',  // Default value since it doesn't exist in the DB schema
           source_input: item.source || item.title || '',
           parsed_text: null,  // Default value since it doesn't exist in the DB schema
@@ -57,7 +41,8 @@ export function useReadingHistory() {
           created_at: item.created_at,
           updated_at: item.updated_at,
           summary: item.summary,
-          content_id: item.content_id
+          content_id: item.content_id,
+          is_completed: item.is_completed
         }));
 
         setHistory(transformedData);
@@ -91,7 +76,8 @@ export function useReadingHistory() {
             created_at: item.created_at,
             updated_at: item.updated_at,
             summary: item.summary,
-            content_id: item.content_id
+            content_id: item.content_id,
+            is_completed: item.is_completed
           }));
           
           setHistory(transformedLocalData);
