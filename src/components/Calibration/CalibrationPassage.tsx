@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -70,9 +69,12 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
             {!isFinished ? (
               <>
                 <div className="flex justify-center items-center h-40 text-4xl">
-                  <span className="opacity-70">{formattedWord.before}</span>
-                  <span className="text-red-500 font-bold">{formattedWord.highlight}</span>
-                  <span className="opacity-70">{formattedWord.after}</span>
+                  {/* Using a more structured layout to keep the highlighted letter in a consistent position */}
+                  <div className="flex items-center relative text-center">
+                    <div className="text-right opacity-70 min-w-[120px] mr-1">{formattedWord.before}</div>
+                    <div className="text-red-500 font-bold">{formattedWord.highlight}</div>
+                    <div className="text-left opacity-70 min-w-[120px] ml-1">{formattedWord.after}</div>
+                  </div>
                 </div>
                 <Progress value={progress} className="my-4 h-2" />
                 <div className="flex justify-center mt-4">
