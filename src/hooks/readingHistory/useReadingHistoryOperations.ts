@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { ReadingHistoryEntry } from '@/utils/types';
+import { ReadingHistoryEntry } from './types';
 import { isSignificantSession, removeDuplicateEntries, calculateProgressPercentage } from './readingHistoryUtils';
 
 export function useReadingHistoryOperations(

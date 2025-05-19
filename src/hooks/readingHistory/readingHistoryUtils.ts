@@ -1,5 +1,5 @@
 
-import { ReadingHistoryEntry } from '@/utils/types';
+import { ReadingHistoryEntry } from './types';
 
 /**
  * Transforms raw data to ensure it matches the ReadingHistoryEntry interface

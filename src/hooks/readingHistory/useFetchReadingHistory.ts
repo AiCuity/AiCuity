@@ -1,9 +1,8 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
-import { ReadingHistoryEntry } from '@/utils/types';
+import { ReadingHistoryEntry } from './types';
 import { transformHistoryData, removeDuplicateEntries } from './readingHistoryUtils';
 
 export function useFetchReadingHistory() {

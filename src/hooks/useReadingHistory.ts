@@ -1,6 +1,5 @@
-
 import { useState } from 'react';
-import { ReadingHistoryEntry } from '@/utils/types';
+import { ReadingHistoryEntry } from './readingHistory/types';
 import { useFetchReadingHistory } from './readingHistory/useFetchReadingHistory';
 import { useReadingHistoryOperations } from './readingHistory/useReadingHistoryOperations';
 
