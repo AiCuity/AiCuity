@@ -13,9 +13,11 @@ import {
   Minimize, 
   Settings, 
   BookOpen,
-  ArrowLeft
+  ArrowLeft,
+  Gauge
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { getSpeedAdjustmentFactor } from "@/utils/textAnalysis";
 
 interface RSVPReaderProps {
   text: string;
@@ -29,8 +31,11 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
   const [currentWordIndex, setCurrentWordIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(false);
   const [wpm, setWpm] = useState(300);
+  const [baseWpm, setBaseWpm] = useState(300);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [optimalLetterPosition, setOptimalLetterPosition] = useState(0.35);
+  const [smartPacingEnabled, setSmartPacingEnabled] = useState(true);
+  const [effectiveWpm, setEffectiveWpm] = useState(300);
   const readerRef = useRef<HTMLDivElement>(null);
   const animationRef = useRef<number | null>(null);
   const lastUpdateTimeRef = useRef<number | null>(null);
@@ -60,7 +65,7 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
     return () => {
       stopReading();
     };
-  }, [isPlaying, wpm, currentWordIndex]);
+  }, [isPlaying, baseWpm, currentWordIndex, smartPacingEnabled]);
   
   // Handle fullscreen changes
   useEffect(() => {
@@ -98,6 +103,22 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
     };
   };
 
+  // Get adjusted reading speed based on current word complexity
+  const getAdjustedWpm = (currentIndex: number): number => {
+    if (!smartPacingEnabled) return baseWpm;
+    
+    const currentWord = words[currentIndex];
+    const previousWord = currentIndex > 0 ? words[currentIndex - 1] : null;
+    
+    const speedAdjustment = getSpeedAdjustmentFactor(currentWord, previousWord, baseWpm);
+    const adjustedWpm = Math.round(baseWpm * speedAdjustment);
+    
+    // Update the displayed effective WPM
+    setEffectiveWpm(adjustedWpm);
+    
+    return adjustedWpm;
+  };
+
   // Start the reading animation
   const startReading = () => {
     if (animationRef.current) {
@@ -117,7 +138,8 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
     }
     
     const timePassed = timestamp - lastUpdateTimeRef.current;
-    const msPerWord = 60000 / wpm;
+    const currentAdjustedWpm = getAdjustedWpm(currentWordIndex);
+    const msPerWord = 60000 / currentAdjustedWpm;
     
     if (timePassed >= msPerWord) {
       lastUpdateTimeRef.current = timestamp;
@@ -167,6 +189,23 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
     if (currentWordIndex > 0) {
       setCurrentWordIndex(prev => prev - 1);
     }
+  };
+
+  // Toggle smart pacing
+  const toggleSmartPacing = () => {
+    setSmartPacingEnabled(prev => !prev);
+    toast({
+      title: smartPacingEnabled ? "Smart Pacing Disabled" : "Smart Pacing Enabled",
+      description: smartPacingEnabled 
+        ? "Reading at constant speed" 
+        : "Speed will adjust based on text complexity",
+    });
+  };
+
+  // Handle WPM change
+  const handleWpmChange = (value: number[]) => {
+    setBaseWpm(value[0]);
+    setWpm(value[0]);
   };
 
   // Keyboard navigation
@@ -243,6 +282,11 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
           <div className="mt-4 text-sm text-gray-500 dark:text-gray-400">
             Word {currentWordIndex + 1} of {words.length}
           </div>
+          {smartPacingEnabled && (
+            <div className="mt-2 text-xs text-blue-600 dark:text-blue-400">
+              Effective: {effectiveWpm} WPM
+            </div>
+          )}
         </div>
         
         {/* Progress bar */}
@@ -297,12 +341,24 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
             </Button>
           </div>
           
+          <div className="flex items-center justify-center mb-4">
+            <Button
+              variant={smartPacingEnabled ? "default" : "outline"}
+              size="sm"
+              onClick={toggleSmartPacing}
+              className="flex items-center gap-1"
+            >
+              <Gauge className="h-4 w-4" />
+              {smartPacingEnabled ? "Smart Pacing On" : "Smart Pacing Off"}
+            </Button>
+          </div>
+          
           <Separator className="my-4" />
           
           {/* Speed controls */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Speed: {wpm} WPM</span>
+              <span className="text-sm font-medium">Base Speed: {baseWpm} WPM</span>
               <Button 
                 variant="outline" 
                 size="icon"
@@ -319,11 +375,11 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
             <div className="flex items-center gap-4">
               <span className="text-xs">100</span>
               <Slider
-                value={[wpm]}
+                value={[baseWpm]}
                 min={100}
                 max={1000}
                 step={10}
-                onValueChange={(value) => setWpm(value[0])}
+                onValueChange={handleWpmChange}
                 className="flex-1"
               />
               <span className="text-xs">1000</span>
