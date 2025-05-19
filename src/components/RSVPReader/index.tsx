@@ -28,6 +28,7 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
     baseWpm,
     effectiveWpm,
     smartPacingEnabled,
+    currentComplexity,
     goToNextWord,
     goToPreviousWord,
     toggleSmartPacing,
@@ -78,7 +79,7 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
           isFullscreen={isFullscreen}
         />
         
-        <ProgressBar progress={progress} />
+        <ProgressBar progress={progress} complexity={currentComplexity} />
       </div>
       
       {/* Controls */}

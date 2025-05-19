@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useToast } from "@/components/ui/use-toast";
-import { getSpeedAdjustmentFactor } from "@/utils/textAnalysis";
+import { getSpeedAdjustmentFactor, calculateComplexity, isAcronym, isTechnicalTerm } from "@/utils/textAnalysis";
 
 interface UseRSVPReaderProps {
   text: string;
@@ -13,6 +13,7 @@ export function useRSVPReader({ text }: UseRSVPReaderProps) {
   const [isPlaying, setIsPlaying] = useState(false);
   const [baseWpm, setBaseWpm] = useState(300);
   const [effectiveWpm, setEffectiveWpm] = useState(300);
+  const [currentComplexity, setCurrentComplexity] = useState(0);
   const [smartPacingEnabled, setSmartPacingEnabled] = useState(true);
   const animationRef = useRef<number | null>(null);
   const lastUpdateTimeRef = useRef<number | null>(null);
@@ -79,6 +80,25 @@ export function useRSVPReader({ text }: UseRSVPReaderProps) {
     
     // Update the displayed effective WPM
     setEffectiveWpm(adjustedWpm);
+    
+    // Calculate and store the current word's complexity
+    const complexity = calculateComplexity(currentWord);
+    setCurrentComplexity(complexity);
+    
+    // Show toast for highly complex terms or acronyms
+    if ((complexity > 0.7 || isAcronym(currentWord) || isTechnicalTerm(currentWord)) && smartPacingEnabled) {
+      const reason = isAcronym(currentWord) ? "acronym" : 
+                    isTechnicalTerm(currentWord) ? "technical term" : "complex word";
+      
+      // Only show toast occasionally to avoid overwhelming the user
+      if (Math.random() < 0.3) {
+        toast({
+          title: "Slowing down",
+          description: `Reading slower for ${reason}: "${currentWord}"`,
+          duration: 1500,
+        });
+      }
+    }
     
     return adjustedWpm;
   };
@@ -172,6 +192,7 @@ export function useRSVPReader({ text }: UseRSVPReaderProps) {
     setIsPlaying,
     baseWpm,
     effectiveWpm,
+    currentComplexity,
     smartPacingEnabled,
     goToNextWord,
     goToPreviousWord,
