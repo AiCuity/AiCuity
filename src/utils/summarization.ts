@@ -115,7 +115,7 @@ const extractiveSummarize = (text: string, options: { maxLength: number, minLeng
       score += 2; // End of text
     }
     
-    return [sentence, score] as [string, number];
+    return [sentence, score];
   });
   
   // Sort sentences by score
