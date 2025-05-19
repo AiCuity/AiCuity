@@ -119,13 +119,14 @@ const WebsiteForm = () => {
           // Generate more meaningful fallback content based on the URL
           const sampleText = generateFallbackContent(hostname, path);
           
+          // Store the fallback content in sessionStorage
           sessionStorage.setItem('readerContent', sampleText);
           sessionStorage.setItem('contentTitle', `Content from ${title}`);
           sessionStorage.setItem('contentSource', processedUrl);
           
           toast({
             title: "Using Fallback Mode",
-            description: "Connected to generated content as the API server is not available.",
+            description: "Using generated content as the API server is not available.",
           });
           
           setIsLoading(false);

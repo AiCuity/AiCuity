@@ -22,6 +22,7 @@ export const useContentLoader = (contentId?: string) => {
           if (storedContent) {
             setContent(storedContent);
             setTitle(storedTitle);
+            console.log("Loaded file content:", storedContent.substring(0, 100) + "...");
           } else {
             toast({
               title: "Content not found",
@@ -36,6 +37,7 @@ export const useContentLoader = (contentId?: string) => {
           const storedSource = sessionStorage.getItem('contentSource') || '';
           
           if (storedContent) {
+            console.log("Loaded website content:", storedContent.substring(0, 100) + "...");
             setContent(storedContent);
             setTitle(storedTitle);
             setSource(storedSource);
