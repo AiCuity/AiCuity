@@ -3,6 +3,12 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Maximize, Minimize } from "lucide-react";
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
 
 interface SpeedControlProps {
   baseWpm: number;
@@ -18,32 +24,50 @@ const SpeedControl = ({ baseWpm, onWpmChange, isFullscreen, onToggleFullscreen }
       
       <div className="flex items-center justify-between">
         <span className="text-sm font-medium">Base Speed: {baseWpm} WPM</span>
-        <Button 
-          variant="default" 
-          size="icon"
-          onClick={onToggleFullscreen}
-          type="button"
-        >
-          {isFullscreen ? (
-            <Minimize className="h-4 w-4" />
-          ) : (
-            <Maximize className="h-4 w-4" />
-          )}
-        </Button>
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant="default" 
+                size="icon"
+                onClick={onToggleFullscreen}
+                type="button"
+              >
+                {isFullscreen ? (
+                  <Minimize className="h-4 w-4" />
+                ) : (
+                  <Maximize className="h-4 w-4" />
+                )}
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       </div>
       
-      <div className="flex items-center gap-4">
-        <span className="text-xs">100</span>
-        <Slider
-          value={[baseWpm]}
-          min={100}
-          max={1000}
-          step={10}
-          onValueChange={onWpmChange}
-          className="flex-1"
-        />
-        <span className="text-xs">1000</span>
-      </div>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="flex items-center gap-4">
+              <span className="text-xs">100</span>
+              <Slider
+                value={[baseWpm]}
+                min={100}
+                max={1000}
+                step={10}
+                onValueChange={onWpmChange}
+                className="flex-1"
+              />
+              <span className="text-xs">1000</span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Adjust reading speed (words per minute)</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 };

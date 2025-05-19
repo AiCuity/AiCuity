@@ -1,4 +1,11 @@
 
+import { 
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger 
+} from "@/components/ui/tooltip";
+
 interface ProgressBarProps {
   progress: number;
   complexity?: number;
@@ -14,14 +21,30 @@ const ProgressBar = ({ progress, complexity = 0 }: ProgressBarProps) => {
     return "bg-red-500";
   };
 
+  const getComplexityLabel = () => {
+    if (complexity < 0.3) return "Low complexity"; 
+    if (complexity < 0.5) return "Medium complexity";
+    if (complexity < 0.7) return "High complexity";
+    return "Very high complexity";
+  };
+
   return (
     <div className="w-full max-w-lg mx-auto px-4">
-      <div className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
-        <div
-          className={`h-full ${getBarColor()} transition-all duration-300`}
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+              <div
+                className={`h-full ${getBarColor()} transition-all duration-300`}
+                style={{ width: `${progress}%` }}
+              />
+            </div>
+          </TooltipTrigger>
+          <TooltipContent>
+            <p>Progress: {Math.round(progress)}% - {getComplexityLabel()}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
     </div>
   );
 };
