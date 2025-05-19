@@ -86,7 +86,8 @@ const extractiveSummarize = (text: string, options: { maxLength: number, minLeng
   }
   
   // Score sentences based on simple heuristics
-  const sentenceScores: Array<[string, number]> = sentences.map((sentence): [string, number] => {
+  // Use explicit typing for the array of tuples
+  const sentenceScores = sentences.map((sentence: string): [string, number] => {
     let score = 0;
     
     // Longer sentences (but not too long) might be more informative
@@ -126,10 +127,12 @@ const extractiveSummarize = (text: string, options: { maxLength: number, minLeng
   let currentLength = 0;
   
   // Original positions of sentences for proper ordering
+  // Explicitly type the array to match sentenceScores
   const selectedSentences: Array<[string, number]> = [];
   
   for (const [sentence, _score] of sentenceScores) {
     if (currentLength + sentence.length <= options.maxLength || currentLength < options.minLength) {
+      // Use type assertion to ensure TypeScript knows the index exists
       const position = sentences.indexOf(sentence);
       selectedSentences.push([sentence, position]);
       currentLength += sentence.length;
@@ -144,7 +147,7 @@ const extractiveSummarize = (text: string, options: { maxLength: number, minLeng
   selectedSentences.sort((a, b) => a[1] - b[1]);
   
   // Join sentences back together
-  summary = selectedSentences.map((item): string => item[0]).join(' ');
+  summary = selectedSentences.map((item) => item[0]).join(' ');
   
   return summary;
 };
