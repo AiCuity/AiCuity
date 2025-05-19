@@ -41,12 +41,12 @@ const WebsiteForm = () => {
     try {
       console.log(`Extracting content from URL: ${processedUrl}`);
       
-      const { content, title, sourceUrl } = await extractContentFromUrl(processedUrl);
+      const extractedContent = await extractContentFromUrl(processedUrl);
       
       // Store the extracted content in sessionStorage
-      sessionStorage.setItem('readerContent', content);
-      sessionStorage.setItem('contentTitle', title || 'Website content');
-      sessionStorage.setItem('contentSource', sourceUrl || processedUrl);
+      sessionStorage.setItem('readerContent', extractedContent.content);
+      sessionStorage.setItem('contentTitle', extractedContent.title || 'Website content');
+      sessionStorage.setItem('contentSource', extractedContent.sourceUrl || processedUrl);
       
       toast({
         title: "Content extracted",
@@ -62,7 +62,7 @@ const WebsiteForm = () => {
       
       toast({
         title: "Error",
-        description: "Failed to extract content from the website. Using fallback mode.",
+        description: "Failed to extract content from the website.",
         variant: "destructive",
       });
     }
