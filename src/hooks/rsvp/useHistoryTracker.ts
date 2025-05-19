@@ -17,7 +17,7 @@ export function useHistoryTracker(
   const { user } = useAuth(); // Get the current authenticated user
 
   // Minimum progress required to consider a session worth saving
-  const MIN_WORDS_READ = 20;
+  const MIN_WORDS_READ = 5;
   
   // Check if this is a significant reading session
   const isSignificantSession = currentWordIndex >= MIN_WORDS_READ;

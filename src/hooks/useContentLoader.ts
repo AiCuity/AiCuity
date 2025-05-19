@@ -55,6 +55,8 @@ export const useContentLoader = (contentId?: string) => {
             setIsLoading(false);
             return;
           }
+        } else if (storedContentId && contentId) {
+          console.log("ContentID doesn't match stored value. Route:", contentId, "Stored:", storedContentId);
         }
         
         // If not in history or matching session storage, process based on content type

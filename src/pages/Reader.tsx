@@ -68,40 +68,56 @@ const Reader = () => {
   // Save reading session to history
   useEffect(() => {
     const saveToHistory = async () => {
-      if (content && title && !historySaved && contentId) {
-        // Don't attempt to save if no user is logged in and we aren't ready to save to localStorage
-        if (!user && !content) return;
-        
-        // Determine source type based on contentId
-        let sourceType = 'url';
-        if (contentId?.startsWith('file-')) {
-          sourceType = 'upload';
-        } else if (contentId?.includes('search-')) {
-          sourceType = 'search';
-        }
-        
-        // Use preferred WPM from profile if available
-        const wpm = profile?.preferred_wpm || 300;
-        
-        await saveHistoryEntry({
-          title,
-          source,
-          source_type: sourceType,
-          source_input: source || title,
-          content_id: contentId,
-          wpm,
-          current_position: 0,
-          calibrated: profile?.calibration_status === 'completed',
-          summary: null,
-          parsed_text: content,
-        });
-        
-        setHistorySaved(true);
+      // Only save if we have content, title, contentId, and haven't saved yet
+      if (!content || !title || !contentId || historySaved) {
+        return;
       }
+      
+      console.log("Attempting to save history for:", contentId);
+      
+      // Check if this entry already exists in history
+      const existingEntry = history.find(entry => entry.content_id === contentId);
+      
+      // If it already exists, don't create a duplicate
+      if (existingEntry) {
+        console.log("Entry already exists in history, not creating duplicate:", contentId);
+        setHistorySaved(true);
+        return;
+      }
+      
+      // Don't attempt to save if no user is logged in and we aren't ready to save to localStorage
+      if (!user && !content) return;
+      
+      // Determine source type based on contentId
+      let sourceType = 'url';
+      if (contentId?.startsWith('file-')) {
+        sourceType = 'upload';
+      } else if (contentId?.includes('search-')) {
+        sourceType = 'search';
+      }
+      
+      // Use preferred WPM from profile if available
+      const wpm = profile?.preferred_wpm || 300;
+      
+      await saveHistoryEntry({
+        title,
+        source,
+        source_type: sourceType,
+        source_input: source || title,
+        content_id: contentId,
+        wpm,
+        current_position: 0,
+        calibrated: profile?.calibration_status === 'completed',
+        summary: null,
+        parsed_text: content,
+      });
+      
+      setHistorySaved(true);
+      console.log("History entry saved for:", contentId);
     };
     
     saveToHistory();
-  }, [content, title, contentId, user]);
+  }, [content, title, contentId, user, historySaved, history]);
 
   // Update history with summary when generated
   useEffect(() => {

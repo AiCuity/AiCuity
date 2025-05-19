@@ -27,15 +27,15 @@ const ReadingHistoryTable = ({ history, onDeleteClick, calculateProgress }: Read
   const handleContinueReading = (item: ReadingHistoryEntry) => {
     console.log("Continuing reading for item:", item);
     
-    // Before navigating, store the content in sessionStorage for the reader to load
+    // Clear any existing reader content in session storage first
+    sessionStorage.removeItem('readerContent');
+    sessionStorage.removeItem('contentTitle');
+    sessionStorage.removeItem('contentSource');
+    sessionStorage.removeItem('currentContentId');
+    
+    // Store this item's content for the reader to load
     if (item.parsed_text) {
       console.log("Storing parsed text in sessionStorage for content ID:", item.content_id);
-      
-      // Clear any existing reader content in session storage
-      sessionStorage.removeItem('readerContent');
-      sessionStorage.removeItem('contentTitle');
-      sessionStorage.removeItem('contentSource');
-      sessionStorage.removeItem('currentContentId');
       
       // Store this item's content
       sessionStorage.setItem('readerContent', item.parsed_text);
