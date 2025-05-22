@@ -1,7 +1,8 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
-import { Loader2, Text } from "lucide-react";
+import { Loader2, Text, AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface SummarizePromptProps {
   onSummarize: () => void;
@@ -21,12 +22,30 @@ const SummarizePrompt = ({
       <div className="flex flex-col items-center justify-center gap-4">
         <p className="text-center text-gray-600 dark:text-gray-400">
           Generate a summary of this content for faster reading.
-          {summarizationError && (
-            <span className="block text-red-500 mt-2">
-              Error: {summarizationError}
-            </span>
-          )}
         </p>
+        
+        {summarizationError && (
+          <Alert variant="destructive" className="w-full">
+            <AlertCircle className="h-4 w-4 mr-2" />
+            <AlertDescription>
+              {summarizationError.includes('quota exceeded') || summarizationError.includes('billing') ? 
+                <>
+                  OpenAI API quota exceeded. Your account may have run out of credits or has billing issues.
+                  <a 
+                    href="https://platform.openai.com/account/billing" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="underline ml-1"
+                  >
+                    Check account status
+                  </a>
+                </> : 
+                summarizationError
+              }
+            </AlertDescription>
+          </Alert>
+        )}
+        
         <Button 
           onClick={onSummarize} 
           disabled={isSummarizing}

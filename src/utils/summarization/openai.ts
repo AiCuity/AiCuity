@@ -37,7 +37,16 @@ export const summarizeWithOpenAI = async (
     
     if (!response.ok) {
       const error = await response.json();
-      throw new Error(error.error?.message || 'Failed to summarize with OpenAI');
+      const errorMessage = error.error?.message || 'Failed to summarize with OpenAI';
+      
+      // Handle specific error types with more helpful messages
+      if (errorMessage.includes('exceeded your current quota') || errorMessage.includes('billing')) {
+        throw new Error('OpenAI API quota exceeded or billing issue. Please check your OpenAI account at platform.openai.com.');
+      } else if (errorMessage.includes('Invalid API key')) {
+        throw new Error('Invalid OpenAI API key. Please check your API key and try again.');
+      }
+      
+      throw new Error(errorMessage);
     }
     
     const data = await response.json();

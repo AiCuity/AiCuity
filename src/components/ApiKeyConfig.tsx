@@ -4,7 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+import { 
+  Accordion, 
+  AccordionContent, 
+  AccordionItem, 
+  AccordionTrigger 
+} from "@/components/ui/accordion";
+import { AlertCircle } from "lucide-react";
 
 interface ApiKeyConfigProps {
   apiKey: string;
@@ -20,6 +26,7 @@ const ApiKeyConfig = ({
   onUseOpenAIChange
 }: ApiKeyConfigProps) => {
   const [key, setKey] = useState(apiKey);
+  const [showHelp, setShowHelp] = useState(false);
   
   const handleSave = () => {
     onApiKeyChange(key);
@@ -68,9 +75,38 @@ const ApiKeyConfig = ({
                     Save
                   </Button>
                 </div>
-                <p className="text-xs text-gray-500">
-                  Your API key is stored locally and never sent to our servers.
-                </p>
+                
+                <div className="text-xs text-gray-500 space-y-2">
+                  <p>Your API key is stored locally and never sent to our servers.</p>
+                  
+                  <button 
+                    onClick={() => setShowHelp(!showHelp)}
+                    className="text-xs text-blue-500 hover:underline flex items-center gap-1"
+                  >
+                    <AlertCircle className="h-3 w-3" />
+                    Having issues with your API key?
+                  </button>
+                  
+                  {showHelp && (
+                    <div className="p-3 bg-gray-50 dark:bg-gray-800 rounded-md space-y-2">
+                      <p>If you're seeing errors with your API key:</p>
+                      <ul className="list-disc pl-5 space-y-1">
+                        <li>Make sure your OpenAI account has available credits</li>
+                        <li>Check if your account has billing issues</li>
+                        <li>Verify you've copied the key correctly</li>
+                        <li>Try creating a new API key in your OpenAI account</li>
+                      </ul>
+                      <a 
+                        href="https://platform.openai.com/account/api-keys" 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-blue-500 hover:underline block mt-2"
+                      >
+                        Manage your OpenAI API keys
+                      </a>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
             
