@@ -1,8 +1,7 @@
-
 import React from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, Bookmark } from "lucide-react";
-import { calculateProgressPercentage } from "@/hooks/readingHistory/readingHistoryUtils";
+import { calculateProgressPercentage } from "@/hooks/readingHistory/utils";
 
 interface ReaderAlertsProps {
   isSimulated: boolean;
