@@ -27,21 +27,17 @@ export function useRSVPCore({
   console.log("useRSVPCore - Initial WPM type:", typeof initialWpm, "Value:", initialWpm);
   console.log("useRSVPCore - Normalized initial WPM:", normalizedInitialWpm);
   
-  // Use preferred WPM from profile if available, otherwise use initialWpm
-  const [baseWpm, setBaseWpm] = useState<number>(
-    profile?.preferred_wpm || normalizedInitialWpm
-  );
-  const [effectiveWpm, setEffectiveWpm] = useState<number>(
-    profile?.preferred_wpm || normalizedInitialWpm
-  );
+  // Use initialWpm if provided explicitly, otherwise try profile or fall back to default
+  const [baseWpm, setBaseWpm] = useState<number>(normalizedInitialWpm);
+  const [effectiveWpm, setEffectiveWpm] = useState<number>(normalizedInitialWpm);
   
   const [currentComplexity, setCurrentComplexity] = useState(0);
   const [smartPacingEnabled, setSmartPacingEnabled] = useState(initialSmartPacing);
   const [showToasts, setShowToasts] = useState(initialShowToasts);
   
-  // Load preferred WPM from profile when profile loads or changes
+  // Load preferred WPM from profile only if initialWpm wasn't explicitly provided
   useEffect(() => {
-    // Only use profile WPM if we don't have a specific initialWpm value passed in
+    // If initialWpm is the default and the profile has a preferred WPM, use that
     if (profile?.preferred_wpm && initialWpm === 300) {
       setBaseWpm(profile.preferred_wpm);
       setEffectiveWpm(profile.preferred_wpm);

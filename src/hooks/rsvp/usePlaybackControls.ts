@@ -19,14 +19,14 @@ export function usePlaybackControls(
   const endReachedRef = useRef<boolean>(false); // Track if we've reached the end
   const { toast } = useToast();
 
-  // Function to start reading - refactored for better reliability
+  // Function to start reading - refactored for better reliability and accurate timing
   const startReading = useCallback(() => {
     if (words.length === 0) {
       console.log("No text to read");
       return;
     }
     
-    console.log("Starting reading with words:", words.length);
+    console.log("Starting reading with words:", words.length, "at WPM:", baseWpm);
     
     // Reset end reached flag when starting
     endReachedRef.current = false;
@@ -39,7 +39,7 @@ export function usePlaybackControls(
       animationRef.current = null;
     }
     
-    // Start the animation frame loop
+    // Start the animation frame loop with high precision timing
     const updateReadingFunction = (timestamp: number) => {
       // If this is the first frame or after a pause, just record the time and wait for next frame
       if (lastUpdateTimeRef.current === null) {
@@ -87,9 +87,10 @@ export function usePlaybackControls(
         const complexity = calculateComplexity(word);
         
         // Calculate the delay based on word complexity
+        // This is the key part for accurate timing
         const delay = calculateDelay(baseWpm, complexity, smartPacingEnabled);
         
-        // Calculate effective WPM
+        // Calculate effective WPM with higher precision
         const effectiveWpm = Math.round((60 * 1000) / delay);
         setEffectiveWpm(effectiveWpm);
         setCurrentComplexity(complexity);
@@ -97,7 +98,7 @@ export function usePlaybackControls(
         // Check if enough time has passed to move to the next word
         const elapsedTime = timestamp - lastUpdateTimeRef.current!;
         if (elapsedTime >= delay) {
-          lastUpdateTimeRef.current = timestamp;
+          lastUpdateTimeRef.current = timestamp; // Reset timer for next word
           return currentIndex + 1;
         }
         
@@ -105,13 +106,13 @@ export function usePlaybackControls(
       });
       
       // Continue the animation loop only if still playing
-      if (animationRef.current !== null) {
+      if (!endReachedRef.current) {
         animationRef.current = requestAnimationFrame(updateReadingFunction);
       }
     };
     
     animationRef.current = requestAnimationFrame(updateReadingFunction);
-    console.log("Animation frame requested");
+    console.log("Animation frame requested for WPM:", baseWpm);
   }, [words, baseWpm, smartPacingEnabled, showToasts, setCurrentWordIndex, setIsPlaying, setEffectiveWpm, setCurrentComplexity, toast]);
 
   // Function to stop reading

@@ -11,7 +11,8 @@ export function calculateMsPerWord(wpm: number): number {
     return wpmToMsCache.get(wpm)!;
   }
   
-  const result = 60000 / wpm;
+  // This is the key fix - ensure we're calculating exactly 60,000 ms / wpm
+  const result = Math.round(60000 / Math.max(1, wpm));
   wpmToMsCache.set(wpm, result);
   return result;
 }
@@ -85,14 +86,14 @@ export function calculateDelay(
     smoothedComplexity = weightedSum / weightSum;
   }
   
-  // UPDATED: Reduced maximum adjustment from 30% to 20%
-  // Maximum adjustment percentage (equal in both directions)
-  const maxAdjustmentPercent = 0.2; // 20% slower or faster
+  // Reduced maximum adjustment to 15% (from 20%)
+  // This ensures the effective WPM stays closer to the selected WPM
+  const maxAdjustmentPercent = 0.15;
   
-  // Convert smoothed complexity (0-1) to adjustment factor (-0.2 to 0.2)
+  // Convert smoothed complexity (0-1) to adjustment factor (-0.15 to 0.15)
   // When complexity is 0.5 (medium), adjustment will be 0 (no change)
-  // When complexity is 1.0 (max), adjustment will be +0.2 (slower)
-  // When complexity is 0.0 (min), adjustment will be -0.2 (faster)
+  // When complexity is 1.0 (max), adjustment will be +0.15 (slower)
+  // When complexity is 0.0 (min), adjustment will be -0.15 (faster)
   const adjustmentFactor = (smoothedComplexity - 0.5) * maxAdjustmentPercent * 2;
   
   // Apply the adjustment to the base delay
