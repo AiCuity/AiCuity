@@ -10,11 +10,19 @@ import { calculateProgress } from "./ReadingHistory/utils";
 const ReadingHistory = () => {
   const { history, isLoading, deleteHistoryEntry, refreshHistory } = useReadingHistory();
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [localHistory, setLocalHistory] = useState(history);
+
+  // Update local history when the fetched history changes
+  useState(() => {
+    setLocalHistory(history);
+  }, [history]);
 
   const handleDeleteConfirm = async () => {
     if (deletingId) {
       const success = await deleteHistoryEntry(deletingId);
       if (success) {
+        // Update local state immediately to avoid UI flicker
+        setLocalHistory(prev => prev.filter(item => item.id !== deletingId));
         // Refresh the history list after successful deletion
         await refreshHistory();
       }
@@ -26,7 +34,8 @@ const ReadingHistory = () => {
     return <LoadingState />;
   }
 
-  if (history.length === 0) {
+  // Check if there are any entries in the local history
+  if (localHistory.length === 0) {
     return <EmptyState />;
   }
 
@@ -37,7 +46,7 @@ const ReadingHistory = () => {
       </div>
 
       <ReadingHistoryTable 
-        history={history}
+        history={localHistory}
         onDeleteClick={setDeletingId}
         calculateProgress={calculateProgress}
       />
