@@ -14,6 +14,9 @@ export function useRSVPReader({
   initialPosition = 0,
   contentId
 }: RSVPReaderOptions): RSVPReaderHook {
+  // Log the initial WPM we're receiving
+  console.log("useRSVPReader - Initial WPM type:", typeof initialWpm, "Value:", initialWpm);
+  
   // Get core RSVP state
   const {
     words,
@@ -38,6 +41,8 @@ export function useRSVPReader({
     initialShowToasts,
     initialPosition
   });
+  
+  console.log("useRSVPReader - After core init - baseWpm:", baseWpm);
   
   // Get RSVP controls
   const {
@@ -88,6 +93,7 @@ export function useRSVPReader({
   // Enhanced play/pause handler
   const togglePlay = useCallback(() => {
     const newPlayState = !isPlaying;
+    console.log("togglePlay - Setting play state to:", newPlayState, "Current WPM:", baseWpm);
     setIsPlaying(newPlayState);
     
     // Save position when toggling play/pause
@@ -118,6 +124,7 @@ export function useRSVPReader({
     // Extract the numeric value from the array
     const newWpm = values[0];
     console.log("handleWpmChangeWithSave - Setting new WPM:", newWpm);
+    console.log("handleWpmChangeWithSave - Previous WPM:", baseWpm);
     
     // Pass to original handler
     handleWpmChange(values);

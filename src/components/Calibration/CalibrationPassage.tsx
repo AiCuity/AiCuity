@@ -22,6 +22,12 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
   const [isFinished, setIsFinished] = useState(false);
   const [isLastWordDisplayed, setIsLastWordDisplayed] = useState(false);
   
+  // Make sure we're passing a number for WPM
+  const numericWpm = typeof wpm === 'number' ? wpm : parseInt(String(wpm), 10) || 300;
+  
+  console.log("CalibrationPassage - WPM type:", typeof wpm, "Value:", wpm);
+  console.log("CalibrationPassage - Numeric WPM:", numericWpm);
+  
   const { 
     isPlaying, 
     setIsPlaying, 
@@ -34,7 +40,7 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
     toggleSmartPacing
   } = useRSVPReader({ 
     text,
-    initialWpm: wpm, // Use the prop directly for initial value
+    initialWpm: numericWpm, // Pass as a number
     initialSmartPacing: false, // Disable smart pacing for calibration to ensure consistent WPM
     initialPosition: 0,
     contentId: "calibration" // Use a special contentId for calibration
@@ -42,10 +48,18 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
 
   // Set the WPM when the component mounts or when wpm prop changes
   useEffect(() => {
-    // Make sure we're passing a number, not an array
-    console.log("Setting calibration WPM to:", wpm);
-    handleWpmChange([wpm]);
-  }, [wpm, handleWpmChange]);
+    // Make sure we're passing a number array, not a single value
+    console.log("Setting calibration WPM to:", numericWpm);
+    handleWpmChange([numericWpm]);
+  }, [numericWpm, handleWpmChange]);
+
+  // Auto-start reading when user clicks the start button
+  useEffect(() => {
+    if (isStarted && !isPlaying) {
+      console.log("Auto-starting reading at WPM:", numericWpm);
+      setIsPlaying(true);
+    }
+  }, [isStarted, isPlaying, setIsPlaying, numericWpm]);
 
   // Detect when we reach the last word
   useEffect(() => {
@@ -68,22 +82,23 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
   }, [currentWordIndex, words, isStarted, isLastWordDisplayed, setIsPlaying, onComplete]);
 
   const handleStart = () => {
+    console.log("Starting calibration reading at WPM:", numericWpm);
     setIsStarted(true);
-    setIsPlaying(true);
+    // We'll let the effect hook above handle the actual play state
   };
 
   return (
     <Card className="mb-6">
       <CardContent className="p-6">
         <div className="mb-4">
-          <h3 className="text-lg font-medium mb-2">{title || `Reading Test at ${wpm} WPM`}</h3>
-          <p className="text-sm text-gray-500">Speed: {wpm} WPM</p>
+          <h3 className="text-lg font-medium mb-2">{title || `Reading Test at ${numericWpm} WPM`}</h3>
+          <p className="text-sm text-gray-500">Speed: {numericWpm} WPM</p>
         </div>
 
         {!isStarted ? (
           <div className="text-center py-10">
             <p className="mb-4">
-              You'll read a short passage at {wpm} WPM. After reading, you'll answer questions about the content.
+              You'll read a short passage at {numericWpm} WPM. After reading, you'll answer questions about the content.
             </p>
             <Button onClick={handleStart}>Start Reading</Button>
           </div>

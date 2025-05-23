@@ -8,22 +8,34 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
   const { user } = useAuth();
   const [historySaved, setHistorySaved] = useState(false);
   const [initialPosition, setInitialPosition] = useState(0);
+  const [savedWpm, setSavedWpm] = useState<number>(300); // Store the WPM from history
 
   // Refresh history when component loads
   useEffect(() => {
     fetchHistory();
   }, []);
 
-  // Check for existing reading position from session storage first (from "Continue" button)
+  // Check for existing reading position and WPM from session storage first (from "Continue" button)
   // or from reading history if available
   useEffect(() => {
     // First try to get position from session storage (Continue button flow)
     const storedPosition = sessionStorage.getItem('initialPosition');
+    const storedWpm = sessionStorage.getItem('savedWpm');
+    
     if (storedPosition) {
       const position = parseInt(storedPosition, 10);
       console.log("Found position in session storage:", position);
       setInitialPosition(position);
+      
+      // Check for stored WPM
+      if (storedWpm) {
+        const wpm = parseInt(storedWpm, 10);
+        console.log("Found WPM in session storage:", wpm);
+        setSavedWpm(wpm);
+      }
+      
       sessionStorage.removeItem('initialPosition'); // Clear it after use
+      sessionStorage.removeItem('savedWpm'); // Clear it after use
       return;
     }
     
@@ -36,9 +48,16 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
         entry.current_position > 0
       );
       
-      if (existingEntry && existingEntry.current_position) {
-        console.log("Found existing position by content ID:", existingEntry.current_position);
-        setInitialPosition(existingEntry.current_position);
+      if (existingEntry) {
+        if (existingEntry.current_position) {
+          console.log("Found existing position by content ID:", existingEntry.current_position);
+          setInitialPosition(existingEntry.current_position);
+        }
+        
+        if (existingEntry.wpm) {
+          console.log("Found existing WPM by content ID:", existingEntry.wpm);
+          setSavedWpm(existingEntry.wpm);
+        }
         return;
       }
       
@@ -50,9 +69,16 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
           entry.current_position > 0
         );
         
-        if (sourceMatch && sourceMatch.current_position) {
-          console.log("Found existing position by source URL:", sourceMatch.current_position);
-          setInitialPosition(sourceMatch.current_position);
+        if (sourceMatch) {
+          if (sourceMatch.current_position) {
+            console.log("Found existing position by source URL:", sourceMatch.current_position);
+            setInitialPosition(sourceMatch.current_position);
+          }
+          
+          if (sourceMatch.wpm) {
+            console.log("Found existing WPM by source URL:", sourceMatch.wpm);
+            setSavedWpm(sourceMatch.wpm);
+          }
         }
       }
     }
@@ -116,7 +142,7 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
           source_type: sourceType,
           source_input: source || title,
           content_id: contentId,
-          wpm: 300, // Default WPM
+          wpm: savedWpm, // Use saved WPM if available
           current_position: 0,
           calibrated: false,
           summary: null,
@@ -131,7 +157,7 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
     };
     
     saveToHistory();
-  }, [content, title, contentId, user, historySaved, history, source, findExistingEntryBySource, saveHistoryEntry]);
+  }, [content, title, contentId, user, historySaved, history, source, findExistingEntryBySource, saveHistoryEntry, savedWpm]);
 
   // Update history with summary when generated
   const updateHistoryWithSummary = async (summary: string) => {
@@ -151,6 +177,7 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
   return {
     initialPosition,
     historySaved,
-    updateHistoryWithSummary
+    updateHistoryWithSummary,
+    savedWpm // Export the saved WPM value
   };
 }

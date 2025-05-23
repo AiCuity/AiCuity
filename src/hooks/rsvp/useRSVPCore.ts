@@ -24,11 +24,14 @@ export function useRSVPCore({
       ? initialWpm[0] 
       : 300;
   
+  console.log("useRSVPCore - Initial WPM type:", typeof initialWpm, "Value:", initialWpm);
+  console.log("useRSVPCore - Normalized initial WPM:", normalizedInitialWpm);
+  
   // Use preferred WPM from profile if available, otherwise use initialWpm
-  const [baseWpm, setBaseWpm] = useState(
+  const [baseWpm, setBaseWpm] = useState<number>(
     profile?.preferred_wpm || normalizedInitialWpm
   );
-  const [effectiveWpm, setEffectiveWpm] = useState(
+  const [effectiveWpm, setEffectiveWpm] = useState<number>(
     profile?.preferred_wpm || normalizedInitialWpm
   );
   

@@ -23,7 +23,7 @@ const Reader = () => {
     setSummary 
   } = useSummarization(content);
 
-  const { initialPosition, updateHistoryWithSummary } = useReaderHistory(contentId, title, source, content);
+  const { initialPosition, updateHistoryWithSummary, savedWpm } = useReaderHistory(contentId, title, source, content);
   
   const [showReader, setShowReader] = useState(false);
   const [useFullText, setUseFullText] = useState(true);
@@ -57,6 +57,13 @@ const Reader = () => {
     handleSummarize(apiKey, useOpenAI);
   };
 
+  // Log saved WPM when it's available
+  useEffect(() => {
+    if (savedWpm) {
+      console.log("Reader detected savedWpm:", savedWpm);
+    }
+  }, [savedWpm]);
+
   if (isLoading) {
     return <LoadingState />;
   }
@@ -75,6 +82,7 @@ const Reader = () => {
         title={title}
         source={source}
         initialPosition={initialPosition}
+        initialWpm={savedWpm} // Pass the saved WPM to the reader
       />
     );
   }

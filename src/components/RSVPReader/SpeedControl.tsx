@@ -32,6 +32,9 @@ const SpeedControl = ({
   const wpmValue = typeof baseWpm === 'number' ? baseWpm : 
                   Array.isArray(baseWpm) ? baseWpm[0] : 300;
   
+  console.log("SpeedControl - WPM type:", typeof baseWpm, "Value:", baseWpm);
+  console.log("SpeedControl - Normalized WPM value:", wpmValue);
+  
   // Show saving indicator briefly when WPM changes
   useEffect(() => {
     setIsSaving(true);
@@ -45,7 +48,8 @@ const SpeedControl = ({
   // Handle WPM change with debounce
   const handleWpmChange = (values: number[]) => {
     // Make sure we're passing a clean number value
-    console.log("SpeedControl - WPM change:", values[0]);
+    const newWpm = values[0];
+    console.log("SpeedControl - WPM change:", newWpm);
     
     // Call the parent handler
     onWpmChange(values);
@@ -56,7 +60,7 @@ const SpeedControl = ({
     // If we have a manual save function, call it after a delay
     if (onSavePosition) {
       const saveTimer = setTimeout(() => {
-        console.log("SpeedControl - calling save position with WPM:", wpmValue);
+        console.log("SpeedControl - calling save position with WPM:", newWpm);
         onSavePosition();
       }, 1500);
       
