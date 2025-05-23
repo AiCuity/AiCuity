@@ -27,7 +27,7 @@ const RSVPReader = ({
   initialWpm 
 }: RSVPReaderProps) => {
   const readerRef = useRef<HTMLDivElement>(null);
-  const { showNotifications, setShowNotifications, toggleNotifications } = useNotifications(true);
+  const { showNotifications, setShowNotifications, toggleNotifications } = useNotifications(false);
   
   const {
     words,

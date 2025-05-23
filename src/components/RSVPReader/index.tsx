@@ -7,8 +7,8 @@ import WordDisplay from "./WordDisplay";
 import ProgressBar from "./ProgressBar";
 import PlaybackControls from "./PlaybackControls";
 import SpeedControl from "./SpeedControl";
+import { BellOff, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { RefreshCw, BellOff, Bell } from "lucide-react";
 
 interface RSVPReaderProps {
   text: string;
@@ -16,7 +16,7 @@ interface RSVPReaderProps {
   title: string;
   source?: string;
   initialPosition?: number;
-  initialWpm?: number; // Add the initialWpm prop to the interface
+  initialWpm?: number;
 }
 
 const RSVPReader = ({ 
@@ -25,10 +25,10 @@ const RSVPReader = ({
   title, 
   source, 
   initialPosition = 0,
-  initialWpm  // Add initialWpm to the parameter list
+  initialWpm
 }: RSVPReaderProps) => {
   const readerRef = useRef<HTMLDivElement>(null);
-  const [showNotifications, setShowNotifications] = useState(true);
+  const [showNotifications, setShowNotifications] = useState(false);
   
   const {
     words,
@@ -53,7 +53,7 @@ const RSVPReader = ({
     initialShowToasts: showNotifications,
     contentId: contentId,
     initialPosition: initialPosition,
-    initialWpm: initialWpm // Pass the initialWpm to the useRSVPReader hook
+    initialWpm: initialWpm
   });
   
   const { isFullscreen, toggleFullscreen } = useFullscreen(readerRef);
@@ -112,16 +112,6 @@ const RSVPReader = ({
         />
         
         <div className="flex items-center justify-center gap-4 mb-4">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={restartReading}
-            className="flex items-center gap-1"
-          >
-            <RefreshCw className="h-4 w-4" />
-            Restart
-          </Button>
-          
           <Button 
             variant="outline" 
             size="sm" 

@@ -66,7 +66,6 @@ const ControlsContainer = ({
       />
       
       <div className="flex items-center justify-center gap-4 mb-4">
-        <RestartButton onClick={onRestart} />
         <NotificationToggle 
           showNotifications={showNotifications} 
           onToggle={onToggleNotifications} 

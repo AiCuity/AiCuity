@@ -7,11 +7,11 @@ export interface NotificationsHook {
   toggleNotifications: () => void;
 }
 
-export const useNotifications = (initialState = true): NotificationsHook => {
+export const useNotifications = (initialState = false): NotificationsHook => {
   // Try to load preference from localStorage first
   const [showNotifications, setShowNotifications] = useState(() => {
     const savedPreference = localStorage.getItem('rsvp-notifications');
-    // If we have a saved preference, use it, otherwise use the initialState
+    // If we have a saved preference, use it, otherwise use the initialState (now false by default)
     return savedPreference !== null ? savedPreference === 'true' : initialState;
   });
   
