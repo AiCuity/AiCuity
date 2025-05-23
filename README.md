@@ -1,13 +1,13 @@
 
-# SpeedRead - RSVP Reading Application
+# AiCuity - AI-Powered Reading Application
 
-SpeedRead is a web application that allows users to extract and read content from websites, PDFs, TXT files, and EPUB files using Rapid Serial Visual Presentation (RSVP) technology.
+AiCuity is a web application that allows users to extract and read content from websites, PDFs, TXT files, and EPUB files using advanced speed reading technology.
 
 ## Features
 
 - Upload and process PDF, TXT, and EPUB files
-- Extract text content from websites (coming soon)
-- Read content using RSVP with adjustable speed
+- Extract text content from websites
+- Read content at adjustable speeds
 - Fullscreen reading mode
 - Save reading history
 
@@ -33,8 +33,8 @@ SpeedRead is a web application that allows users to extract and read content fro
 
 1. Clone the repository:
    ```
-   git clone https://github.com/yourusername/speedread.git
-   cd speedread
+   git clone https://github.com/yourusername/aicuity.git
+   cd aicuity
    ```
 
 2. Install frontend dependencies:
@@ -75,12 +75,6 @@ SpeedRead is a web application that allows users to extract and read content fro
    ```
 
 2. Access the application at `http://localhost:8080`
-
-## API Endpoints
-
-- `POST /api/upload` - Upload and process files (.txt, .pdf, .epub)
-- `GET /api/health` - API health check
-- `GET /api/check-python` - Check Python installation status
 
 ## License
 

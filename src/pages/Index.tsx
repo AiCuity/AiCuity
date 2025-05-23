@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -134,7 +135,7 @@ const Index = () => {
         </Card>
         
         <div className="mt-12 text-center text-sm text-gray-500">
-          <p>SpeedRead - Powered by RSVP (Rapid Serial Visual Presentation)</p>
+          <p>AiCuity - Speed Reading Technology</p>
         </div>
       </div>
     </div>
