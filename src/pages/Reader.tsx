@@ -44,7 +44,21 @@ const Reader = () => {
     if (summary) {
       updateHistoryWithSummary(summary);
     }
-  }, [summary]);
+  }, [summary, updateHistoryWithSummary]);
+
+  // Clear session storage after reader loads to prevent stale data
+  useEffect(() => {
+    if (showReader) {
+      // Set a timeout to clear session storage after component mounts and initializes
+      const timer = setTimeout(() => {
+        console.log("Reader component mounted, clearing session storage");
+        sessionStorage.removeItem('initialPosition');
+        sessionStorage.removeItem('savedWpm');
+      }, 1000);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showReader]);
 
   const handleStartReading = (useFull: boolean) => {
     setUseFullText(useFull);
@@ -73,6 +87,7 @@ const Reader = () => {
   }
 
   if (showReader) {
+    console.log("Rendering RSVPReaderContainer with savedWpm:", savedWpm);
     return (
       <RSVPReaderContainer
         useFullText={useFullText}

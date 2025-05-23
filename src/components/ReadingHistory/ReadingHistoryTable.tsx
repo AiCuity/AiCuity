@@ -41,10 +41,17 @@ const ReadingHistoryTable = ({
     sessionStorage.removeItem('contentTitle');
     sessionStorage.removeItem('contentSource');
     sessionStorage.removeItem('currentContentId');
+    sessionStorage.removeItem('initialPosition');
+    sessionStorage.removeItem('savedWpm'); // Make sure to clear previous WPM
     
     // Track the reading position
     const readingPosition = item.current_position || 0;
     console.log("Reading position:", readingPosition);
+    
+    // Store the WPM from history, with fallback to default
+    const wpm = item.wpm || 300;
+    console.log("Setting savedWpm in sessionStorage:", wpm);
+    sessionStorage.setItem('savedWpm', wpm.toString());
     
     // If we have parsed text, use it
     if (item.parsed_text) {
@@ -65,7 +72,7 @@ const ReadingHistoryTable = ({
         sessionStorage.setItem('initialPosition', readingPosition.toString());
       }
       
-      console.log("Content ID and position stored:", item.content_id, readingPosition);
+      console.log("Content ID, position, and WPM stored:", item.content_id, readingPosition, wpm);
       
       // Navigate to the reader page with the content ID
       navigate(`/reader/${item.content_id}`);
@@ -94,6 +101,9 @@ const ReadingHistoryTable = ({
           if (readingPosition > 0) {
             sessionStorage.setItem('initialPosition', readingPosition.toString());
           }
+          
+          // Store the WPM
+          sessionStorage.setItem('savedWpm', wpm.toString());
           
           toast({
             title: "Content retrieved",

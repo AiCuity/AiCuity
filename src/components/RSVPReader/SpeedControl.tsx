@@ -27,13 +27,29 @@ const SpeedControl = ({
   onSavePosition 
 }: SpeedControlProps) => {
   const [isSaving, setIsSaving] = useState(false);
+  const [localWpm, setLocalWpm] = useState<number>(300); // Local state to track WPM
   
   // Make sure baseWpm is a number
   const wpmValue = typeof baseWpm === 'number' ? baseWpm : 
                   Array.isArray(baseWpm) ? baseWpm[0] : 300;
   
+  // Initialize local state from props
+  useEffect(() => {
+    setLocalWpm(wpmValue);
+    console.log("SpeedControl - Initialized with WPM:", wpmValue);
+  }, []);
+  
+  // Update local state when baseWpm changes
+  useEffect(() => {
+    if (wpmValue !== localWpm) {
+      console.log("SpeedControl - WPM updated from props:", wpmValue);
+      setLocalWpm(wpmValue);
+    }
+  }, [wpmValue]);
+  
   console.log("SpeedControl - WPM type:", typeof baseWpm, "Value:", baseWpm);
   console.log("SpeedControl - Normalized WPM value:", wpmValue);
+  console.log("SpeedControl - Local WPM value:", localWpm);
   
   // Show saving indicator briefly when WPM changes
   useEffect(() => {
@@ -50,6 +66,9 @@ const SpeedControl = ({
     // Make sure we're passing a clean number value
     const newWpm = values[0];
     console.log("SpeedControl - WPM change:", newWpm);
+    
+    // Update local state
+    setLocalWpm(newWpm);
     
     // Call the parent handler
     onWpmChange(values);
@@ -74,7 +93,7 @@ const SpeedControl = ({
       
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Reading Speed: {wpmValue} WPM</span>
+          <span className="text-sm font-medium">Reading Speed: {localWpm} WPM</span>
           {isSaving && (
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Save className="h-3 w-3 animate-pulse" />
@@ -111,7 +130,7 @@ const SpeedControl = ({
             <div className="flex items-center gap-4">
               <span className="text-xs">100</span>
               <Slider
-                value={[wpmValue]}
+                value={[localWpm]} 
                 min={100}
                 max={1000}
                 step={10}

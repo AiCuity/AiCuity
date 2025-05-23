@@ -8,12 +8,12 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
   const { user } = useAuth();
   const [historySaved, setHistorySaved] = useState(false);
   const [initialPosition, setInitialPosition] = useState(0);
-  const [savedWpm, setSavedWpm] = useState<number>(300); // Store the WPM from history
+  const [savedWpm, setSavedWpm] = useState<number | undefined>(undefined); // Changed to undefined initially
 
   // Refresh history when component loads
   useEffect(() => {
     fetchHistory();
-  }, []);
+  }, [fetchHistory]);
 
   // Check for existing reading position and WPM from session storage first (from "Continue" button)
   // or from reading history if available
@@ -34,8 +34,7 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
         setSavedWpm(wpm);
       }
       
-      sessionStorage.removeItem('initialPosition'); // Clear it after use
-      sessionStorage.removeItem('savedWpm'); // Clear it after use
+      // Do not remove these from sessionStorage yet, let the reader component use them first
       return;
     }
     
@@ -83,6 +82,14 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
       }
     }
   }, [contentId, history, source, content]);
+
+  // Clear session storage when component unmounts
+  useEffect(() => {
+    return () => {
+      // Only clear if we've already processed them
+      console.log("Cleaning up session storage - useReaderHistory unmounting");
+    };
+  }, []);
 
   // Save reading session to history
   useEffect(() => {

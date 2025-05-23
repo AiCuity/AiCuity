@@ -57,7 +57,13 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
   useEffect(() => {
     if (isStarted && !isPlaying) {
       console.log("Auto-starting reading at WPM:", numericWpm);
-      setIsPlaying(true);
+      // Set a timeout to ensure React state has properly updated before starting playback
+      const timer = setTimeout(() => {
+        console.log("Starting playback now...");
+        setIsPlaying(true);
+      }, 100);
+      
+      return () => clearTimeout(timer);
     }
   }, [isStarted, isPlaying, setIsPlaying, numericWpm]);
 
