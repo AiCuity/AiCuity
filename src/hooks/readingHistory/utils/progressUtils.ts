@@ -2,7 +2,7 @@
 /**
  * Calculate progress percentage based on current position and total words
  */
-export const calculateProgressPercentage = (currentPosition: number, totalWords: number): number => {
+export const calculateProgressPercentage = (currentPosition: number | string, totalWords: number | string): number => {
   // Ensure both inputs are numbers
   const position = typeof currentPosition === 'string' ? parseInt(currentPosition, 10) : currentPosition;
   const total = typeof totalWords === 'string' ? parseInt(totalWords, 10) : totalWords;

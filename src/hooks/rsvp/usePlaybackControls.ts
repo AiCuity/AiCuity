@@ -16,6 +16,7 @@ export function usePlaybackControls(
 ): [PlaybackRefs, PlaybackControls] {
   const animationRef = useRef<number | null>(null);
   const lastUpdateTimeRef = useRef<number | null>(null);
+  const endReachedRef = useRef<boolean>(false); // Track if we've reached the end
   const { toast } = useToast();
 
   // Function to start reading - refactored for better reliability
@@ -25,6 +26,8 @@ export function usePlaybackControls(
       return;
     }
     
+    // Reset end reached flag when starting
+    endReachedRef.current = false;
     setIsPlaying(true);
     lastUpdateTimeRef.current = null;
     
@@ -43,20 +46,22 @@ export function usePlaybackControls(
       }
       
       setCurrentWordIndex(currentIndex => {
-        // Safety check - stop if end reached
-        if (currentIndex >= words.length - 1) {
-          console.log("Reading complete - reached last word");
-          // Continue showing the last word but don't increment
-          
-          // FIX: Ensure we're at exactly the last word index
-          const lastWordIndex = words.length - 1;
-          
-          if (currentIndex < lastWordIndex) {
-            return lastWordIndex;
-          }
-          
-          // Only notify once when we've just reached the end
-          if (currentIndex === lastWordIndex && animationRef.current !== null) {
+        // Check if we're at the last word
+        const lastWordIndex = words.length - 1;
+        const isAtEnd = currentIndex >= lastWordIndex;
+        
+        // Handle reaching the end
+        if (isAtEnd) {
+          // If we haven't notified about the end yet
+          if (!endReachedRef.current) {
+            console.log("Reading complete - reached last word");
+            endReachedRef.current = true;
+            
+            // Ensure we're at exactly the last word index
+            if (currentIndex < lastWordIndex) {
+              return lastWordIndex;
+            }
+            
             if (showToasts) {
               toast({
                 title: "Reading Complete",
@@ -65,12 +70,12 @@ export function usePlaybackControls(
             }
             
             // Stop the animation loop
-            cancelAnimationFrame(animationRef.current);
+            cancelAnimationFrame(animationRef.current!);
             animationRef.current = null;
             setIsPlaying(false);
           }
           
-          return currentIndex;
+          return currentIndex; // Keep at the last word
         }
         
         const word = words[currentIndex];
@@ -146,6 +151,7 @@ export function usePlaybackControls(
   const restartReading = useCallback(() => {
     setCurrentWordIndex(0);
     setIsPlaying(false);
+    endReachedRef.current = false; // Reset end reached flag
     if (showToasts) {
       toast({
         title: "Restarted",
@@ -155,7 +161,7 @@ export function usePlaybackControls(
   }, [setCurrentWordIndex, setIsPlaying, showToasts, toast]);
 
   return [
-    { animationRef, lastUpdateTimeRef },
+    { animationRef, lastUpdateTimeRef, endReachedRef },
     { startReading, stopReading, updateReading, goToNextWord, goToPreviousWord, restartReading }
   ];
 }

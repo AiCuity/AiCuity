@@ -109,17 +109,25 @@ export function useRSVPReader({
     showToasts
   );
 
-  // Enhanced play/pause handler
+  // Enhanced play/pause handler that really works
   const togglePlay = useCallback(() => {
     const newPlayState = !isPlaying;
     console.log("togglePlay - Setting play state to:", newPlayState, "Current WPM:", baseWpm);
+    
+    // Forcefully toggle the play state
     setIsPlaying(newPlayState);
     
-    // Save position when toggling play/pause
-    if (!newPlayState && currentWordIndex > 0) {
-      // Only save when pausing and we've read some content
-      console.log("Saving position on pause with WPM:", baseWpm);
-      savePosition();
+    // Handle based on the new play state
+    if (newPlayState) {
+      // We're playing now
+      console.log("Starting reading in togglePlay");
+      // Will be handled by the effect below
+    } else {
+      // We're pausing - save position
+      if (currentWordIndex > 0) {
+        console.log("Saving position on pause with WPM:", baseWpm);
+        savePosition();
+      }
     }
   }, [isPlaying, setIsPlaying, currentWordIndex, savePosition, baseWpm]);
 
@@ -128,15 +136,17 @@ export function useRSVPReader({
     console.log("Play state changed:", isPlaying, "WPM:", baseWpm);
     
     if (isPlaying) {
+      console.log("Starting reading due to isPlaying state change");
       startReading();
     } else {
       stopReading();
     }
     
     return () => {
+      console.log("Cleaning up play/pause effect");
       stopReading();
     };
-  }, [isPlaying, baseWpm, currentWordIndex, smartPacingEnabled, startReading, stopReading]);
+  }, [isPlaying, baseWpm, startReading, stopReading]);
 
   // Modified WPM change handler to ensure proper type and add auto-save
   const handleWpmChangeWithSave = useCallback((values: number[]) => {

@@ -65,10 +65,10 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
     }
   }, [isStarted, isPlaying, setIsPlaying, numericWpm]);
 
-  // Detect when we reach the last word - FIX: Check for end of reading consistently
+  // Detect when we reach the last word - Fix: Improve end detection logic
   useEffect(() => {
     // Only check for completion if we've started and we have words
-    if (isStarted && words.length > 0) {
+    if (isStarted && words.length > 0 && isPlaying) {
       // We've reached the end of the text
       if (currentWordIndex >= words.length - 1) {
         console.log("Reached last word, completing calibration passage");
@@ -84,7 +84,7 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
         return () => clearTimeout(timer);
       }
     }
-  }, [currentWordIndex, words, isStarted, setIsPlaying, onComplete]);
+  }, [currentWordIndex, words, isStarted, isPlaying, setIsPlaying, onComplete]);
 
   const handleStart = () => {
     console.log("Starting calibration reading at WPM:", numericWpm);
