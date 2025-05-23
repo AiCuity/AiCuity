@@ -1,6 +1,6 @@
 
 import { ReadingHistoryEntry } from "@/hooks/useReadingHistory";
-import { calculateProgressPercentage } from "@/hooks/readingHistory/utils";
+import { calculateProgressPercentage } from "@/hooks/readingHistory/utils/progressUtils";
 
 // Calculate progress for an entry
 export const calculateProgress = (entry: ReadingHistoryEntry): number => {
@@ -10,11 +10,6 @@ export const calculateProgress = (entry: ReadingHistoryEntry): number => {
   }
   
   // Calculate progress based on current position divided by total word count
-  if (entry.parsed_text && entry.current_position) {
-    const wordCount = entry.parsed_text.split(/\s+/).filter(word => word.length > 0).length;
-    return Math.min(Math.round((entry.current_position / wordCount) * 100), 100);
-  }
-  
   return calculateProgressPercentage(
     entry.current_position || 0,
     entry.parsed_text

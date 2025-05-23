@@ -16,7 +16,6 @@ const ProgressBar = ({ progress, complexity = 0 }: ProgressBarProps) => {
   const normalizedProgress = Math.max(0, Math.min(100, progress));
   
   // Determine color based on complexity (0-1)
-  // Lower complexity = blue, medium = green, higher complexity = amber, highest = red
   const getBarColor = () => {
     if (complexity < 0.3) return "bg-blue-500"; 
     if (complexity < 0.5) return "bg-green-500";

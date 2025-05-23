@@ -4,6 +4,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
+import { calculateProgressPercentage } from "@/hooks/readingHistory/utils/progressUtils";
 
 export function useHistoryTracker(
   contentId: string | undefined,
@@ -27,9 +28,7 @@ export function useHistoryTracker(
   // Calculate progress percentage
   const words = text.split(/\s+/).filter(word => word.length > 0);
   const totalWords = words.length;
-  const progressPercentage = totalWords > 0 
-    ? Math.min(Math.round((currentWordIndex / totalWords) * 100), 100)
-    : 0;
+  const progressPercentage = calculateProgressPercentage(currentWordIndex, text);
 
   // Refresh history when component mounts
   useEffect(() => {

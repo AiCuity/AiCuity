@@ -10,5 +10,6 @@ export const calculateProgressPercentage = (currentPosition: number, totalText: 
   if (totalWords === 0) return 0;
   
   // Calculate percentage and ensure it's between 0-100
-  return Math.min(Math.round((currentPosition / totalWords) * 100), 100);
+  const percentage = Math.min(Math.round((currentPosition / totalWords) * 100), 100);
+  return percentage;
 };
