@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
 import { useAuth } from "@/context/AuthContext";
+import { useProfile } from "@/hooks/useProfile";
 
 export function useHistoryTracker(
   contentId: string | undefined,
@@ -14,7 +15,8 @@ export function useHistoryTracker(
 ): { savePosition: () => Promise<boolean> } {
   const { toast } = useToast();
   const { saveHistoryEntry, history, fetchHistory, findExistingEntryBySource } = useReadingHistory();
-  const { user } = useAuth(); // Get the current authenticated user
+  const { user } = useAuth();
+  const { profile } = useProfile();
 
   // Minimum progress required to consider a session worth saving
   const MIN_WORDS_READ = 5;
@@ -66,6 +68,9 @@ export function useHistoryTracker(
       // Get title from session storage or use the existing title
       const title = sessionStorage.getItem('contentTitle') || existingEntry?.title || "Reading Session";
       
+      // Use preferred WPM from profile if available
+      const wpm = profile?.preferred_wpm || baseWpm;
+      
       // Prepare the entry data
       const entryData = {
         content_id: contentId,
@@ -74,8 +79,8 @@ export function useHistoryTracker(
         source_type: existingEntry?.source_type || "unknown",
         source_input: existingEntry?.source_input || source || "",
         current_position: currentWordIndex,
-        wpm: baseWpm,
-        calibrated: false,
+        wpm: wpm,
+        calibrated: profile?.calibration_status === 'completed' || false,
         summary: existingEntry?.summary || null,
         parsed_text: text,
       };
