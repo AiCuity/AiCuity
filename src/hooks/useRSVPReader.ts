@@ -1,9 +1,12 @@
 
 import { useEffect, useCallback } from "react";
 import { useRSVPCore } from "./rsvp/useRSVPCore";
-import { useRSVPControls } from "./rsvp/useRSVPControls";
 import { usePlaybackControls } from "./rsvp/usePlaybackControls";
 import { useHistoryTracker } from "./rsvp/useHistoryTracker";
+import { useRSVPReadingPosition } from "./rsvp/useRSVPReadingPosition";
+import { useSmartPacing } from "./rsvp/useSmartPacing";
+import { useSpeedControl } from "./rsvp/useSpeedControl";
+import { useWordFormatting } from "./rsvp/useWordFormatting";
 import { RSVPReaderOptions, RSVPReaderHook } from "@/utils/rsvp-types";
 
 export function useRSVPReader({
@@ -44,26 +47,42 @@ export function useRSVPReader({
   
   console.log("useRSVPReader - After core init - baseWpm:", baseWpm);
   
-  // Get RSVP controls
+  // Get reading position controls
   const {
     goToNextWord,
     goToPreviousWord,
-    toggleSmartPacing,
-    handleWpmChange,
-    formattedWord,
-    progress,
     restartReading
-  } = useRSVPControls({
+  } = useRSVPReadingPosition({
     words,
     currentWordIndex,
     setCurrentWordIndex,
-    isPlaying,
-    setIsPlaying,
-    baseWpm,
-    setBaseWpm,
+    showToasts
+  });
+  
+  // Get smart pacing controls
+  const {
+    toggleSmartPacing
+  } = useSmartPacing({
     smartPacingEnabled,
     setSmartPacingEnabled,
     showToasts
+  });
+  
+  // Get speed control
+  const {
+    handleWpmChange: baseHandleWpmChange
+  } = useSpeedControl({
+    setBaseWpm,
+    showToasts
+  });
+  
+  // Get word formatting utilities
+  const {
+    formattedWord,
+    progress
+  } = useWordFormatting({
+    words,
+    currentWordIndex
   });
   
   // Get playback controls
@@ -85,7 +104,7 @@ export function useRSVPReader({
     contentId,
     currentWordIndex,
     isPlaying,
-    baseWpm, // Pass the current baseWpm to history tracker
+    baseWpm,
     text,
     showToasts
   );
@@ -119,15 +138,15 @@ export function useRSVPReader({
     };
   }, [isPlaying, baseWpm, currentWordIndex, smartPacingEnabled, startReading, stopReading]);
 
-  // Modified WPM change handler to ensure proper type
-  const handleWpmChangeWithSave = (values: number[]) => {
+  // Modified WPM change handler to ensure proper type and add auto-save
+  const handleWpmChangeWithSave = useCallback((values: number[]) => {
     // Extract the numeric value from the array
     const newWpm = values[0];
     console.log("handleWpmChangeWithSave - Setting new WPM:", newWpm);
     console.log("handleWpmChangeWithSave - Previous WPM:", baseWpm);
     
     // Pass to original handler
-    handleWpmChange(values);
+    baseHandleWpmChange(values);
     
     // Add auto-save when WPM changes
     if (contentId && currentWordIndex > 0) {
@@ -138,7 +157,7 @@ export function useRSVPReader({
       
       return () => clearTimeout(wpmSaveTimer);
     }
-  };
+  }, [baseHandleWpmChange, contentId, currentWordIndex, baseWpm, savePosition]);
 
   // Return combined hook interface with enhanced toggle functionality
   return {
