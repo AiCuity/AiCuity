@@ -1,7 +1,8 @@
+
 import React from "react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertTriangle, Bookmark } from "lucide-react";
-import { calculateProgressPercentage } from "@/hooks/readingHistory/utils";
+import { calculateProgressPercentage } from "@/hooks/readingHistory/utils/progressUtils";
 
 interface ReaderAlertsProps {
   isSimulated: boolean;
@@ -11,7 +12,9 @@ interface ReaderAlertsProps {
 
 const ReaderAlerts = ({ isSimulated, initialPosition, content }: ReaderAlertsProps) => {
   // Calculate progress percentage using the utility function
-  const progressPercentage = calculateProgressPercentage(initialPosition, content);
+  // Fix: Use content.split() to get word count instead of passing content directly
+  const contentWordCount = content ? content.split(/\s+/).filter(Boolean).length : 0;
+  const progressPercentage = calculateProgressPercentage(initialPosition, contentWordCount);
   
   return (
     <>

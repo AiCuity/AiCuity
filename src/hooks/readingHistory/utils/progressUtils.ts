@@ -10,4 +10,3 @@ export const calculateProgressPercentage = (currentPosition: number, totalWords:
   if (isNaN(position) || isNaN(total) || total === 0) return 0;
   return Math.min(Math.round((position / total) * 100), 100);
 };
-

@@ -23,10 +23,13 @@ export const calculateProgress = (entry: ReadingHistoryEntry): number => {
   
   // Use parsed_text if available to calculate accurate progress
   if (entry.parsed_text) {
+    // Fix: Convert parsed_text to word count instead of passing it directly
+    const wordCount = entry.parsed_text.split(/\s+/).filter(Boolean).length;
+    
     // Calculate progress based on current position and total text
     return calculateProgressPercentage(
       entry.current_position,
-      entry.parsed_text
+      wordCount
     );
   }
   
