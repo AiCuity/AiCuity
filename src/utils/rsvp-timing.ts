@@ -1,3 +1,4 @@
+
 import { calculateComplexity as getTextComplexity } from "./textAnalysis";
 
 /**
@@ -84,14 +85,14 @@ export function calculateDelay(
     smoothedComplexity = weightedSum / weightSum;
   }
   
-  // Use the same algorithm from before, but with smoothed complexity
+  // UPDATED: Reduced maximum adjustment from 50% to 30%
   // Maximum adjustment percentage (equal in both directions)
-  const maxAdjustmentPercent = 0.5; // 50% slower or faster
+  const maxAdjustmentPercent = 0.3; // 30% slower or faster
   
-  // Convert smoothed complexity (0-1) to adjustment factor (-0.5 to 0.5)
+  // Convert smoothed complexity (0-1) to adjustment factor (-0.3 to 0.3)
   // When complexity is 0.5 (medium), adjustment will be 0 (no change)
-  // When complexity is 1.0 (max), adjustment will be +0.5 (slower)
-  // When complexity is 0.0 (min), adjustment will be -0.5 (faster)
+  // When complexity is 1.0 (max), adjustment will be +0.3 (slower)
+  // When complexity is 0.0 (min), adjustment will be -0.3 (faster)
   const adjustmentFactor = (smoothedComplexity - 0.5) * maxAdjustmentPercent * 2;
   
   // Apply the adjustment to the base delay
