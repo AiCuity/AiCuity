@@ -1,4 +1,3 @@
-
 import { calculateComplexity as getTextComplexity } from "./textAnalysis";
 
 /**
@@ -29,8 +28,13 @@ export function shouldAdvanceWord(
   return timePassed >= msPerWord;
 }
 
+// Context-aware complexity smoothing
+const recentComplexities: number[] = [];
+const SMOOTHING_WINDOW_SIZE = 5; // Number of words to consider for smoothing
+
 /**
  * Calculate the delay for a word based on its complexity
+ * Now with smoothing for more gradual speed changes
  * @param baseWpm The base reading speed in words per minute
  * @param complexity The complexity factor (0-1) of the current word
  * @param smartPacingEnabled Whether smart pacing is enabled
@@ -46,18 +50,49 @@ export function calculateDelay(
   
   // If smart pacing is disabled, return the base delay
   if (!smartPacingEnabled) {
+    recentComplexities.length = 0; // Clear history when disabled
     return baseDelay;
   }
   
-  // NEW ALGORITHM: Center around the selected WPM
+  // Add current complexity to recent history for smoothing
+  recentComplexities.push(complexity);
+  
+  // Keep only the most recent entries based on window size
+  if (recentComplexities.length > SMOOTHING_WINDOW_SIZE) {
+    recentComplexities.shift(); // Remove oldest
+  }
+  
+  // Calculate smoothed complexity using weighted average
+  // More weight to current word but consider recent words too
+  let smoothedComplexity = complexity; // Start with current complexity
+  
+  if (recentComplexities.length > 1) {
+    // Weight recent complexities with decreasing importance
+    const totalEntries = recentComplexities.length;
+    let weightSum = 0;
+    let weightedSum = 0;
+    
+    for (let i = 0; i < totalEntries; i++) {
+      // More recent words have higher weight
+      // Current word (last in array) has highest weight
+      const weight = (i + 1) / totalEntries;
+      weightSum += weight;
+      weightedSum += recentComplexities[i] * weight;
+    }
+    
+    // Compute weighted average
+    smoothedComplexity = weightedSum / weightSum;
+  }
+  
+  // Use the same algorithm from before, but with smoothed complexity
   // Maximum adjustment percentage (equal in both directions)
   const maxAdjustmentPercent = 0.5; // 50% slower or faster
   
-  // Convert complexity (0-1) to adjustment factor (-0.5 to 0.5)
+  // Convert smoothed complexity (0-1) to adjustment factor (-0.5 to 0.5)
   // When complexity is 0.5 (medium), adjustment will be 0 (no change)
   // When complexity is 1.0 (max), adjustment will be +0.5 (slower)
   // When complexity is 0.0 (min), adjustment will be -0.5 (faster)
-  const adjustmentFactor = (complexity - 0.5) * maxAdjustmentPercent * 2;
+  const adjustmentFactor = (smoothedComplexity - 0.5) * maxAdjustmentPercent * 2;
   
   // Apply the adjustment to the base delay
   // Positive adjustment = longer delay = slower reading
