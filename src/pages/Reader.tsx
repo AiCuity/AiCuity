@@ -82,7 +82,7 @@ const Reader = () => {
         title={title}
         source={source}
         initialPosition={initialPosition}
-        initialWpm={savedWpm} // Pass the saved WPM to the reader
+        initialWpm={savedWpm} // Make sure to pass the savedWpm to the container
       />
     );
   }
