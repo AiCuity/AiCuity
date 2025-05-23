@@ -49,12 +49,22 @@ export function calculateDelay(
     return baseDelay;
   }
   
-  // Apply complexity-based adjustment - optimize calculation
-  // Higher complexity = longer delay (slower reading)
-  // Use a simplified adjustment for calibration scenarios
-  const adjustmentFactor = 1 + (complexity * Math.max(0.2, 1.2 - (baseWpm / 1200)));
+  // NEW ALGORITHM: Center around the selected WPM
+  // Maximum adjustment percentage (equal in both directions)
+  const maxAdjustmentPercent = 0.5; // 50% slower or faster
   
-  return Math.round(baseDelay * adjustmentFactor);
+  // Convert complexity (0-1) to adjustment factor (-0.5 to 0.5)
+  // When complexity is 0.5 (medium), adjustment will be 0 (no change)
+  // When complexity is 1.0 (max), adjustment will be +0.5 (slower)
+  // When complexity is 0.0 (min), adjustment will be -0.5 (faster)
+  const adjustmentFactor = (complexity - 0.5) * maxAdjustmentPercent * 2;
+  
+  // Apply the adjustment to the base delay
+  // Positive adjustment = longer delay = slower reading
+  // Negative adjustment = shorter delay = faster reading
+  const adjustedDelay = baseDelay * (1 + adjustmentFactor);
+  
+  return Math.round(adjustedDelay);
 }
 
 // Complexity cache for repeated words
