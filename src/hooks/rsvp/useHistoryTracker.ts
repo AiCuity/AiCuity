@@ -5,6 +5,11 @@ import { useReadingHistory } from "@/hooks/useReadingHistory";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { calculateProgressPercentage } from "@/hooks/readingHistory/utils/progressUtils";
+import { 
+  isSignificantSession, 
+  hasSignificantPositionChange, 
+  hasEnoughTimePassed 
+} from "@/hooks/readingHistory/utils/sessionUtils";
 
 export function useHistoryTracker(
   contentId: string | undefined,
@@ -28,18 +33,10 @@ export function useHistoryTracker(
   // Minimum time between auto-saves in milliseconds
   const MIN_SAVE_INTERVAL = 30000; // 30 seconds
   
-  // Check if this is a significant reading session
-  const isSignificantSession = currentWordIndex >= MIN_WORDS_READ;
-  
   // Calculate progress percentage
   const words = text.split(/\s+/).filter(word => word.length > 0);
   const totalWords = words.length;
   const progressPercentage = calculateProgressPercentage(currentWordIndex, totalWords);
-  
-  // Has enough position change occurred to warrant a save?
-  const hasSignificantPositionChange = Math.abs(currentWordIndex - lastSavedPosition.current) >= MIN_POSITION_CHANGE;
-  // Has enough time passed since the last save?
-  const hasEnoughTimePassed = (Date.now() - lastSavedTime.current) >= MIN_SAVE_INTERVAL;
 
   // Refresh history when component mounts
   useEffect(() => {
@@ -77,16 +74,20 @@ export function useHistoryTracker(
         existingEntry = findExistingEntryBySource(sourceUrl);
       }
       
-      // Only save if it's a significant session or if it already has a summary
-      if (!isSignificantSession && !existingEntry?.summary) {
+      // Prepare partial entry for significance check
+      const partialEntry = {
+        title: sessionStorage.getItem('contentTitle') || existingEntry?.title || "Reading Session",
+        summary: existingEntry?.summary || null,
+        current_position: currentWordIndex
+      };
+      
+      // Only save if it's a significant session
+      if (!isSignificantSession(partialEntry) && !existingEntry?.summary) {
         console.log("Not saving insignificant session with no summary");
         return false;
       }
       
       console.log(`Saving reading progress for ${contentId}: ${currentWordIndex}/${totalWords} (${progressPercentage}%) at ${wpmToSave} WPM`);
-      
-      // Get title from session storage or use the existing title
-      const title = sessionStorage.getItem('contentTitle') || existingEntry?.title || "Reading Session";
       
       // Calculate if the reading is completed (reached end or close to end)
       const isCompleted = currentWordIndex >= totalWords - 5;
@@ -94,12 +95,12 @@ export function useHistoryTracker(
       // Prepare the entry data
       const entryData = {
         content_id: contentId,
-        title: title,
+        title: partialEntry.title,
         source: sourceUrl || existingEntry?.source || null,
         source_type: existingEntry?.source_type || "unknown",
         source_input: existingEntry?.source_input || sourceUrl || "",
         current_position: currentWordIndex,
-        wpm: wpmToSave, // Use the number value, not an array
+        wpm: wpmToSave,
         calibrated: profile?.calibration_status === 'completed' || false,
         summary: existingEntry?.summary || null,
         parsed_text: text,
@@ -131,13 +132,13 @@ export function useHistoryTracker(
       }
       return false;
     }
-  }, [contentId, currentWordIndex, baseWpm, totalWords, progressPercentage, history, isSignificantSession, profile, text, saveHistoryEntry, findExistingEntryBySource, showToasts, toast]);
+  }, [contentId, currentWordIndex, baseWpm, totalWords, progressPercentage, history, profile, text, saveHistoryEntry, findExistingEntryBySource, showToasts, toast]);
 
   // Auto-save position when user stops reading, but with delay and position change check
   useEffect(() => {
     if (!isPlaying && contentId && currentWordIndex > 0) {
       // Only save if there's been a significant change in position
-      if (hasSignificantPositionChange) {
+      if (hasSignificantPositionChange(currentWordIndex, lastSavedPosition.current, MIN_POSITION_CHANGE)) {
         const debounceTimer = setTimeout(() => {
           console.log("Auto-saving position after stopping with significant change:", 
                       currentWordIndex, "progress:", progressPercentage + "%", "WPM:", baseWpm);
@@ -147,7 +148,7 @@ export function useHistoryTracker(
         return () => clearTimeout(debounceTimer);
       }
     }
-  }, [isPlaying, contentId, currentWordIndex, progressPercentage, baseWpm, savePosition, hasSignificantPositionChange]);
+  }, [isPlaying, contentId, currentWordIndex, progressPercentage, baseWpm, savePosition]);
   
   // Auto-save periodically while reading, but only if enough time has passed and position changed
   useEffect(() => {
@@ -156,7 +157,8 @@ export function useHistoryTracker(
     if (isPlaying && contentId && currentWordIndex > 0) {
       saveInterval = setInterval(() => {
         // Only save if both time and position conditions are met
-        if (hasEnoughTimePassed && hasSignificantPositionChange) {
+        if (hasEnoughTimePassed(lastSavedTime.current, MIN_SAVE_INTERVAL) && 
+            hasSignificantPositionChange(currentWordIndex, lastSavedPosition.current, MIN_POSITION_CHANGE)) {
           console.log("Auto-saving position during reading - significant progress made:", 
                       currentWordIndex, "progress:", progressPercentage + "%", "WPM:", baseWpm);
           savePosition();
@@ -167,7 +169,7 @@ export function useHistoryTracker(
     return () => {
       if (saveInterval) clearInterval(saveInterval);
     };
-  }, [isPlaying, contentId, currentWordIndex, progressPercentage, baseWpm, savePosition, hasEnoughTimePassed, hasSignificantPositionChange]);
+  }, [isPlaying, contentId, currentWordIndex, progressPercentage, baseWpm, savePosition]);
 
   return { savePosition };
 }
