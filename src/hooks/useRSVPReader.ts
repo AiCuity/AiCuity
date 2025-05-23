@@ -1,12 +1,12 @@
 
-import { useState, useEffect } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { processText, formatWord, calculateProgress } from "@/utils/rsvp-word-utils";
-import { RSVPReaderOptions, RSVPReaderHook } from "@/utils/rsvp-types";
+import { useEffect } from "react";
+import { useRSVPCore } from "./rsvp/useRSVPCore";
+import { useRSVPControls } from "./rsvp/useRSVPControls";
 import { usePlaybackControls } from "./rsvp/usePlaybackControls";
 import { useHistoryTracker } from "./rsvp/useHistoryTracker";
+import { RSVPReaderOptions, RSVPReaderHook } from "@/utils/rsvp-types";
 
-export function useRSVPReader({ 
+export function useRSVPReader({
   text,
   initialWpm = 300,
   initialSmartPacing = true,
@@ -14,35 +14,56 @@ export function useRSVPReader({
   initialPosition = 0,
   contentId
 }: RSVPReaderOptions): RSVPReaderHook {
-  const [words, setWords] = useState<string[]>([]);
-  const [currentWordIndex, setCurrentWordIndex] = useState(initialPosition);
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [baseWpm, setBaseWpm] = useState(initialWpm);
-  const [effectiveWpm, setEffectiveWpm] = useState(initialWpm);
-  const [currentComplexity, setCurrentComplexity] = useState(0);
-  const [smartPacingEnabled, setSmartPacingEnabled] = useState(initialSmartPacing);
-  const [showToasts, setShowToasts] = useState(initialShowToasts);
+  // Get core RSVP state
+  const {
+    words,
+    currentWordIndex,
+    setCurrentWordIndex,
+    isPlaying,
+    setIsPlaying,
+    baseWpm,
+    setBaseWpm,
+    effectiveWpm,
+    setEffectiveWpm,
+    currentComplexity,
+    setCurrentComplexity,
+    smartPacingEnabled,
+    setSmartPacingEnabled,
+    showToasts,
+    setShowToasts
+  } = useRSVPCore({
+    text,
+    initialWpm,
+    initialSmartPacing,
+    initialShowToasts,
+    initialPosition
+  });
   
-  const { toast } = useToast();
-  
-  // Process text into words on component mount or when text changes
-  useEffect(() => {
-    const processedWords = processText(text);
-    setWords(processedWords);
-    
-    // If we're setting the words for the first time and there's an initialPosition,
-    // make sure it's not out of bounds
-    if (processedWords.length > 0 && initialPosition > 0) {
-      setCurrentWordIndex(prev => 
-        Math.min(prev, processedWords.length - 1)
-      );
-    }
-  }, [text, initialPosition]);
+  // Get RSVP controls
+  const {
+    goToNextWord,
+    goToPreviousWord,
+    toggleSmartPacing,
+    handleWpmChange,
+    formattedWord,
+    progress,
+    restartReading
+  } = useRSVPControls({
+    words,
+    currentWordIndex,
+    setCurrentWordIndex,
+    isPlaying,
+    setIsPlaying,
+    baseWpm,
+    setBaseWpm,
+    smartPacingEnabled,
+    setSmartPacingEnabled,
+    showToasts
+  });
   
   // Get playback controls
   const [playbackRefs, { 
-    startReading, stopReading, updateReading, 
-    goToNextWord, goToPreviousWord, restartReading 
+    startReading, stopReading, updateReading 
   }] = usePlaybackControls(
     words,
     baseWpm,
@@ -77,30 +98,7 @@ export function useRSVPReader({
     };
   }, [isPlaying, baseWpm, currentWordIndex, smartPacingEnabled]);
 
-  // Toggle smart pacing
-  const toggleSmartPacing = () => {
-    setSmartPacingEnabled(prev => !prev);
-    if (showToasts) {
-      toast({
-        title: smartPacingEnabled ? "Smart Pacing Disabled" : "Smart Pacing Enabled",
-        description: smartPacingEnabled 
-          ? "Reading at constant speed" 
-          : "Speed will adjust based on text complexity",
-      });
-    }
-  };
-
-  // Handle WPM change
-  const handleWpmChange = (value: number[]) => {
-    setBaseWpm(value[0]);
-  };
-
-  // Format the current word for display
-  const formattedWord = formatWord(words[currentWordIndex] || "");
-  
-  // Calculate reading progress
-  const progress = calculateProgress(currentWordIndex, words.length);
-
+  // Return combined hook interface
   return {
     words,
     currentWordIndex,

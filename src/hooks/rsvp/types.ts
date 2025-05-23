@@ -38,4 +38,36 @@ export interface RSVPPreferences {
   showToasts: boolean;
 }
 
+export interface RSVPCoreState {
+  words: string[];
+  currentWordIndex: number;
+  setCurrentWordIndex: React.Dispatch<React.SetStateAction<number>>;
+  isPlaying: boolean;
+  setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
+  baseWpm: number;
+  setBaseWpm: React.Dispatch<React.SetStateAction<number>>;
+  effectiveWpm: number;
+  setEffectiveWpm: React.Dispatch<React.SetStateAction<number>>;
+  currentComplexity: number;
+  setCurrentComplexity: React.Dispatch<React.SetStateAction<number>>;
+  smartPacingEnabled: boolean;
+  setSmartPacingEnabled: React.Dispatch<React.SetStateAction<boolean>>;
+  showToasts: boolean;
+  setShowToasts: React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+export interface RSVPControlsHook {
+  goToNextWord: () => void;
+  goToPreviousWord: () => void;
+  toggleSmartPacing: () => void;
+  handleWpmChange: (value: number[]) => void;
+  formattedWord: {
+    before: string;
+    highlight: string;
+    after: string;
+  };
+  progress: number;
+  restartReading: () => void;
+}
+
 export type UseRSVPReaderReturn = RSVPReaderHook;
