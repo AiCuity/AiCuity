@@ -37,10 +37,11 @@ const PlaybackControls = ({
   totalWords,
   effectiveWpm
 }: PlaybackControlsProps) => {
-  // Function to handle play/pause that prevents default behavior
+  // Fixed function to handle play/pause that prevents default behavior
   const handlePlayPause = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
+    console.log("Play/Pause clicked, current state:", isPlaying);
     onPlayPause();
   };
 

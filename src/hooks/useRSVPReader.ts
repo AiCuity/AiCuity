@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useRSVPCore } from "./rsvp/useRSVPCore";
 import { useRSVPControls } from "./rsvp/useRSVPControls";
 import { usePlaybackControls } from "./rsvp/usePlaybackControls";
@@ -85,8 +85,22 @@ export function useRSVPReader({
     showToasts
   );
 
-  // Handle play/pause
+  // Enhanced play/pause handler
+  const togglePlay = useCallback(() => {
+    const newPlayState = !isPlaying;
+    setIsPlaying(newPlayState);
+    
+    // Save position when toggling play/pause
+    if (!newPlayState && currentWordIndex > 0) {
+      // Only save when pausing and we've read some content
+      savePosition();
+    }
+  }, [isPlaying, setIsPlaying, currentWordIndex, savePosition]);
+
+  // Handle play/pause with improved synchronization
   useEffect(() => {
+    console.log("Play state changed:", isPlaying);
+    
     if (isPlaying) {
       startReading();
     } else {
@@ -98,12 +112,12 @@ export function useRSVPReader({
     };
   }, [isPlaying, baseWpm, currentWordIndex, smartPacingEnabled, startReading, stopReading]);
 
-  // Return combined hook interface
+  // Return combined hook interface with enhanced toggle functionality
   return {
     words,
     currentWordIndex,
     isPlaying,
-    setIsPlaying,
+    setIsPlaying: togglePlay, // Use the enhanced toggle function
     baseWpm,
     effectiveWpm,
     currentComplexity,

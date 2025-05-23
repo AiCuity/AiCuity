@@ -50,6 +50,7 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
   });
   
   const { isFullscreen, toggleFullscreen } = useFullscreen(readerRef);
+  const [showToasts, setShowToasts] = useState(true);
 
   // Auto-save WPM when it changes
   useEffect(() => {
@@ -57,41 +58,18 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
       // Debounce the WPM updates
       const saveTimer = setTimeout(() => {
         updatePreferredWpm(baseWpm);
-        toast({
-          title: "Reading Speed Saved",
-          description: `Your preferred reading speed (${baseWpm} WPM) has been automatically saved.`,
-        });
+        if (showToasts) {
+          toast({
+            title: "Reading Speed Saved",
+            description: `Your preferred reading speed (${baseWpm} WPM) has been automatically saved.`,
+          });
+        }
       }, 1500); // Wait 1.5 seconds after last change
       
       return () => clearTimeout(saveTimer);
     }
-  }, [baseWpm, profile?.preferred_wpm, updatePreferredWpm, toast]);
+  }, [baseWpm, profile?.preferred_wpm, updatePreferredWpm, toast, showToasts]);
 
-  // Modified togglePlay function to save position when play state changes
-  const togglePlay = () => {
-    const newPlayState = !isPlaying;
-    setIsPlaying(newPlayState);
-    
-    // Save position when toggling play/pause
-    if (!newPlayState && currentWordIndex > 0) {
-      // Only save when pausing and we've read some content
-      savePosition();
-    }
-  };
-  
-  // Modified navigation functions to save position
-  const handleGoToNext = () => {
-    goToNextWord();
-    // No need to immediately save here as it would be excessive
-    // The auto-save interval will handle periodic saves
-  };
-  
-  const handleGoToPrevious = () => {
-    goToPreviousWord();
-    // No need to immediately save here as it would be excessive
-    // The auto-save interval will handle periodic saves
-  };
-  
   // Save position when user exits the page
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -114,10 +92,15 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
     };
   }, [currentWordIndex, savePosition]);
   
+  // Toggle notifications
+  const toggleNotifications = () => {
+    setShowToasts(!showToasts);
+  };
+  
   // Log progress for debugging
   useEffect(() => {
-    console.log(`Current progress: ${progress}%, Word index: ${currentWordIndex}/${words.length}`);
-  }, [progress, currentWordIndex, words.length]);
+    console.log(`Current progress: ${progress}%, Word index: ${currentWordIndex}/${words.length}, Playing: ${isPlaying}`);
+  }, [progress, currentWordIndex, words.length, isPlaying]);
   
   return (
     <div 
@@ -129,9 +112,9 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
       }`}
     >
       <KeyboardControls 
-        onPlayPause={togglePlay}
-        onNext={handleGoToNext}
-        onPrevious={handleGoToPrevious}
+        onPlayPause={() => setIsPlaying(!isPlaying)}
+        onNext={goToNextWord}
+        onPrevious={goToPreviousWord}
       />
       
       <TitleBar 
@@ -160,9 +143,9 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
       <div className={`p-4 ${isFullscreen ? "absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm" : ""}`}>
         <PlaybackControls 
           isPlaying={isPlaying}
-          onPlayPause={togglePlay}
-          onPrevious={handleGoToPrevious}
-          onNext={handleGoToNext}
+          onPlayPause={() => setIsPlaying(!isPlaying)}
+          onPrevious={goToPreviousWord}
+          onNext={goToNextWord}
           onRestart={restartReading}
           disablePrevious={currentWordIndex <= 0}
           disableNext={currentWordIndex >= words.length - 1}
@@ -172,6 +155,19 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
           totalWords={words.length}
           effectiveWpm={effectiveWpm}
         />
+        
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <button 
+            className={`px-3 py-1 rounded-md flex items-center gap-1 ${
+              showToasts 
+                ? "bg-blue-500 text-white" 
+                : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white"
+            }`}
+            onClick={toggleNotifications}
+          >
+            {showToasts ? "Notifications On" : "Notifications Off"}
+          </button>
+        </div>
         
         <SpeedControl 
           baseWpm={baseWpm}
