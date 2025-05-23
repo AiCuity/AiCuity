@@ -37,18 +37,18 @@ export function useRSVPCore({
   
   // Load preferred WPM from profile only if initialWpm wasn't explicitly provided
   useEffect(() => {
-    // If initialWpm is the default and the profile has a preferred WPM, use that
-    if (profile?.preferred_wpm && initialWpm === 300) {
+    // Only use profile WPM if initialWpm is using the default value
+    if (profile?.preferred_wpm && normalizedInitialWpm === 300) {
       setBaseWpm(profile.preferred_wpm);
       setEffectiveWpm(profile.preferred_wpm);
       console.log(`Loaded preferred WPM from profile: ${profile.preferred_wpm}`);
-    } else if (normalizedInitialWpm !== 300) {
+    } else {
       // If we have a specific initialWpm passed in, prioritize it
       setBaseWpm(normalizedInitialWpm);
       setEffectiveWpm(normalizedInitialWpm);
       console.log(`Using provided initial WPM: ${normalizedInitialWpm}`);
     }
-  }, [profile, initialWpm, normalizedInitialWpm]);
+  }, [profile, normalizedInitialWpm]);
   
   // Process text into words on component mount or when text changes
   useEffect(() => {

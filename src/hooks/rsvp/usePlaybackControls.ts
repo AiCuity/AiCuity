@@ -19,7 +19,7 @@ export function usePlaybackControls(
   const endReachedRef = useRef<boolean>(false); // Track if we've reached the end
   const { toast } = useToast();
 
-  // Function to start reading - refactored for better reliability and accurate timing
+  // Function to start reading - improved for better timing accuracy
   const startReading = useCallback(() => {
     if (words.length === 0) {
       console.log("No text to read");
@@ -86,11 +86,10 @@ export function usePlaybackControls(
         const word = words[currentIndex];
         const complexity = calculateComplexity(word);
         
-        // Calculate the delay based on word complexity
-        // This is the key part for accurate timing
+        // Calculate the delay based on word complexity - this is now fixed for accurate timing
         const delay = calculateDelay(baseWpm, complexity, smartPacingEnabled);
         
-        // Calculate effective WPM with higher precision
+        // Calculate effective WPM directly from the delay - exact calculation
         const effectiveWpm = Math.round((60 * 1000) / delay);
         setEffectiveWpm(effectiveWpm);
         setCurrentComplexity(complexity);

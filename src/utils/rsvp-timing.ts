@@ -11,8 +11,9 @@ export function calculateMsPerWord(wpm: number): number {
     return wpmToMsCache.get(wpm)!;
   }
   
-  // This is the key fix - ensure we're calculating exactly 60,000 ms / wpm
-  const result = Math.round(60000 / Math.max(1, wpm));
+  // Fix WPM calculation: exactly 60,000 ms / wpm with no rounding
+  // Rounding was causing inaccuracy in timing
+  const result = 60000 / Math.max(1, wpm);
   wpmToMsCache.set(wpm, result);
   return result;
 }
@@ -101,7 +102,7 @@ export function calculateDelay(
   // Negative adjustment = shorter delay = faster reading
   const adjustedDelay = baseDelay * (1 + adjustmentFactor);
   
-  return Math.round(adjustedDelay);
+  return adjustedDelay;
 }
 
 // Complexity cache for repeated words
