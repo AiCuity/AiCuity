@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { generateWikipediaArticle } from "@/utils/wikiContent";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
+import { fetchActualContent } from "@/utils/contentSource";
 
 export const useContentLoader = (contentId?: string) => {
   const [content, setContent] = useState<string>("");
@@ -10,6 +11,7 @@ export const useContentLoader = (contentId?: string) => {
   const [source, setSource] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [isSimulated, setIsSimulated] = useState(false);
+  const [isRefetching, setIsRefetching] = useState(false);
   const { toast } = useToast();
   const { history, fetchHistory } = useReadingHistory();
 
@@ -59,6 +61,51 @@ export const useContentLoader = (contentId?: string) => {
           console.log("ContentID doesn't match stored value. Route:", contentId, "Stored:", storedContentId);
         }
         
+        // Get history entry even without parsed_text to try refetching from source
+        const historyEntryWithoutContent = contentId ? 
+          history.find(entry => entry.content_id === contentId) : null;
+          
+        // Try to refetch content from source URL if available
+        if (historyEntryWithoutContent?.source && historyEntryWithoutContent.source.startsWith('http')) {
+          console.log("Attempting to refetch content from source:", historyEntryWithoutContent.source);
+          setIsRefetching(true);
+          
+          try {
+            const result = await fetchActualContent(historyEntryWithoutContent.source);
+            
+            if (result && result.content) {
+              console.log("Successfully refetched content from source");
+              setContent(result.content);
+              setTitle(historyEntryWithoutContent.title || result.title);
+              setSource(historyEntryWithoutContent.source);
+              
+              // Save to session storage for future use
+              sessionStorage.setItem('readerContent', result.content);
+              sessionStorage.setItem('contentTitle', historyEntryWithoutContent.title || result.title);
+              sessionStorage.setItem('contentSource', historyEntryWithoutContent.source);
+              sessionStorage.setItem('currentContentId', contentId);
+              
+              toast({
+                title: "Content retrieved",
+                description: "Successfully retrieved content from the original source.",
+              });
+              
+              setIsLoading(false);
+              setIsRefetching(false);
+              return;
+            }
+          } catch (error) {
+            console.error("Error refetching content:", error);
+            toast({
+              title: "Could not retrieve content",
+              description: "The original content source is no longer available.",
+              variant: "destructive",
+            });
+          } finally {
+            setIsRefetching(false);
+          }
+        }
+          
         // If not in history or matching session storage, process based on content type
         if (contentId?.startsWith('file-')) {
           // For file uploads, get content from sessionStorage
@@ -134,8 +181,8 @@ export const useContentLoader = (contentId?: string) => {
           } else {
             console.warn("Unknown content type and no sessionStorage content:", contentId);
             toast({
-              title: "Unknown content type",
-              description: "The requested content type is not supported.",
+              title: "Content not found",
+              description: "The requested content could not be loaded.",
               variant: "destructive",
             });
           }
@@ -155,5 +202,5 @@ export const useContentLoader = (contentId?: string) => {
     fetchContent();
   }, [contentId, toast, history]);
 
-  return { content, title, source, isLoading, isSimulated };
+  return { content, title, source, isLoading, isSimulated, isRefetching };
 };
