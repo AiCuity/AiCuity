@@ -1,6 +1,5 @@
 
 import { useState } from "react";
-import { useToast } from "@/hooks/use-toast";
 import { summarizeText, SummarizationOptions } from "@/utils/summarization";
 
 export const useSummarization = (content: string) => {
@@ -8,15 +7,10 @@ export const useSummarization = (content: string) => {
   const [isSummarizing, setIsSummarizing] = useState(false);
   const [summarizationProgress, setSummarizationProgress] = useState(0);
   const [summarizationError, setSummarizationError] = useState<string | null>(null);
-  const { toast } = useToast();
 
   const handleSummarize = async (apiKey: string, useOpenAI: boolean) => {
     if (!content) {
-      toast({
-        title: "Error",
-        description: "No content available to summarize.",
-        variant: "destructive",
-      });
+      console.log("Error: No content available to summarize.");
       return;
     }
     
@@ -44,18 +38,11 @@ export const useSummarization = (content: string) => {
       setSummary(result);
       setSummarizationProgress(100);
       
-      toast({
-        title: "Summary generated",
-        description: "Text has been successfully summarized.",
-      });
+      // Removed toast notification
     } catch (error) {
       console.error("Summarization error:", error);
       setSummarizationError(error instanceof Error ? error.message : "Unknown error occurred");
-      toast({
-        title: "Summarization failed",
-        description: "Failed to generate a summary. Please try again.",
-        variant: "destructive",
-      });
+      // Removed toast notification
       setSummarizationProgress(0);
     } finally {
       clearInterval(progressInterval);

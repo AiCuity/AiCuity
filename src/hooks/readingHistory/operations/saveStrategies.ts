@@ -31,6 +31,11 @@ export const saveToSupabase = async (
       }
     }
     
+    // Make sure wpm is a valid number
+    if (!entry.wpm || typeof entry.wpm !== 'number') {
+      entry.wpm = 300; // Default to 300 WPM if missing or invalid
+    }
+    
     if (existingEntry) {
       // Update existing entry
       const { data, error } = await supabase
@@ -113,11 +118,7 @@ export const saveToSupabase = async (
     }
   } catch (error) {
     console.error('Error saving reading history:', error);
-    toast({
-      title: 'Error',
-      description: 'Failed to save reading session.',
-      variant: 'destructive',
-    });
+    // Removed toast notification
     return null;
   }
 };
@@ -133,6 +134,11 @@ export const saveToLocalStorage = (
 ) => {
   try {
     const localHistory: ReadingHistoryEntry[] = JSON.parse(localStorage.getItem('readingHistory') || '[]');
+    
+    // Make sure wpm is a valid number
+    if (!entry.wpm || typeof entry.wpm !== 'number') {
+      entry.wpm = 300; // Default to 300 WPM if missing or invalid
+    }
     
     // Check for existing entry with the same content_id
     const existingEntry = findExistingEntry(localHistory, entry.content_id);
@@ -184,11 +190,7 @@ export const saveToLocalStorage = (
     }
   } catch (error) {
     console.error('Error saving local reading history:', error);
-    toast({
-      title: 'Error',
-      description: 'Failed to save reading session locally.',
-      variant: 'destructive',
-    });
+    // Removed toast notification
     return null;
   }
 };

@@ -23,7 +23,7 @@ export function useProgressSaver(
 
   // Save current position to history
   const savePosition = useCallback(async () => {
-    // Ensure WPM is a number, not an array
+    // Ensure WPM is a valid number
     const wpmToSave = typeof baseWpm === 'number' ? baseWpm : 
                     Array.isArray(baseWpm) ? baseWpm[0] : 300;
     
@@ -98,26 +98,14 @@ export function useProgressSaver(
       lastSavedPosition.current = currentWordIndex;
       lastSavedTime.current = Date.now();
       
-      if (showToasts) {
-        toast({
-          title: "Progress Saved",
-          description: `Your reading position (${progressPercentage}%) has been saved at ${wpmToSave} WPM.`,
-        });
-      }
+      // No toast notifications here, removed as requested
       
       return true;
     } catch (error) {
       console.error("Error saving position:", error);
-      if (showToasts) {
-        toast({
-          title: "Error Saving Progress",
-          description: "Failed to save your reading position.",
-          variant: "destructive",
-        });
-      }
       return false;
     }
-  }, [contentId, currentWordIndex, baseWpm, totalWords, progressPercentage, history, text, saveHistoryEntry, findExistingEntryBySource, showToasts, toast]);
+  }, [contentId, currentWordIndex, baseWpm, totalWords, progressPercentage, history, text, saveHistoryEntry, findExistingEntryBySource]);
 
   return {
     savePosition,
