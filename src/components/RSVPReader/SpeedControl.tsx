@@ -23,7 +23,7 @@ const SpeedControl = ({ baseWpm, onWpmChange, isFullscreen, onToggleFullscreen }
       <Separator className="my-4" />
       
       <div className="flex items-center justify-between">
-        <span className="text-sm font-medium">Base Speed: {baseWpm} WPM</span>
+        <span className="text-sm font-medium">Reading Speed: {baseWpm} WPM</span>
         <TooltipProvider>
           <Tooltip>
             <TooltipTrigger asChild>

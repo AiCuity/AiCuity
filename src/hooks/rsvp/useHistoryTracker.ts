@@ -28,12 +28,12 @@ export function useHistoryTracker(
   // Calculate progress percentage
   const words = text.split(/\s+/).filter(word => word.length > 0);
   const totalWords = words.length;
-  const progressPercentage = calculateProgressPercentage(currentWordIndex, text);
+  const progressPercentage = calculateProgressPercentage(currentWordIndex, totalWords);
 
   // Refresh history when component mounts
   useEffect(() => {
     fetchHistory();
-  }, []);
+  }, [fetchHistory]);
 
   // Save current position to history
   const savePosition = async () => {
@@ -70,6 +70,9 @@ export function useHistoryTracker(
       // Use preferred WPM from profile if available
       const wpm = profile?.preferred_wpm || baseWpm;
       
+      // Calculate if the reading is completed (reached end or close to end)
+      const isCompleted = currentWordIndex >= totalWords - 5;
+      
       // Prepare the entry data
       const entryData = {
         content_id: contentId,
@@ -82,6 +85,7 @@ export function useHistoryTracker(
         calibrated: profile?.calibration_status === 'completed' || false,
         summary: existingEntry?.summary || null,
         parsed_text: text,
+        is_completed: isCompleted
       };
       
       await saveHistoryEntry(entryData);
@@ -117,7 +121,7 @@ export function useHistoryTracker(
       
       return () => clearTimeout(debounceTimer);
     }
-  }, [isPlaying, contentId, currentWordIndex]);
+  }, [isPlaying, contentId, currentWordIndex, progressPercentage]);
   
   // Auto-save position when user changes play status (start/stop reading)
   useEffect(() => {

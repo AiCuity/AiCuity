@@ -93,6 +93,8 @@ export function useProfile() {
         title: 'Settings Updated',
         description: `Your preferred reading speed is now ${wpm} WPM.`,
       });
+      
+      return true;
     } catch (error) {
       console.error('Error updating WPM:', error);
       toast({
@@ -100,6 +102,7 @@ export function useProfile() {
         description: 'Failed to update your reading speed.',
         variant: 'destructive'
       });
+      return false;
     }
   };
 
@@ -115,6 +118,7 @@ export function useProfile() {
       if (error) throw error;
       
       setProfile(prev => prev ? { ...prev, calibration_status: status } : null);
+      return true;
     } catch (error) {
       console.error('Error updating calibration status:', error);
       toast({
@@ -122,6 +126,7 @@ export function useProfile() {
         description: 'Failed to update your calibration status.',
         variant: 'destructive'
       });
+      return false;
     }
   };
 

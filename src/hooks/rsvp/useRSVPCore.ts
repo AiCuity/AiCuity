@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react";
 import { processText } from "@/utils/rsvp-word-utils";
 import { RSVPReaderOptions } from "@/utils/rsvp-types";
+import { useProfile } from "@/hooks/useProfile";
 
 export function useRSVPCore({
   text,
@@ -10,15 +11,28 @@ export function useRSVPCore({
   initialShowToasts = true,
   initialPosition = 0
 }: RSVPReaderOptions) {
+  const { profile } = useProfile();
   // Core state for the RSVP reader
   const [words, setWords] = useState<string[]>([]);
   const [currentWordIndex, setCurrentWordIndex] = useState(initialPosition);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [baseWpm, setBaseWpm] = useState(initialWpm);
-  const [effectiveWpm, setEffectiveWpm] = useState(initialWpm);
+  
+  // Use preferred WPM from profile if available, otherwise use initialWpm
+  const [baseWpm, setBaseWpm] = useState(profile?.preferred_wpm || initialWpm);
+  const [effectiveWpm, setEffectiveWpm] = useState(profile?.preferred_wpm || initialWpm);
+  
   const [currentComplexity, setCurrentComplexity] = useState(0);
   const [smartPacingEnabled, setSmartPacingEnabled] = useState(initialSmartPacing);
   const [showToasts, setShowToasts] = useState(initialShowToasts);
+  
+  // Load preferred WPM from profile when profile loads or changes
+  useEffect(() => {
+    if (profile?.preferred_wpm) {
+      setBaseWpm(profile.preferred_wpm);
+      setEffectiveWpm(profile.preferred_wpm);
+      console.log(`Loaded preferred WPM from profile: ${profile.preferred_wpm}`);
+    }
+  }, [profile]);
   
   // Process text into words on component mount or when text changes
   useEffect(() => {
