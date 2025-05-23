@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useCallback } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
 import { useAuth } from "@/context/AuthContext";
@@ -36,7 +36,7 @@ export function useHistoryTracker(
   }, [fetchHistory]);
 
   // Save current position to history
-  const savePosition = async () => {
+  const savePosition = useCallback(async () => {
     // Don't save if we don't have a valid contentId
     if (!contentId) {
       console.log("Not saving position - missing contentId");
@@ -109,7 +109,7 @@ export function useHistoryTracker(
       }
       return false;
     }
-  };
+  }, [contentId, currentWordIndex, totalWords, progressPercentage, history, source, isSignificantSession, profile, baseWpm, text, saveHistoryEntry, findExistingEntryBySource, showToasts, toast]);
 
   // Auto-save position when user stops reading
   useEffect(() => {
@@ -117,19 +117,23 @@ export function useHistoryTracker(
       const debounceTimer = setTimeout(() => {
         console.log("Auto-saving position after stopping:", currentWordIndex, "progress:", progressPercentage + "%");
         savePosition();
-      }, 3000); // Save 3 seconds after stopping
+      }, 2000); // Save 2 seconds after stopping
       
       return () => clearTimeout(debounceTimer);
     }
-  }, [isPlaying, contentId, currentWordIndex, progressPercentage]);
+  }, [isPlaying, contentId, currentWordIndex, progressPercentage, savePosition]);
   
   // Auto-save position when user changes play status (start/stop reading)
   useEffect(() => {
-    if (contentId && currentWordIndex > 0) {
-      console.log("Auto-saving position on play status change:", currentWordIndex, "progress:", progressPercentage + "%");
-      savePosition();
-    }
-  }, [isPlaying]);
+    const saveTimer = setTimeout(() => {
+      if (contentId && currentWordIndex > 0) {
+        console.log("Auto-saving position on play status change:", currentWordIndex, "progress:", progressPercentage + "%");
+        savePosition();
+      }
+    }, 500);
+    
+    return () => clearTimeout(saveTimer);
+  }, [isPlaying, savePosition, contentId, currentWordIndex, progressPercentage]);
   
   // Auto-save periodically while reading (every 30 seconds)
   useEffect(() => {
@@ -145,7 +149,7 @@ export function useHistoryTracker(
     return () => {
       if (saveInterval) clearInterval(saveInterval);
     };
-  }, [isPlaying, contentId, currentWordIndex, progressPercentage]);
+  }, [isPlaying, contentId, currentWordIndex, progressPercentage, savePosition]);
 
   return { savePosition };
 }

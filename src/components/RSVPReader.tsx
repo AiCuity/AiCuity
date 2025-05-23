@@ -9,8 +9,6 @@ import WordDisplay from "./RSVPReader/WordDisplay";
 import ProgressBar from "./RSVPReader/ProgressBar";
 import PlaybackControls from "./RSVPReader/PlaybackControls";
 import SpeedControl from "./RSVPReader/SpeedControl";
-import { Button } from "./ui/button";
-import { BookmarkIcon, Save } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useProfile } from "@/hooks/useProfile";
 
@@ -26,7 +24,6 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
   const readerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { profile, updatePreferredWpm } = useProfile();
-  const [saveWpmEnabled, setSaveWpmEnabled] = useState(false);
   
   const {
     words,
@@ -54,26 +51,21 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
   
   const { isFullscreen, toggleFullscreen } = useFullscreen(readerRef);
 
-  // Enable WPM save button when user changes WPM from their profile setting
+  // Auto-save WPM when it changes
   useEffect(() => {
     if (profile?.preferred_wpm && baseWpm !== profile.preferred_wpm) {
-      setSaveWpmEnabled(true);
-    } else {
-      setSaveWpmEnabled(false);
+      // Debounce the WPM updates
+      const saveTimer = setTimeout(() => {
+        updatePreferredWpm(baseWpm);
+        toast({
+          title: "Reading Speed Saved",
+          description: `Your preferred reading speed (${baseWpm} WPM) has been automatically saved.`,
+        });
+      }, 1500); // Wait 1.5 seconds after last change
+      
+      return () => clearTimeout(saveTimer);
     }
-  }, [baseWpm, profile]);
-
-  // Save WPM to user profile
-  const saveWpmToProfile = async () => {
-    if (profile) {
-      await updatePreferredWpm(baseWpm);
-      setSaveWpmEnabled(false);
-      toast({
-        title: "Reading Speed Saved",
-        description: `Your preferred reading speed (${baseWpm} WPM) has been saved to your profile.`,
-      });
-    }
-  };
+  }, [baseWpm, profile?.preferred_wpm, updatePreferredWpm, toast]);
 
   // Modified togglePlay function to save position when play state changes
   const togglePlay = () => {
@@ -111,7 +103,7 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
       window.removeEventListener('beforeunload', handleBeforeUnload);
       savePosition();
     };
-  }, [currentWordIndex, contentId]);
+  }, [currentWordIndex, contentId, savePosition]);
   
   // Save position when reader is unmounted
   useEffect(() => {
@@ -120,7 +112,7 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
         savePosition();
       }
     };
-  }, []);
+  }, [currentWordIndex, savePosition]);
   
   // Log progress for debugging
   useEffect(() => {
@@ -149,33 +141,6 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
       />
       
       <SourceLink source={source} isFullscreen={isFullscreen} />
-
-      {/* Save buttons */}
-      <div className="absolute top-4 right-4 z-10 flex gap-2">
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className={`${isFullscreen ? 'bg-gray-800 hover:bg-gray-700' : ''}`}
-          onClick={() => savePosition()}
-          type="button"
-        >
-          <BookmarkIcon className="w-4 h-4 mr-2" />
-          Save Position
-        </Button>
-        
-        {saveWpmEnabled && (
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className={`${isFullscreen ? 'bg-gray-800 hover:bg-gray-700' : ''}`}
-            onClick={saveWpmToProfile}
-            type="button"
-          >
-            <Save className="w-4 h-4 mr-2" />
-            Save WPM
-          </Button>
-        )}
-      </div>
 
       {/* Main reading area */}
       <div className={`flex flex-col items-center justify-center ${

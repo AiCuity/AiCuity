@@ -96,7 +96,7 @@ export function useRSVPReader({
     return () => {
       stopReading();
     };
-  }, [isPlaying, baseWpm, currentWordIndex, smartPacingEnabled]);
+  }, [isPlaying, baseWpm, currentWordIndex, smartPacingEnabled, startReading, stopReading]);
 
   // Return combined hook interface
   return {
