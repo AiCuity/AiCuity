@@ -4,7 +4,6 @@ import ApiKeyConfig from "@/components/ApiKeyConfig";
 import SummaryPanel from "@/components/SummaryPanel";
 import SummarizePrompt from "@/components/Reader/SummarizePrompt";
 import ContentPreview from "@/components/Reader/ContentPreview";
-import ContentContainer from "@/components/Reader/ContentContainer";
 
 interface ReaderOptionsProps {
   apiKey: string;
