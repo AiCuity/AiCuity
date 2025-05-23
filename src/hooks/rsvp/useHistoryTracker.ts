@@ -25,6 +25,7 @@ export function useHistoryTracker(
   const { profile } = useProfile();
   const lastSavedPosition = useRef<number>(0);
   const lastSavedTime = useRef<number>(Date.now());
+  const localEntrySaved = useRef<boolean>(false);
   
   // Minimum progress required to consider a session worth saving
   const MIN_WORDS_READ = 5;
@@ -42,6 +43,37 @@ export function useHistoryTracker(
   useEffect(() => {
     fetchHistory();
   }, [fetchHistory]);
+  
+  // Save to localStorage whenever position changes
+  useEffect(() => {
+    // Don't save if we don't have a valid contentId
+    if (!contentId || currentWordIndex < MIN_WORDS_READ) {
+      return;
+    }
+    
+    // Don't save if position hasn't changed significantly
+    if (currentWordIndex === lastSavedPosition.current) {
+      return;
+    }
+    
+    // Only save to localStorage if the change is significant enough
+    if (hasSignificantPositionChange(currentWordIndex, lastSavedPosition.current, 5)) {
+      // Save to localStorage
+      const localReadingData = {
+        contentId,
+        position: currentWordIndex,
+        wpm: baseWpm,
+        timestamp: Date.now(),
+        progress: progressPercentage,
+        title: sessionStorage.getItem('contentTitle') || "Reading Session",
+        source: sessionStorage.getItem('contentSource') || null
+      };
+      
+      localStorage.setItem(`reading-${contentId}`, JSON.stringify(localReadingData));
+      localEntrySaved.current = true;
+      console.log(`Saved reading position to localStorage: ${currentWordIndex}/${totalWords} (${progressPercentage}%)`);
+    }
+  }, [contentId, currentWordIndex, baseWpm, totalWords, progressPercentage]);
 
   // Save current position to history
   const savePosition = useCallback(async () => {
@@ -58,6 +90,12 @@ export function useHistoryTracker(
     // Don't save if position hasn't changed significantly
     if (currentWordIndex === lastSavedPosition.current) {
       console.log("Not saving position - no change since last save");
+      return false;
+    }
+    
+    // Check if the current reading session is significant enough to save to Supabase
+    if (currentWordIndex < MIN_WORDS_READ) {
+      console.log("Not saving position - not enough words read");
       return false;
     }
     
@@ -134,14 +172,13 @@ export function useHistoryTracker(
     }
   }, [contentId, currentWordIndex, baseWpm, totalWords, progressPercentage, history, profile, text, saveHistoryEntry, findExistingEntryBySource, showToasts, toast]);
 
-  // Auto-save position when user stops reading, but with delay and position change check
+  // Save to Supabase ONLY when user pauses after a meaningful reading session
   useEffect(() => {
-    if (!isPlaying && contentId && currentWordIndex > 0) {
+    if (!isPlaying && localEntrySaved.current && contentId && currentWordIndex > MIN_WORDS_READ) {
       // Only save if there's been a significant change in position
       if (hasSignificantPositionChange(currentWordIndex, lastSavedPosition.current, MIN_POSITION_CHANGE)) {
         const debounceTimer = setTimeout(() => {
-          console.log("Auto-saving position after stopping with significant change:", 
-                      currentWordIndex, "progress:", progressPercentage + "%", "WPM:", baseWpm);
+          console.log("Saving to Supabase after pause: position", currentWordIndex, "progress:", progressPercentage + "%");
           savePosition();
         }, 2000); // Save 2 seconds after stopping
         

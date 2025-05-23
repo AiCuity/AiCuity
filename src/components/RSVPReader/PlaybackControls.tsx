@@ -42,6 +42,7 @@ const PlaybackControls = ({
     e.preventDefault();
     e.stopPropagation();
     console.log("Play/Pause clicked, current state:", isPlaying);
+    // This will now trigger saving to Supabase on pause via the useEffect in useHistoryTracker
     onPlayPause();
   };
 

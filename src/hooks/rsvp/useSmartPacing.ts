@@ -1,5 +1,5 @@
 
-import { useCallback } from "react";
+import { useCallback, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 interface SmartPacingOptions {
@@ -18,6 +18,11 @@ export function useSmartPacing({
   showToasts
 }: SmartPacingOptions): SmartPacingControls {
   const { toast } = useToast();
+  
+  // Save preference to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('smart-pacing', smartPacingEnabled.toString());
+  }, [smartPacingEnabled]);
   
   const toggleSmartPacing = useCallback(() => {
     const newValue = !smartPacingEnabled;

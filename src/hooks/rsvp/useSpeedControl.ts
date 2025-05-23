@@ -22,6 +22,9 @@ export function useSpeedControl({
     const wpmValue = newWpm[0];
     console.log("handleWpmChange - Setting new WPM:", wpmValue);
     
+    // Save preferred WPM to localStorage
+    localStorage.setItem('preferred-wpm', wpmValue.toString());
+    
     setBaseWpm(wpmValue);
     
     if (showToasts) {
