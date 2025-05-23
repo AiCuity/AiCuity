@@ -29,8 +29,11 @@ if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
 
-// Use API routes
+// Use API routes - update to reflect new structure
 app.use('/api', apiRoutes);
+app.use('/api/files', apiRoutes); // Add compatibility route for direct file access
+app.use('/api/web', apiRoutes);   // Add compatibility route for web scraping
+app.use('/api/system', apiRoutes); // Add compatibility route for system endpoints
 
 // Basic route for checking server status
 app.get('/', (req, res) => {
