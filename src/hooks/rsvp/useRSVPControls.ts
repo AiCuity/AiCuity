@@ -1,19 +1,9 @@
 
-import { useToast } from "@/components/ui/use-toast";
-import { calculateProgress, formatWord } from "@/utils/rsvp-word-utils";
-
-interface UseRSVPControlsProps {
-  words: string[];
-  currentWordIndex: number;
-  setCurrentWordIndex: React.Dispatch<React.SetStateAction<number>>;
-  isPlaying: boolean;
-  setIsPlaying: React.Dispatch<React.SetStateAction<boolean>>;
-  baseWpm: number;
-  setBaseWpm: React.Dispatch<React.SetStateAction<number>>;
-  smartPacingEnabled: boolean;
-  setSmartPacingEnabled: React.Dispatch<React.SetStateAction<boolean>>;
-  showToasts: boolean;
-}
+import { useCallback, useMemo } from "react";
+import { calculateWordPauses } from "@/utils/rsvp-timing";
+import { formatWordForDisplay } from "@/utils/rsvp-word-utils";
+import { useToast } from "@/hooks/use-toast";
+import { calculateProgressPercentage } from "@/hooks/readingHistory/utils/progressUtils";
 
 export function useRSVPControls({
   words,
@@ -26,65 +16,87 @@ export function useRSVPControls({
   smartPacingEnabled,
   setSmartPacingEnabled,
   showToasts
-}: UseRSVPControlsProps) {
+}) {
   const { toast } = useToast();
-
-  // Toggle smart pacing
-  const toggleSmartPacing = () => {
-    setSmartPacingEnabled(prev => !prev);
-    if (showToasts) {
-      toast({
-        title: smartPacingEnabled ? "Smart Pacing Disabled" : "Smart Pacing Enabled",
-        description: smartPacingEnabled 
-          ? "Reading at constant speed" 
-          : "Speed will adjust based on text complexity",
-      });
-    }
-  };
-
-  // Handle WPM change
-  const handleWpmChange = (value: number[]) => {
-    setBaseWpm(value[0]);
-  };
   
-  // Control functions
-  const goToNextWord = () => {
-    setCurrentWordIndex(prevIndex => {
-      const nextIndex = prevIndex + 1;
-      if (nextIndex < words.length) {
-        return nextIndex;
-      }
-      return prevIndex;
-    });
-  };
-
-  const goToPreviousWord = () => {
-    setCurrentWordIndex(prevIndex => {
-      const nextIndex = prevIndex - 1;
-      if (nextIndex >= 0) {
-        return nextIndex;
-      }
-      return prevIndex;
-    });
-  };
-
-  const restartReading = () => {
-    setCurrentWordIndex(0);
-    setIsPlaying(false);
-    if (showToasts) {
-      toast({
-        title: "Restarted",
-        description: "Reading has been reset to the beginning.",
-      });
-    }
-  };
-
   // Format the current word for display
-  const formattedWord = formatWord(words[currentWordIndex] || "");
+  const formattedWord = useMemo(() => {
+    if (words.length === 0 || currentWordIndex >= words.length) {
+      return { before: "", highlight: "", after: "" };
+    }
+    return formatWordForDisplay(words[currentWordIndex]);
+  }, [words, currentWordIndex]);
   
-  // Calculate reading progress
-  const progress = calculateProgress(currentWordIndex, words.length);
-
+  // Calculate current progress (percentage)
+  const progress = useMemo(() => {
+    if (words.length === 0) return 0;
+    // Use the utility function to calculate progress percentage
+    return calculateProgressPercentage(currentWordIndex, words.join(' '));
+  }, [currentWordIndex, words]);
+  
+  // Navigation functions
+  const goToPreviousWord = useCallback(() => {
+    if (currentWordIndex > 0) {
+      setCurrentWordIndex(prevIndex => prevIndex - 1);
+    } else {
+      if (showToasts) {
+        toast({
+          title: "Beginning of Text",
+          description: "You are at the beginning of the text.",
+        });
+      }
+    }
+  }, [currentWordIndex, setCurrentWordIndex, showToasts, toast]);
+  
+  const goToNextWord = useCallback(() => {
+    if (currentWordIndex < words.length - 1) {
+      setCurrentWordIndex(prevIndex => prevIndex + 1);
+    } else {
+      if (showToasts) {
+        toast({
+          title: "End of Text",
+          description: "You have reached the end of the text.",
+        });
+      }
+    }
+  }, [currentWordIndex, words.length, setCurrentWordIndex, showToasts, toast]);
+  
+  // Toggle smart pacing
+  const toggleSmartPacing = useCallback(() => {
+    const newValue = !smartPacingEnabled;
+    setSmartPacingEnabled(newValue);
+    if (showToasts) {
+      toast({
+        title: newValue ? "Smart Pacing Enabled" : "Smart Pacing Disabled",
+        description: newValue 
+          ? "Reading speed will adjust based on complexity." 
+          : "Reading at constant speed.",
+      });
+    }
+  }, [smartPacingEnabled, setSmartPacingEnabled, showToasts, toast]);
+  
+  // Handle WPM changes
+  const handleWpmChange = useCallback((newWpm) => {
+    setBaseWpm(newWpm);
+    if (showToasts) {
+      toast({
+        title: "Reading Speed Updated",
+        description: `Speed set to ${newWpm} WPM.`,
+      });
+    }
+  }, [setBaseWpm, showToasts, toast]);
+  
+  // Restart reading
+  const restartReading = useCallback(() => {
+    setCurrentWordIndex(0);
+    if (showToasts) {
+      toast({
+        title: "Reading Restarted",
+        description: "Starting from the beginning.",
+      });
+    }
+  }, [setCurrentWordIndex, showToasts, toast]);
+  
   return {
     goToNextWord,
     goToPreviousWord,

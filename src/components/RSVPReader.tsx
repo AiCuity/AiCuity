@@ -95,6 +95,11 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
     };
   }, []);
   
+  // Log progress for debugging
+  useEffect(() => {
+    console.log(`Current progress: ${progress}%, Word index: ${currentWordIndex}/${words.length}`);
+  }, [progress, currentWordIndex, words.length]);
+  
   return (
     <div 
       ref={readerRef} 

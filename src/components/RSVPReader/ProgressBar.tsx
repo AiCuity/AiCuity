@@ -5,6 +5,7 @@ import {
   TooltipProvider,
   TooltipTrigger 
 } from "@/components/ui/tooltip";
+import { Progress } from "@/components/ui/progress";
 
 interface ProgressBarProps {
   progress: number;
@@ -35,10 +36,14 @@ const ProgressBar = ({ progress, complexity = 0 }: ProgressBarProps) => {
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="w-full h-1 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
+            <div className="w-full h-2 bg-gray-200 dark:bg-gray-700 rounded-full overflow-hidden">
               <div
                 className={`h-full ${getBarColor()} transition-all duration-300`}
                 style={{ width: `${normalizedProgress}%` }}
+                role="progressbar"
+                aria-valuenow={normalizedProgress}
+                aria-valuemin={0}
+                aria-valuemax={100}
               />
             </div>
           </TooltipTrigger>

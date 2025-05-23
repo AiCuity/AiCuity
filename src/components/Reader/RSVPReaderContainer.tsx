@@ -1,5 +1,5 @@
 
-import React from "react";
+import React, { useEffect } from "react";
 import RSVPReader from "@/components/RSVPReader";
 
 interface RSVPReaderContainerProps {
@@ -21,6 +21,11 @@ const RSVPReaderContainer = ({
   source, 
   initialPosition 
 }: RSVPReaderContainerProps) => {
+  // Log initial position for debugging
+  useEffect(() => {
+    console.log(`RSVPReaderContainer initializing with position: ${initialPosition}`);
+  }, [initialPosition]);
+
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <RSVPReader 
