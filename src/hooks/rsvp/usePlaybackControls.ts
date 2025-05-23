@@ -26,6 +26,8 @@ export function usePlaybackControls(
       return;
     }
     
+    console.log("Starting reading with words:", words.length);
+    
     // Reset end reached flag when starting
     endReachedRef.current = false;
     setIsPlaying(true);
@@ -34,6 +36,7 @@ export function usePlaybackControls(
     // Cancel any existing animation frame
     if (animationRef.current !== null) {
       cancelAnimationFrame(animationRef.current);
+      animationRef.current = null;
     }
     
     // Start the animation frame loop
@@ -70,8 +73,10 @@ export function usePlaybackControls(
             }
             
             // Stop the animation loop
-            cancelAnimationFrame(animationRef.current!);
-            animationRef.current = null;
+            if (animationRef.current !== null) {
+              cancelAnimationFrame(animationRef.current);
+              animationRef.current = null;
+            }
             setIsPlaying(false);
           }
           
@@ -106,6 +111,7 @@ export function usePlaybackControls(
     };
     
     animationRef.current = requestAnimationFrame(updateReadingFunction);
+    console.log("Animation frame requested");
   }, [words, baseWpm, smartPacingEnabled, showToasts, setCurrentWordIndex, setIsPlaying, setEffectiveWpm, setCurrentComplexity, toast]);
 
   // Function to stop reading
