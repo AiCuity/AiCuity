@@ -14,6 +14,7 @@ export interface PlaybackState {
 export interface PlaybackRefs {
   animationRef: React.MutableRefObject<number | null>;
   lastUpdateTimeRef: React.MutableRefObject<number | null>;
+  endReachedRef: React.MutableRefObject<boolean>;
 }
 
 export interface PlaybackControls {
