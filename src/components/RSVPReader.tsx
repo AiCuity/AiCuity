@@ -25,6 +25,9 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
   const { toast } = useToast();
   const { profile, updatePreferredWpm } = useProfile();
   
+  // Log initial WPM for debugging
+  console.log("RSVPReader initializing with WPM:", profile?.preferred_wpm || 300);
+  
   const {
     words,
     currentWordIndex,
@@ -54,11 +57,17 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
   const { isFullscreen, toggleFullscreen } = useFullscreen(readerRef);
   const [showToastsState, setShowToastsState] = useState(true);
 
+  // Log current WPM for debugging
+  useEffect(() => {
+    console.log("Current baseWpm in RSVPReader:", baseWpm);
+  }, [baseWpm]);
+
   // Auto-save WPM when it changes
   useEffect(() => {
     if (profile?.preferred_wpm && baseWpm !== profile.preferred_wpm) {
       // Debounce the WPM updates
       const saveTimer = setTimeout(() => {
+        console.log("Updating preferred WPM in profile:", baseWpm);
         updatePreferredWpm(baseWpm);
         if (showToasts) {
           toast({
@@ -107,6 +116,12 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
   const handleSavePosition = () => {
     console.log("Manually saving position with current WPM:", baseWpm);
     savePosition();
+  };
+  
+  // Handler for WPM changes
+  const handleSpeedChange = (values: number[]) => {
+    console.log("RSVPReader - WPM change received:", values);
+    handleWpmChange(values);
   };
   
   // Log progress for debugging
@@ -183,7 +198,7 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
         
         <SpeedControl 
           baseWpm={baseWpm}
-          onWpmChange={handleWpmChange}
+          onWpmChange={handleSpeedChange}
           isFullscreen={isFullscreen}
           onToggleFullscreen={toggleFullscreen}
           onSavePosition={handleSavePosition} // Pass the save function

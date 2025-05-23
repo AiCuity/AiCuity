@@ -37,6 +37,13 @@ export function useHistoryTracker(
 
   // Save current position to history
   const savePosition = useCallback(async () => {
+    // Ensure WPM is a number, not an array
+    const wpmToSave = typeof baseWpm === 'number' ? baseWpm : 
+                     Array.isArray(baseWpm) ? baseWpm[0] : 300;
+    
+    console.log("savePosition - WPM value type:", typeof baseWpm, "Value:", baseWpm);
+    console.log("savePosition - WPM to save:", wpmToSave);
+    
     // Don't save if we don't have a valid contentId
     if (!contentId) {
       console.log("Not saving position - missing contentId");
@@ -62,13 +69,13 @@ export function useHistoryTracker(
         return false;
       }
       
-      console.log(`Saving reading progress for ${contentId}: ${currentWordIndex}/${totalWords} (${progressPercentage}%) at ${baseWpm} WPM`);
+      console.log(`Saving reading progress for ${contentId}: ${currentWordIndex}/${totalWords} (${progressPercentage}%) at ${wpmToSave} WPM`);
       
       // Get title from session storage or use the existing title
       const title = sessionStorage.getItem('contentTitle') || existingEntry?.title || "Reading Session";
       
       // Always use the current baseWpm from the reader
-      console.log("Current reading speed to save:", baseWpm, "WPM");
+      console.log("Current reading speed to save:", wpmToSave, "WPM");
       
       // Calculate if the reading is completed (reached end or close to end)
       const isCompleted = currentWordIndex >= totalWords - 5;
@@ -81,7 +88,7 @@ export function useHistoryTracker(
         source_type: existingEntry?.source_type || "unknown",
         source_input: existingEntry?.source_input || sourceUrl || "",
         current_position: currentWordIndex,
-        wpm: baseWpm, // Use the current reading speed from the reader
+        wpm: wpmToSave, // Use the number value, not an array
         calibrated: profile?.calibration_status === 'completed' || false,
         summary: existingEntry?.summary || null,
         parsed_text: text,
@@ -93,7 +100,7 @@ export function useHistoryTracker(
       if (showToasts) {
         toast({
           title: "Progress Saved",
-          description: `Your reading position (${progressPercentage}%) has been saved at ${baseWpm} WPM.`,
+          description: `Your reading position (${progressPercentage}%) has been saved at ${wpmToSave} WPM.`,
         });
       }
       

@@ -40,6 +40,9 @@ const SpeedControl = ({
 
   // Handle WPM change with debounce
   const handleWpmChange = (values: number[]) => {
+    // Make sure we're passing a clean number value
+    console.log("SpeedControl - WPM change:", values[0]);
+    
     // Call the parent handler
     onWpmChange(values);
     
@@ -49,6 +52,7 @@ const SpeedControl = ({
     // If we have a manual save function, call it after a delay
     if (onSavePosition) {
       const saveTimer = setTimeout(() => {
+        console.log("SpeedControl - calling save position with WPM:", baseWpm);
         onSavePosition();
       }, 1500);
       
@@ -103,7 +107,7 @@ const SpeedControl = ({
                 min={100}
                 max={1000}
                 step={10}
-                onValueChange={onWpmChange}
+                onValueChange={handleWpmChange}
                 className="flex-1"
               />
               <span className="text-xs">1000</span>

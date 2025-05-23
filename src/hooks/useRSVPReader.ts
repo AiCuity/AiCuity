@@ -93,9 +93,10 @@ export function useRSVPReader({
     // Save position when toggling play/pause
     if (!newPlayState && currentWordIndex > 0) {
       // Only save when pausing and we've read some content
+      console.log("Saving position on pause with WPM:", baseWpm);
       savePosition();
     }
-  }, [isPlaying, setIsPlaying, currentWordIndex, savePosition]);
+  }, [isPlaying, setIsPlaying, currentWordIndex, savePosition, baseWpm]);
 
   // Handle play/pause with improved synchronization
   useEffect(() => {
@@ -112,18 +113,25 @@ export function useRSVPReader({
     };
   }, [isPlaying, baseWpm, currentWordIndex, smartPacingEnabled, startReading, stopReading]);
 
-  // Add auto-save when WPM changes
-  useEffect(() => {
-    // Debounce WPM changes to avoid excessive saving
+  // Modified WPM change handler to ensure proper type
+  const handleWpmChangeWithSave = (values: number[]) => {
+    // Extract the numeric value from the array
+    const newWpm = values[0];
+    console.log("handleWpmChangeWithSave - Setting new WPM:", newWpm);
+    
+    // Pass to original handler
+    handleWpmChange(values);
+    
+    // Add auto-save when WPM changes
     if (contentId && currentWordIndex > 0) {
       const wpmSaveTimer = setTimeout(() => {
-        console.log("Auto-saving after WPM change:", baseWpm);
+        console.log("Auto-saving after WPM change:", newWpm);
         savePosition();
       }, 1500); // Wait 1.5 seconds after last WPM change to save
       
       return () => clearTimeout(wpmSaveTimer);
     }
-  }, [baseWpm, contentId, currentWordIndex, savePosition]);
+  };
 
   // Return combined hook interface with enhanced toggle functionality
   return {
@@ -138,7 +146,7 @@ export function useRSVPReader({
     goToNextWord,
     goToPreviousWord,
     toggleSmartPacing,
-    handleWpmChange,
+    handleWpmChange: handleWpmChangeWithSave, // Use enhanced version
     formattedWord,
     progress,
     restartReading,
