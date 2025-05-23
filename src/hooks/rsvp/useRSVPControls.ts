@@ -1,7 +1,7 @@
 
 import { useCallback, useMemo } from "react";
-import { calculateWordPauses } from "@/utils/rsvp-timing";
-import { formatWordForDisplay } from "@/utils/rsvp-word-utils";
+import { calculateDelay, calculateComplexity } from "@/utils/rsvp-timing";
+import { formatWord } from "@/utils/rsvp-word-utils";
 import { useToast } from "@/hooks/use-toast";
 import { calculateProgressPercentage } from "@/hooks/readingHistory/utils/progressUtils";
 
@@ -24,15 +24,15 @@ export function useRSVPControls({
     if (words.length === 0 || currentWordIndex >= words.length) {
       return { before: "", highlight: "", after: "" };
     }
-    return formatWordForDisplay(words[currentWordIndex]);
+    return formatWord(words[currentWordIndex]);
   }, [words, currentWordIndex]);
   
   // Calculate current progress (percentage)
   const progress = useMemo(() => {
     if (words.length === 0) return 0;
     // Use the utility function to calculate progress percentage
-    return calculateProgressPercentage(currentWordIndex, words.join(' '));
-  }, [currentWordIndex, words]);
+    return calculateProgressPercentage(currentWordIndex, words.length);
+  }, [currentWordIndex, words.length]);
   
   // Navigation functions
   const goToPreviousWord = useCallback(() => {
