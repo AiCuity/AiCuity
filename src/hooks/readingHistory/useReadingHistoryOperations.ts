@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
@@ -19,6 +18,17 @@ export function useReadingHistoryOperations(
     return history.find(entry => entry.content_id === contentId);
   };
 
+  // Find existing entry by source URL
+  const findExistingEntryBySource = (source: string | null): ReadingHistoryEntry | undefined => {
+    if (!source) return undefined;
+    
+    // Only match against URL sources
+    if (source.startsWith('http')) {
+      return history.find(entry => entry.source === source);
+    }
+    return undefined;
+  };
+
   // Save reading history entry
   const saveHistoryEntry = async (entry: Omit<ReadingHistoryEntry, 'id' | 'created_at' | 'updated_at'>) => {
     // Check if this is a significant session worth saving
@@ -27,7 +37,20 @@ export function useReadingHistoryOperations(
       return null;
     }
     
-    const existingEntry = findExistingEntry(entry.content_id);
+    // First check for existing entry with the same content_id
+    let existingEntry = findExistingEntry(entry.content_id);
+    
+    // If no entry with matching content_id was found and we have a source URL,
+    // check for an entry with the same source URL
+    if (!existingEntry && entry.source) {
+      const sourceMatch = findExistingEntryBySource(entry.source);
+      if (sourceMatch) {
+        console.log(`Found existing entry with matching source URL: ${entry.source}`);
+        existingEntry = sourceMatch;
+        // Update the content_id to match the existing entry to ensure consistency
+        entry.content_id = sourceMatch.content_id;
+      }
+    }
     
     // Calculate progress percentage for logging and notifications
     const progressPct = calculateProgressPercentage(entry.current_position, entry.parsed_text);
@@ -249,6 +272,7 @@ export function useReadingHistoryOperations(
   return {
     saveHistoryEntry,
     deleteHistoryEntry,
-    findExistingEntry
+    findExistingEntry,
+    findExistingEntryBySource
   };
 }

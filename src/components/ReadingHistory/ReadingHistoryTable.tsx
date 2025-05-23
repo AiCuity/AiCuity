@@ -40,6 +40,10 @@ const ReadingHistoryTable = ({ history, onDeleteClick, calculateProgress }: Read
     sessionStorage.removeItem('contentSource');
     sessionStorage.removeItem('currentContentId');
     
+    // Track the reading position
+    const readingPosition = item.current_position || 0;
+    console.log("Reading position:", readingPosition);
+    
     // If we have parsed text, use it
     if (item.parsed_text) {
       console.log("Storing parsed text in sessionStorage for content ID:", item.content_id);
@@ -54,7 +58,12 @@ const ReadingHistoryTable = ({ history, onDeleteClick, calculateProgress }: Read
       // Store the content ID for the reader to identify which content this is
       sessionStorage.setItem('currentContentId', item.content_id);
       
-      console.log("Content ID stored:", item.content_id);
+      // Also store the current position
+      if (readingPosition > 0) {
+        sessionStorage.setItem('initialPosition', readingPosition.toString());
+      }
+      
+      console.log("Content ID and position stored:", item.content_id, readingPosition);
       
       // Navigate to the reader page with the content ID
       navigate(`/reader/${item.content_id}`);
@@ -78,6 +87,11 @@ const ReadingHistoryTable = ({ history, onDeleteClick, calculateProgress }: Read
           sessionStorage.setItem('contentTitle', item.title || result.title);
           sessionStorage.setItem('contentSource', item.source);
           sessionStorage.setItem('currentContentId', item.content_id);
+          
+          // Store the reading position
+          if (readingPosition > 0) {
+            sessionStorage.setItem('initialPosition', readingPosition.toString());
+          }
           
           toast({
             title: "Content retrieved",

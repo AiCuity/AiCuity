@@ -13,7 +13,7 @@ export function useHistoryTracker(
   showToasts: boolean
 ): { savePosition: () => Promise<boolean> } {
   const { toast } = useToast();
-  const { saveHistoryEntry, history, fetchHistory } = useReadingHistory();
+  const { saveHistoryEntry, history, fetchHistory, findExistingEntryBySource } = useReadingHistory();
   const { user } = useAuth(); // Get the current authenticated user
 
   // Minimum progress required to consider a session worth saving
@@ -42,9 +42,18 @@ export function useHistoryTracker(
       return false;
     }
     
+    // Get source URL from session storage if available
+    const source = sessionStorage.getItem('contentSource');
+    
     try {
-      // Check if there's already an entry for this content to avoid duplicates
-      const existingEntry = history.find(entry => entry.content_id === contentId);
+      // First try to find by content ID
+      let existingEntry = history.find(entry => entry.content_id === contentId);
+      
+      // If not found by content ID and we have a source URL,
+      // try to find by source URL
+      if (!existingEntry && source) {
+        existingEntry = findExistingEntryBySource(source);
+      }
       
       // Only save if it's a significant session or if it already has a summary
       if (!isSignificantSession && !existingEntry?.summary) {
@@ -54,13 +63,16 @@ export function useHistoryTracker(
       
       console.log(`Saving reading progress for ${contentId}: ${currentWordIndex}/${totalWords} (${progressPercentage}%)`);
       
+      // Get title from session storage or use the existing title
+      const title = sessionStorage.getItem('contentTitle') || existingEntry?.title || "Reading Session";
+      
       // Prepare the entry data
       const entryData = {
         content_id: contentId,
-        title: existingEntry?.title || "Reading Session", // Use existing title if available
-        source: existingEntry?.source || null,
+        title: title,
+        source: source || existingEntry?.source || null,
         source_type: existingEntry?.source_type || "unknown",
-        source_input: existingEntry?.source_input || "",
+        source_input: existingEntry?.source_input || source || "",
         current_position: currentWordIndex,
         wpm: baseWpm,
         calibrated: false,

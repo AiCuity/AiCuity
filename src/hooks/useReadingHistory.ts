@@ -22,7 +22,7 @@ export function useReadingHistory() {
   }, [fetchedHistory]);
   
   // Get history operations
-  const { saveHistoryEntry, deleteHistoryEntry, findExistingEntry } = useReadingHistoryOperations(
+  const { saveHistoryEntry, deleteHistoryEntry, findExistingEntry, findExistingEntryBySource } = useReadingHistoryOperations(
     history,
     setHistory,
     refreshHistory
@@ -34,6 +34,8 @@ export function useReadingHistory() {
     isLoading,
     saveHistoryEntry,
     deleteHistoryEntry,
+    findExistingEntry,
+    findExistingEntryBySource,
     refreshHistory,
     fetchHistory: refreshHistory,
   };
