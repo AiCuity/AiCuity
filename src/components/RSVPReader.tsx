@@ -18,15 +18,16 @@ interface RSVPReaderProps {
   title: string;
   source?: string;
   initialPosition?: number;
+  initialWpm?: number; // Add the initialWpm prop to the interface
 }
 
-const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSVPReaderProps) => {
+const RSVPReader = ({ text, contentId, title, source, initialPosition = 0, initialWpm }: RSVPReaderProps) => {
   const readerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { profile, updatePreferredWpm } = useProfile();
   
   // Log initial WPM for debugging
-  console.log("RSVPReader initializing with WPM:", profile?.preferred_wpm || 300);
+  console.log("RSVPReader initializing with WPM:", initialWpm || profile?.preferred_wpm || 300);
   
   const {
     words,
@@ -51,7 +52,7 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
     text, 
     initialPosition, 
     contentId,
-    initialWpm: profile?.preferred_wpm || 300
+    initialWpm: initialWpm || profile?.preferred_wpm || 300
   });
   
   const { isFullscreen, toggleFullscreen } = useFullscreen(readerRef);

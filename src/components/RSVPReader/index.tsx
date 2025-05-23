@@ -16,6 +16,7 @@ interface RSVPReaderProps {
   title: string;
   source?: string;
   initialPosition?: number;
+  initialWpm?: number; // Add the initialWpm prop to the interface
 }
 
 const RSVPReader = ({ 
@@ -23,7 +24,8 @@ const RSVPReader = ({
   contentId, 
   title, 
   source, 
-  initialPosition = 0 
+  initialPosition = 0,
+  initialWpm  // Add initialWpm to the parameter list
 }: RSVPReaderProps) => {
   const readerRef = useRef<HTMLDivElement>(null);
   const [showNotifications, setShowNotifications] = useState(true);
@@ -50,7 +52,8 @@ const RSVPReader = ({
     text,
     initialShowToasts: showNotifications,
     contentId: contentId,
-    initialPosition: initialPosition
+    initialPosition: initialPosition,
+    initialWpm: initialWpm // Pass the initialWpm to the useRSVPReader hook
   });
   
   const { isFullscreen, toggleFullscreen } = useFullscreen(readerRef);
