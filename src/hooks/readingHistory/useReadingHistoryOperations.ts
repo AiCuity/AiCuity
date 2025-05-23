@@ -1,3 +1,4 @@
+
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
@@ -225,12 +226,16 @@ export function useReadingHistoryOperations(
           throw error;
         }
 
-        setHistory(history.filter(entry => entry.id !== id));
+        // Immediately update the local state to remove the deleted entry
+        setHistory(prev => prev.filter(entry => entry.id !== id));
         
         toast({
           title: 'Entry deleted',
           description: 'Reading history entry has been deleted.',
         });
+        
+        // Force a refresh of the history from the database
+        await refreshHistory();
         
         return true;
       } catch (error) {
@@ -243,13 +248,15 @@ export function useReadingHistoryOperations(
         return false;
       }
     } else {
-      // Delete from localStorage if user is not logged in
       try {
+        // Delete from localStorage if user is not logged in
         const localHistory = JSON.parse(localStorage.getItem('readingHistory') || '[]');
         const updatedHistory = localHistory.filter((entry: ReadingHistoryEntry) => entry.id !== id);
         
         localStorage.setItem('readingHistory', JSON.stringify(updatedHistory));
-        setHistory(updatedHistory);
+        
+        // Immediately update the local state
+        setHistory(prev => prev.filter(entry => entry.id !== id));
         
         toast({
           title: 'Entry deleted',

@@ -16,9 +16,7 @@ export function useReadingHistory() {
   
   // Update local state when fetched history changes
   useEffect(() => {
-    if (JSON.stringify(history) !== JSON.stringify(fetchedHistory)) {
-      setHistory(fetchedHistory);
-    }
+    setHistory(fetchedHistory);
   }, [fetchedHistory]);
   
   // Get history operations

@@ -8,12 +8,16 @@ import LoadingState from "./ReadingHistory/LoadingState";
 import { calculateProgress } from "./ReadingHistory/utils";
 
 const ReadingHistory = () => {
-  const { history, isLoading, deleteHistoryEntry } = useReadingHistory();
+  const { history, isLoading, deleteHistoryEntry, refreshHistory } = useReadingHistory();
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDeleteConfirm = async () => {
     if (deletingId) {
-      await deleteHistoryEntry(deletingId);
+      const success = await deleteHistoryEntry(deletingId);
+      if (success) {
+        // Refresh the history list after successful deletion
+        await refreshHistory();
+      }
       setDeletingId(null);
     }
   };
