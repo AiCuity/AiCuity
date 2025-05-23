@@ -117,8 +117,19 @@ export function useRSVPReader({
     // Forcefully toggle the play state
     setIsPlaying(newPlayState);
     
-    // We don't need additional logic here as the effect below will handle it
-  }, [isPlaying, setIsPlaying, baseWpm]);
+    // Handle based on the new play state
+    if (newPlayState) {
+      // We're playing now
+      console.log("Starting reading in togglePlay");
+      // Will be handled by the effect below
+    } else {
+      // We're pausing - save position
+      if (currentWordIndex > 0) {
+        console.log("Saving position on pause with WPM:", baseWpm);
+        savePosition();
+      }
+    }
+  }, [isPlaying, setIsPlaying, currentWordIndex, savePosition, baseWpm]);
 
   // Handle play/pause with improved synchronization
   useEffect(() => {
@@ -129,18 +140,13 @@ export function useRSVPReader({
       startReading();
     } else {
       stopReading();
-      // Save position on pause if not at the beginning
-      if (currentWordIndex > 0 && contentId) {
-        console.log("Saving position on pause with WPM:", baseWpm);
-        savePosition();
-      }
     }
     
     return () => {
       console.log("Cleaning up play/pause effect");
       stopReading();
     };
-  }, [isPlaying, baseWpm, startReading, stopReading, currentWordIndex, savePosition, contentId]);
+  }, [isPlaying, baseWpm, startReading, stopReading]);
 
   // Modified WPM change handler to ensure proper type and add auto-save
   const handleWpmChangeWithSave = useCallback((values: number[]) => {

@@ -35,10 +35,8 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
     progress,
     words,
     handleWpmChange,
-    smartPacingEnabled,
-    toggleSmartPacing,
-    baseWpm,
-    effectiveWpm
+    smartPacingEnabled, 
+    toggleSmartPacing
   } = useRSVPReader({ 
     text,
     initialWpm: numericWpm, // Pass as a number
@@ -53,40 +51,46 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
     handleWpmChange([numericWpm]);
   }, [numericWpm, handleWpmChange]);
 
-  // Enhanced start handler that explicitly starts playback
-  const handleStart = useCallback(() => {
-    console.log("Starting calibration reading at WPM:", numericWpm);
-    setIsStarted(true);
-    // Directly set playing state to true to start immediately
-    setTimeout(() => {
-      console.log("Explicitly starting playback");
-      setIsPlaying(true);
-    }, 100);
-  }, [numericWpm, setIsPlaying]);
+  // Auto-start reading when user clicks the start button
+  useEffect(() => {
+    if (isStarted && !isPlaying) {
+      console.log("Auto-starting reading at WPM:", numericWpm);
+      // Set a timeout to ensure React state has properly updated before starting playback
+      const timer = setTimeout(() => {
+        console.log("Starting playback now...");
+        setIsPlaying(true);
+      }, 100);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isStarted, isPlaying, setIsPlaying, numericWpm]);
 
-  // Detect when we reach the last word - Improved end detection logic
+  // Detect when we reach the last word - Fix: Improve end detection logic
   useEffect(() => {
     // Only check for completion if we've started and we have words
-    if (isStarted && words.length > 0) {
-      // We've reached the end of the text (or very close to it)
+    if (isStarted && words.length > 0 && isPlaying) {
+      // We've reached the end of the text
       if (currentWordIndex >= words.length - 1) {
         console.log("Reached last word, completing calibration passage");
         
-        // Prevent repeated completion triggering
-        if (!isFinished) {
-          // Add a short delay to ensure the last word is seen
-          const timer = setTimeout(() => {
-            console.log("Completing reading test");
-            setIsFinished(true);
-            setIsPlaying(false);
-            onComplete(); // Signal completion to parent component
-          }, 800);
-          
-          return () => clearTimeout(timer);
-        }
+        // Add a short delay to ensure the last word is seen
+        const timer = setTimeout(() => {
+          console.log("Completing reading test");
+          setIsFinished(true);
+          setIsPlaying(false);
+          onComplete(); // Signal completion to parent component
+        }, 1000);
+        
+        return () => clearTimeout(timer);
       }
     }
-  }, [currentWordIndex, words, isStarted, isPlaying, setIsPlaying, onComplete, isFinished]);
+  }, [currentWordIndex, words, isStarted, isPlaying, setIsPlaying, onComplete]);
+
+  const handleStart = () => {
+    console.log("Starting calibration reading at WPM:", numericWpm);
+    setIsStarted(true);
+    // We'll let the effect hook above handle the actual play state
+  };
 
   return (
     <Card className="mb-6">

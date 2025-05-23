@@ -27,28 +27,32 @@ export function useRSVPCore({
   console.log("useRSVPCore - Initial WPM type:", typeof initialWpm, "Value:", initialWpm);
   console.log("useRSVPCore - Normalized initial WPM:", normalizedInitialWpm);
   
-  // Use initialWpm if provided explicitly, otherwise try profile or fall back to default
-  const [baseWpm, setBaseWpm] = useState<number>(normalizedInitialWpm);
-  const [effectiveWpm, setEffectiveWpm] = useState<number>(normalizedInitialWpm);
+  // Use preferred WPM from profile if available, otherwise use initialWpm
+  const [baseWpm, setBaseWpm] = useState<number>(
+    profile?.preferred_wpm || normalizedInitialWpm
+  );
+  const [effectiveWpm, setEffectiveWpm] = useState<number>(
+    profile?.preferred_wpm || normalizedInitialWpm
+  );
   
   const [currentComplexity, setCurrentComplexity] = useState(0);
   const [smartPacingEnabled, setSmartPacingEnabled] = useState(initialSmartPacing);
   const [showToasts, setShowToasts] = useState(initialShowToasts);
   
-  // Load preferred WPM from profile only if initialWpm wasn't explicitly provided
+  // Load preferred WPM from profile when profile loads or changes
   useEffect(() => {
-    // Only use profile WPM if initialWpm is using the default value
-    if (profile?.preferred_wpm && normalizedInitialWpm === 300) {
+    // Only use profile WPM if we don't have a specific initialWpm value passed in
+    if (profile?.preferred_wpm && initialWpm === 300) {
       setBaseWpm(profile.preferred_wpm);
       setEffectiveWpm(profile.preferred_wpm);
       console.log(`Loaded preferred WPM from profile: ${profile.preferred_wpm}`);
-    } else {
+    } else if (normalizedInitialWpm !== 300) {
       // If we have a specific initialWpm passed in, prioritize it
       setBaseWpm(normalizedInitialWpm);
       setEffectiveWpm(normalizedInitialWpm);
       console.log(`Using provided initial WPM: ${normalizedInitialWpm}`);
     }
-  }, [profile, normalizedInitialWpm]);
+  }, [profile, initialWpm, normalizedInitialWpm]);
   
   // Process text into words on component mount or when text changes
   useEffect(() => {
