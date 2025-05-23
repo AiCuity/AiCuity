@@ -7,8 +7,7 @@ import {
   Globe, 
   BookOpen, 
   Search, 
-  PlayCircle,
-  AlertTriangle
+  PlayCircle
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { ReadingHistoryEntry } from "@/hooks/useReadingHistory";
@@ -175,18 +174,6 @@ const ReadingHistoryTable = ({ history, onDeleteClick, calculateProgress }: Read
                     <Badge variant="outline" className="ml-1">
                       Summary
                     </Badge>
-                  )}
-                  {!item.parsed_text && (
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger>
-                          <AlertTriangle className="h-4 w-4 text-amber-500 ml-1" />
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Content may need to be reloaded from source</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
                   )}
                 </div>
               </TableCell>

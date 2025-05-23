@@ -68,22 +68,33 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
       
       console.log("Attempting to save history for:", contentId);
       
-      // Check if this entry already exists in history by content ID
+      // Check if this entry already exists in history by content ID or source URL
       let existingEntry = history.find(entry => entry.content_id === contentId);
       
       // If not found by content ID, check by source URL
       if (!existingEntry && source && source.startsWith('http')) {
-        existingEntry = history.find(entry => entry.source === source);
+        existingEntry = findExistingEntryBySource(source);
         
         if (existingEntry) {
           console.log("Found existing entry by source URL:", source);
         }
       }
       
-      // If it already exists, don't create a duplicate
+      // If it already exists, update it rather than creating a duplicate
       if (existingEntry) {
-        console.log("Entry already exists in history, not creating duplicate:", contentId);
-        setHistorySaved(true);
+        console.log("Entry already exists in history, updating:", existingEntry.id);
+        try {
+          await saveHistoryEntry({
+            ...existingEntry,
+            title, // Use the new title
+            source, // Update the source if needed
+            parsed_text: content, // Update with new content
+            content_id: existingEntry.content_id // Keep the same content ID
+          });
+          setHistorySaved(true);
+        } catch (error) {
+          console.error("Error updating existing history entry:", error);
+        }
         return;
       }
       
@@ -113,14 +124,14 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
         });
         
         setHistorySaved(true);
-        console.log("History entry saved for:", contentId);
+        console.log("New history entry saved for:", contentId);
       } catch (error) {
         console.error("Error saving history:", error);
       }
     };
     
     saveToHistory();
-  }, [content, title, contentId, user, historySaved, history, source]);
+  }, [content, title, contentId, user, historySaved, history, source, findExistingEntryBySource, saveHistoryEntry]);
 
   // Update history with summary when generated
   const updateHistoryWithSummary = async (summary: string) => {
