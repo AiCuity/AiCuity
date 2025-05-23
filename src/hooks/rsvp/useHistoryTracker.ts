@@ -44,7 +44,7 @@ export function useHistoryTracker(
     }
     
     // Get source URL from session storage if available
-    const source = sessionStorage.getItem('contentSource');
+    const sourceUrl = sessionStorage.getItem('contentSource');
     
     try {
       // First try to find by content ID
@@ -52,8 +52,8 @@ export function useHistoryTracker(
       
       // If not found by content ID and we have a source URL,
       // try to find by source URL
-      if (!existingEntry && source) {
-        existingEntry = findExistingEntryBySource(source);
+      if (!existingEntry && sourceUrl) {
+        existingEntry = findExistingEntryBySource(sourceUrl);
       }
       
       // Only save if it's a significant session or if it already has a summary
@@ -77,9 +77,9 @@ export function useHistoryTracker(
       const entryData = {
         content_id: contentId,
         title: title,
-        source: source || existingEntry?.source || null,
+        source: sourceUrl || existingEntry?.source || null,
         source_type: existingEntry?.source_type || "unknown",
-        source_input: existingEntry?.source_input || source || "",
+        source_input: existingEntry?.source_input || sourceUrl || "",
         current_position: currentWordIndex,
         wpm: wpm,
         calibrated: profile?.calibration_status === 'completed' || false,
@@ -109,7 +109,7 @@ export function useHistoryTracker(
       }
       return false;
     }
-  }, [contentId, currentWordIndex, totalWords, progressPercentage, history, source, isSignificantSession, profile, baseWpm, text, saveHistoryEntry, findExistingEntryBySource, showToasts, toast]);
+  }, [contentId, currentWordIndex, totalWords, progressPercentage, history, isSignificantSession, profile, baseWpm, text, saveHistoryEntry, findExistingEntryBySource, showToasts, toast]);
 
   // Auto-save position when user stops reading
   useEffect(() => {
