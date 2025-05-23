@@ -1,4 +1,3 @@
-
 import { useRef, useEffect, useState } from "react";
 import { useRSVPReader } from "@/hooks/useRSVPReader";
 import { useFullscreen } from "@/hooks/useFullscreen";
@@ -18,13 +17,15 @@ interface RSVPReaderProps {
   title: string;
   source?: string;
   initialPosition?: number;
-  initialWpm?: number; // Add the initialWpm prop to the interface
+  initialWpm?: number;
 }
 
 const RSVPReader = ({ text, contentId, title, source, initialPosition = 0, initialWpm }: RSVPReaderProps) => {
   const readerRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   const { profile, updatePreferredWpm } = useProfile();
+  const lastWpmUpdateTime = useRef<number>(Date.now());
+  const MIN_WPM_UPDATE_INTERVAL = 5000; // 5 seconds
   
   // Log initial WPM for debugging
   console.log("RSVPReader initializing with WPM:", initialWpm || profile?.preferred_wpm || 300);
@@ -63,26 +64,31 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0, initi
     console.log("Current baseWpm in RSVPReader:", baseWpm);
   }, [baseWpm]);
 
-  // Auto-save WPM when it changes
+  // Auto-save WPM when it changes, but with rate limiting
   useEffect(() => {
     if (profile?.preferred_wpm && baseWpm !== profile.preferred_wpm) {
-      // Debounce the WPM updates
-      const saveTimer = setTimeout(() => {
-        console.log("Updating preferred WPM in profile:", baseWpm);
-        updatePreferredWpm(baseWpm);
-        if (showToasts) {
-          toast({
-            title: "Reading Speed Saved",
-            description: `Your preferred reading speed (${baseWpm} WPM) has been automatically saved.`,
-          });
-        }
-      }, 1500); // Wait 1.5 seconds after last change
-      
-      return () => clearTimeout(saveTimer);
+      // Only update if enough time has passed since the last update
+      const now = Date.now();
+      if (now - lastWpmUpdateTime.current >= MIN_WPM_UPDATE_INTERVAL) {
+        const saveTimer = setTimeout(() => {
+          console.log("Updating preferred WPM in profile:", baseWpm);
+          updatePreferredWpm(baseWpm);
+          lastWpmUpdateTime.current = now;
+          
+          if (showToasts) {
+            toast({
+              title: "Reading Speed Saved",
+              description: `Your preferred reading speed (${baseWpm} WPM) has been automatically saved.`,
+            });
+          }
+        }, 1500); // Wait 1.5 seconds after last change
+        
+        return () => clearTimeout(saveTimer);
+      }
     }
   }, [baseWpm, profile?.preferred_wpm, updatePreferredWpm, toast, showToasts]);
 
-  // Save position when user exits the page
+  // Save position only when user exits the page
   useEffect(() => {
     const handleBeforeUnload = () => {
       console.log("Saving position before unload, WPM:", baseWpm);
@@ -96,7 +102,7 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0, initi
     };
   }, [currentWordIndex, contentId, savePosition, baseWpm]);
   
-  // Save position when reader is unmounted
+  // Save position when reader is unmounted, not continuously
   useEffect(() => {
     return () => {
       if (currentWordIndex > 0) {
@@ -104,7 +110,7 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0, initi
         savePosition();
       }
     };
-  }, [currentWordIndex, savePosition, baseWpm]);
+  }, []);
   
   // Toggle notifications
   const toggleNotifications = () => {

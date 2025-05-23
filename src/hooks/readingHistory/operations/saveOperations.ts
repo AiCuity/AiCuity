@@ -6,6 +6,53 @@ import { findExistingEntry, findExistingEntryBySource } from './findOperations';
 import { useToast } from '@/hooks/use-toast';
 
 /**
+ * Batch interval for saving operations in milliseconds
+ */
+const BATCH_SAVE_INTERVAL = 3000; // 3 seconds
+const batchSaveTimers = new Map<string, NodeJS.Timeout>();
+const pendingSaves = new Map<string, Omit<ReadingHistoryEntry, 'id' | 'created_at' | 'updated_at'>>();
+
+/**
+ * Debounced save - collects multiple save operations within a time window 
+ * and only performs the latest one
+ */
+const debounceSave = (
+  entry: Omit<ReadingHistoryEntry, 'id' | 'created_at' | 'updated_at'>,
+  history: ReadingHistoryEntry[],
+  setHistory: React.Dispatch<React.SetStateAction<ReadingHistoryEntry[]>>,
+  user: any | null,
+  toast: ReturnType<typeof useToast>['toast']
+) => {
+  // Use content_id as the key for batching saves
+  const key = entry.content_id;
+  
+  // Clear any existing timer for this content_id
+  if (batchSaveTimers.has(key)) {
+    clearTimeout(batchSaveTimers.get(key));
+  }
+  
+  // Store the latest entry data
+  pendingSaves.set(key, entry);
+  
+  // Set up a new timer
+  const timerId = setTimeout(() => {
+    // Get the latest entry data
+    const latestEntry = pendingSaves.get(key);
+    if (latestEntry) {
+      // Perform the actual save
+      actualSaveHistoryEntry(latestEntry, history, setHistory, user, toast);
+      // Clear the pending save
+      pendingSaves.delete(key);
+    }
+    // Clear the timer reference
+    batchSaveTimers.delete(key);
+  }, BATCH_SAVE_INTERVAL);
+  
+  // Store the timer reference
+  batchSaveTimers.set(key, timerId);
+};
+
+/**
  * Save a reading history entry to Supabase or localStorage
  */
 export const saveHistoryEntry = async (
@@ -21,6 +68,23 @@ export const saveHistoryEntry = async (
     return null;
   }
   
+  // Use debounced save to reduce database writes
+  debounceSave(entry, history, setHistory, user, toast);
+  
+  // Return early since actual save will happen after debounce
+  return null;
+};
+
+/**
+ * The actual save implementation 
+ */
+const actualSaveHistoryEntry = async (
+  entry: Omit<ReadingHistoryEntry, 'id' | 'created_at' | 'updated_at'>,
+  history: ReadingHistoryEntry[],
+  setHistory: React.Dispatch<React.SetStateAction<ReadingHistoryEntry[]>>,
+  user: any | null,
+  toast: ReturnType<typeof useToast>['toast']
+) => {
   // First check for existing entry with the same content_id
   let existingEntry = findExistingEntry(history, entry.content_id);
   
