@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
 import ReadingHistoryTable from "./ReadingHistory/ReadingHistoryTable";
 import DeleteConfirmationDialog from "./ReadingHistory/DeleteConfirmationDialog";
@@ -13,7 +13,7 @@ const ReadingHistory = () => {
   const [localHistory, setLocalHistory] = useState(history);
 
   // Update local history when the fetched history changes
-  useState(() => {
+  useEffect(() => {
     setLocalHistory(history);
   }, [history]);
 
