@@ -62,13 +62,13 @@ export function useHistoryTracker(
         return false;
       }
       
-      console.log(`Saving reading progress for ${contentId}: ${currentWordIndex}/${totalWords} (${progressPercentage}%)`);
+      console.log(`Saving reading progress for ${contentId}: ${currentWordIndex}/${totalWords} (${progressPercentage}%) at ${baseWpm} WPM`);
       
       // Get title from session storage or use the existing title
       const title = sessionStorage.getItem('contentTitle') || existingEntry?.title || "Reading Session";
       
-      // Use preferred WPM from profile if available
-      const wpm = profile?.preferred_wpm || baseWpm;
+      // Use current baseWpm instead of profile wpm to ensure we're saving the actual reading speed
+      const wpm = baseWpm;
       
       // Calculate if the reading is completed (reached end or close to end)
       const isCompleted = currentWordIndex >= totalWords - 5;
@@ -109,31 +109,31 @@ export function useHistoryTracker(
       }
       return false;
     }
-  }, [contentId, currentWordIndex, totalWords, progressPercentage, history, isSignificantSession, profile, baseWpm, text, saveHistoryEntry, findExistingEntryBySource, showToasts, toast]);
+  }, [contentId, currentWordIndex, baseWpm, totalWords, progressPercentage, history, isSignificantSession, profile, text, saveHistoryEntry, findExistingEntryBySource, showToasts, toast]);
 
   // Auto-save position when user stops reading
   useEffect(() => {
     if (!isPlaying && contentId && currentWordIndex > 0) {
       const debounceTimer = setTimeout(() => {
-        console.log("Auto-saving position after stopping:", currentWordIndex, "progress:", progressPercentage + "%");
+        console.log("Auto-saving position after stopping:", currentWordIndex, "progress:", progressPercentage + "%", "WPM:", baseWpm);
         savePosition();
       }, 2000); // Save 2 seconds after stopping
       
       return () => clearTimeout(debounceTimer);
     }
-  }, [isPlaying, contentId, currentWordIndex, progressPercentage, savePosition]);
+  }, [isPlaying, contentId, currentWordIndex, progressPercentage, baseWpm, savePosition]);
   
   // Auto-save position when user changes play status (start/stop reading)
   useEffect(() => {
     const saveTimer = setTimeout(() => {
       if (contentId && currentWordIndex > 0) {
-        console.log("Auto-saving position on play status change:", currentWordIndex, "progress:", progressPercentage + "%");
+        console.log("Auto-saving position on play status change:", currentWordIndex, "progress:", progressPercentage + "%", "WPM:", baseWpm);
         savePosition();
       }
     }, 500);
     
     return () => clearTimeout(saveTimer);
-  }, [isPlaying, savePosition, contentId, currentWordIndex, progressPercentage]);
+  }, [isPlaying, savePosition, contentId, currentWordIndex, progressPercentage, baseWpm]);
   
   // Auto-save periodically while reading (every 30 seconds)
   useEffect(() => {
@@ -141,7 +141,7 @@ export function useHistoryTracker(
     
     if (isPlaying && contentId && currentWordIndex > 0) {
       saveInterval = setInterval(() => {
-        console.log("Auto-saving position during reading:", currentWordIndex, "progress:", progressPercentage + "%");
+        console.log("Auto-saving position during reading:", currentWordIndex, "progress:", progressPercentage + "%", "WPM:", baseWpm);
         savePosition();
       }, 30000); // Save every 30 seconds while reading
     }
@@ -149,7 +149,7 @@ export function useHistoryTracker(
     return () => {
       if (saveInterval) clearInterval(saveInterval);
     };
-  }, [isPlaying, contentId, currentWordIndex, progressPercentage, savePosition]);
+  }, [isPlaying, contentId, currentWordIndex, progressPercentage, baseWpm, savePosition]);
 
   return { savePosition };
 }

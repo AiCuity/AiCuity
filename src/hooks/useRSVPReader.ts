@@ -80,7 +80,7 @@ export function useRSVPReader({
     contentId,
     currentWordIndex,
     isPlaying,
-    baseWpm,
+    baseWpm, // Make sure this is passed correctly to the history tracker
     text,
     showToasts
   );
@@ -99,7 +99,7 @@ export function useRSVPReader({
 
   // Handle play/pause with improved synchronization
   useEffect(() => {
-    console.log("Play state changed:", isPlaying);
+    console.log("Play state changed:", isPlaying, "WPM:", baseWpm);
     
     if (isPlaying) {
       startReading();
@@ -111,6 +111,19 @@ export function useRSVPReader({
       stopReading();
     };
   }, [isPlaying, baseWpm, currentWordIndex, smartPacingEnabled, startReading, stopReading]);
+
+  // Add auto-save when WPM changes
+  useEffect(() => {
+    // Debounce WPM changes to avoid excessive saving
+    if (contentId && currentWordIndex > 0) {
+      const wpmSaveTimer = setTimeout(() => {
+        console.log("Auto-saving after WPM change:", baseWpm);
+        savePosition();
+      }, 1500); // Wait 1.5 seconds after last WPM change to save
+      
+      return () => clearTimeout(wpmSaveTimer);
+    }
+  }, [baseWpm, contentId, currentWordIndex, savePosition]);
 
   // Return combined hook interface with enhanced toggle functionality
   return {
