@@ -1,6 +1,6 @@
 
-# Use a Node.js base image
-FROM node:18-slim
+# Multi-stage build for optimized Docker image
+FROM node:18-slim AS base
 
 # Install Python and pip
 RUN apt-get update && apt-get install -y \
@@ -9,45 +9,48 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Create app directory for client
-WORKDIR /app/client
+# Install Python dependencies
+RUN pip3 install ebooklib beautifulsoup4
 
-# Copy client package.json and package-lock.json
+# Create app directory
+WORKDIR /app
+
+# Copy package.json files for both client and server
+FROM base AS dependencies
 COPY package*.json ./
-
-# Install client dependencies
+COPY src/server/package*.json ./server/
 RUN npm install
-
-# Copy client source code
-COPY . .
-
-# Create app directory for server
 WORKDIR /app/server
-
-# Copy server package.json and package-lock.json
-COPY src/server/package*.json ./
-
-# Install server dependencies
 RUN npm install
+WORKDIR /app
 
-# Copy server source code
-COPY src/server .
+# Build stage for client
+FROM dependencies AS build
+COPY . .
+RUN npm run build
 
-# Create uploads directory
-RUN mkdir -p uploads
+# Final stage for production
+FROM base AS production
+WORKDIR /app
 
-# Create scripts directory
-RUN mkdir -p scripts
+# Copy built client files and server files
+COPY --from=build /app/dist ./client/dist
+COPY --from=build /app/server ./server
+COPY --from=dependencies /app/node_modules ./node_modules
+COPY --from=dependencies /app/server/node_modules ./server/node_modules
+
+# Create necessary directories
+RUN mkdir -p ./server/uploads ./server/scripts
 
 # Copy Python scripts
-COPY src/server/scripts ./scripts/
+COPY src/server/scripts ./server/scripts/
 
 # Make Python scripts executable
-RUN chmod +x ./scripts/epub_converter.py
+RUN chmod +x ./server/scripts/*.py
 
 # Expose ports (React app and Express server)
 EXPOSE 8080
 EXPOSE 5000
 
-# Start both applications
-CMD ["sh", "-c", "cd /app/client && npm run build && npm run preview & cd /app/server && npm start"]
+# Start command will be defined in docker-compose
+CMD ["sh", "-c", "cd /app/server && npm start & cd /app/client && npm run preview"]

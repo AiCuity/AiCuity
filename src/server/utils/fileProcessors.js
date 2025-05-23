@@ -5,6 +5,7 @@ const path = require('path');
 const pdfParse = require('pdf-parse');
 const { exec } = require('child_process');
 const { cleanText } = require('./textCleaner');
+const fetch = require('node-fetch').default;
 
 // Process text files
 const processTextFile = async (filePath) => {
@@ -20,8 +21,46 @@ const processPdfFile = async (filePath) => {
   return cleanText(data.text);
 };
 
-// Process EPUB files using Python script
-const processEpubFile = (filePath) => {
+// Process EPUB files - with fallback options
+const processEpubFile = async (filePath) => {
+  // First try the Python service if available
+  const pythonServiceUrl = process.env.PYTHON_SERVICE_URL;
+  
+  if (pythonServiceUrl) {
+    try {
+      console.log(`Attempting to use Python service at ${pythonServiceUrl}`);
+      
+      // Check if the service is running
+      const healthCheck = await fetch(`${pythonServiceUrl}/health`, { timeout: 3000 })
+        .then(res => res.json())
+        .catch(() => null);
+      
+      if (healthCheck && healthCheck.status === 'ok') {
+        console.log('Python service is available, using it to process EPUB');
+        
+        const formData = new FormData();
+        formData.append('file', fs.createReadStream(filePath));
+        
+        const response = await fetch(`${pythonServiceUrl}/process-epub`, {
+          method: 'POST',
+          body: formData,
+          timeout: 30000
+        });
+        
+        const result = await response.json();
+        
+        if (result.success && result.text) {
+          console.log('Successfully processed EPUB with Python service');
+          return cleanText(result.text);
+        }
+      }
+    } catch (err) {
+      console.error('Error using Python service:', err.message);
+      console.log('Falling back to local Python script');
+    }
+  }
+  
+  // Fallback to local Python script
   return new Promise((resolve, reject) => {
     // Get the absolute path to the Python script
     const pythonScript = path.resolve(__dirname, '..', 'scripts', 'epub_converter.py');
