@@ -28,6 +28,10 @@ const SpeedControl = ({
 }: SpeedControlProps) => {
   const [isSaving, setIsSaving] = useState(false);
   
+  // Make sure baseWpm is a number
+  const wpmValue = typeof baseWpm === 'number' ? baseWpm : 
+                  Array.isArray(baseWpm) ? baseWpm[0] : 300;
+  
   // Show saving indicator briefly when WPM changes
   useEffect(() => {
     setIsSaving(true);
@@ -36,7 +40,7 @@ const SpeedControl = ({
     }, 1500);
     
     return () => clearTimeout(timer);
-  }, [baseWpm]);
+  }, [wpmValue]);
 
   // Handle WPM change with debounce
   const handleWpmChange = (values: number[]) => {
@@ -52,7 +56,7 @@ const SpeedControl = ({
     // If we have a manual save function, call it after a delay
     if (onSavePosition) {
       const saveTimer = setTimeout(() => {
-        console.log("SpeedControl - calling save position with WPM:", baseWpm);
+        console.log("SpeedControl - calling save position with WPM:", wpmValue);
         onSavePosition();
       }, 1500);
       
@@ -66,7 +70,7 @@ const SpeedControl = ({
       
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Reading Speed: {baseWpm} WPM</span>
+          <span className="text-sm font-medium">Reading Speed: {wpmValue} WPM</span>
           {isSaving && (
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Save className="h-3 w-3 animate-pulse" />
@@ -103,7 +107,7 @@ const SpeedControl = ({
             <div className="flex items-center gap-4">
               <span className="text-xs">100</span>
               <Slider
-                value={[baseWpm]}
+                value={[wpmValue]}
                 min={100}
                 max={1000}
                 step={10}

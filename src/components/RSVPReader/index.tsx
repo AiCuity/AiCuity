@@ -15,9 +15,16 @@ interface RSVPReaderProps {
   contentId: string;
   title: string;
   source?: string;
+  initialPosition?: number;
 }
 
-const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
+const RSVPReader = ({ 
+  text, 
+  contentId, 
+  title, 
+  source, 
+  initialPosition = 0 
+}: RSVPReaderProps) => {
   const readerRef = useRef<HTMLDivElement>(null);
   const [showNotifications, setShowNotifications] = useState(true);
   
@@ -37,10 +44,13 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
     formattedWord,
     progress,
     restartReading,
-    setShowToasts
+    setShowToasts,
+    savePosition
   } = useRSVPReader({ 
     text,
-    initialShowToasts: showNotifications
+    initialShowToasts: showNotifications,
+    contentId: contentId,
+    initialPosition: initialPosition
   });
   
   const { isFullscreen, toggleFullscreen } = useFullscreen(readerRef);
@@ -134,6 +144,7 @@ const RSVPReader = ({ text, contentId, title, source }: RSVPReaderProps) => {
           onWpmChange={handleWpmChange}
           isFullscreen={isFullscreen}
           onToggleFullscreen={toggleFullscreen}
+          onSavePosition={savePosition}
         />
       </div>
     </div>

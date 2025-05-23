@@ -74,9 +74,6 @@ export function useHistoryTracker(
       // Get title from session storage or use the existing title
       const title = sessionStorage.getItem('contentTitle') || existingEntry?.title || "Reading Session";
       
-      // Always use the current baseWpm from the reader
-      console.log("Current reading speed to save:", wpmToSave, "WPM");
-      
       // Calculate if the reading is completed (reached end or close to end)
       const isCompleted = currentWordIndex >= totalWords - 5;
       

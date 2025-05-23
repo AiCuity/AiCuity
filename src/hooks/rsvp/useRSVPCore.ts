@@ -17,9 +17,20 @@ export function useRSVPCore({
   const [currentWordIndex, setCurrentWordIndex] = useState(initialPosition);
   const [isPlaying, setIsPlaying] = useState(false);
   
+  // Make sure initialWpm is a proper number
+  const normalizedInitialWpm = typeof initialWpm === 'number' 
+    ? initialWpm 
+    : Array.isArray(initialWpm) 
+      ? initialWpm[0] 
+      : 300;
+  
   // Use preferred WPM from profile if available, otherwise use initialWpm
-  const [baseWpm, setBaseWpm] = useState(profile?.preferred_wpm || initialWpm);
-  const [effectiveWpm, setEffectiveWpm] = useState(profile?.preferred_wpm || initialWpm);
+  const [baseWpm, setBaseWpm] = useState(
+    profile?.preferred_wpm || normalizedInitialWpm
+  );
+  const [effectiveWpm, setEffectiveWpm] = useState(
+    profile?.preferred_wpm || normalizedInitialWpm
+  );
   
   const [currentComplexity, setCurrentComplexity] = useState(0);
   const [smartPacingEnabled, setSmartPacingEnabled] = useState(initialSmartPacing);
@@ -27,12 +38,18 @@ export function useRSVPCore({
   
   // Load preferred WPM from profile when profile loads or changes
   useEffect(() => {
-    if (profile?.preferred_wpm) {
+    // Only use profile WPM if we don't have a specific initialWpm value passed in
+    if (profile?.preferred_wpm && initialWpm === 300) {
       setBaseWpm(profile.preferred_wpm);
       setEffectiveWpm(profile.preferred_wpm);
       console.log(`Loaded preferred WPM from profile: ${profile.preferred_wpm}`);
+    } else if (normalizedInitialWpm !== 300) {
+      // If we have a specific initialWpm passed in, prioritize it
+      setBaseWpm(normalizedInitialWpm);
+      setEffectiveWpm(normalizedInitialWpm);
+      console.log(`Using provided initial WPM: ${normalizedInitialWpm}`);
     }
-  }, [profile]);
+  }, [profile, initialWpm, normalizedInitialWpm]);
   
   // Process text into words on component mount or when text changes
   useEffect(() => {

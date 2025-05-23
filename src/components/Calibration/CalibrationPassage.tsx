@@ -6,10 +6,10 @@ import { Progress } from '@/components/ui/progress';
 import { useRSVPReader } from '@/hooks/useRSVPReader';
 
 interface CalibrationPassageProps {
-  text: string; // Changed from passage object to direct text
-  wpm: number;  // Direct WPM value
-  title?: string; // Optional title
-  onComplete: () => void; // Changed to simple callback without passageId
+  text: string; 
+  wpm: number;  
+  title?: string; 
+  onComplete: () => void; 
 }
 
 const CalibrationPassage: React.FC<CalibrationPassageProps> = ({ 
@@ -34,12 +34,16 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
     toggleSmartPacing
   } = useRSVPReader({ 
     text,
-    initialSmartPacing: false // Disable smart pacing for calibration to ensure consistent WPM
+    initialWpm: wpm, // Use the prop directly for initial value
+    initialSmartPacing: false, // Disable smart pacing for calibration to ensure consistent WPM
+    initialPosition: 0,
+    contentId: "calibration" // Use a special contentId for calibration
   });
 
   // Set the WPM when the component mounts or when wpm prop changes
   useEffect(() => {
-    // The useRSVPReader hook expects an array for WPM change
+    // Make sure we're passing a number, not an array
+    console.log("Setting calibration WPM to:", wpm);
     handleWpmChange([wpm]);
   }, [wpm, handleWpmChange]);
 
