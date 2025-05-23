@@ -30,8 +30,11 @@ export function useRSVPControls({
   // Calculate current progress (percentage)
   const progress = useMemo(() => {
     if (words.length === 0) return 0;
-    // Use the utility function to calculate progress percentage
-    return calculateProgressPercentage(currentWordIndex, words.length);
+    // Ensure we're passing numeric values
+    const numericIndex = typeof currentWordIndex === 'string' ? parseInt(currentWordIndex, 10) : currentWordIndex;
+    const numericLength = typeof words.length === 'string' ? parseInt(words.length, 10) : words.length;
+    
+    return calculateProgressPercentage(numericIndex, numericLength);
   }, [currentWordIndex, words.length]);
   
   // Navigation functions

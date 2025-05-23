@@ -20,7 +20,6 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
 }) => {
   const [isStarted, setIsStarted] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
-  const [isLastWordDisplayed, setIsLastWordDisplayed] = useState(false);
   
   // Make sure we're passing a number for WPM
   const numericWpm = typeof wpm === 'number' ? wpm : parseInt(String(wpm), 10) || 300;
@@ -48,7 +47,6 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
 
   // Set the WPM when the component mounts or when wpm prop changes
   useEffect(() => {
-    // Make sure we're passing a number array, not a single value
     console.log("Setting calibration WPM to:", numericWpm);
     handleWpmChange([numericWpm]);
   }, [numericWpm, handleWpmChange]);
@@ -67,25 +65,26 @@ const CalibrationPassage: React.FC<CalibrationPassageProps> = ({
     }
   }, [isStarted, isPlaying, setIsPlaying, numericWpm]);
 
-  // Detect when we reach the last word
+  // Detect when we reach the last word - FIX: Check for end of reading consistently
   useEffect(() => {
-    if (isStarted && words.length > 0 && currentWordIndex >= words.length - 1) {
-      // We're at the last word - mark it as displayed but don't finish yet
-      setIsLastWordDisplayed(true);
-      
-      // Only stop playing after a delay to ensure the last word is visible
-      if (isLastWordDisplayed) {
-        // Add a short delay to ensure the last word is seen by the user
+    // Only check for completion if we've started and we have words
+    if (isStarted && words.length > 0) {
+      // We've reached the end of the text
+      if (currentWordIndex >= words.length - 1) {
+        console.log("Reached last word, completing calibration passage");
+        
+        // Add a short delay to ensure the last word is seen
         const timer = setTimeout(() => {
+          console.log("Completing reading test");
           setIsFinished(true);
           setIsPlaying(false);
-          onComplete();
-        }, 1000); // 1 second delay to show the last word
+          onComplete(); // Signal completion to parent component
+        }, 1000);
         
         return () => clearTimeout(timer);
       }
     }
-  }, [currentWordIndex, words, isStarted, isLastWordDisplayed, setIsPlaying, onComplete]);
+  }, [currentWordIndex, words, isStarted, setIsPlaying, onComplete]);
 
   const handleStart = () => {
     console.log("Starting calibration reading at WPM:", numericWpm);

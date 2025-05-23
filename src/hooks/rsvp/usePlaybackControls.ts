@@ -45,13 +45,31 @@ export function usePlaybackControls(
       setCurrentWordIndex(currentIndex => {
         // Safety check - stop if end reached
         if (currentIndex >= words.length - 1) {
-          if (showToasts) {
-            toast({
-              title: "Reading Complete",
-              description: "You've reached the end of the text.",
-            });
+          console.log("Reading complete - reached last word");
+          // Continue showing the last word but don't increment
+          
+          // FIX: Ensure we're at exactly the last word index
+          const lastWordIndex = words.length - 1;
+          
+          if (currentIndex < lastWordIndex) {
+            return lastWordIndex;
           }
-          setIsPlaying(false);
+          
+          // Only notify once when we've just reached the end
+          if (currentIndex === lastWordIndex && animationRef.current !== null) {
+            if (showToasts) {
+              toast({
+                title: "Reading Complete",
+                description: "You've reached the end of the text.",
+              });
+            }
+            
+            // Stop the animation loop
+            cancelAnimationFrame(animationRef.current);
+            animationRef.current = null;
+            setIsPlaying(false);
+          }
+          
           return currentIndex;
         }
         
@@ -87,6 +105,7 @@ export function usePlaybackControls(
 
   // Function to stop reading
   const stopReading = useCallback(() => {
+    console.log("Stopping reading playback");
     setIsPlaying(false);
     
     if (animationRef.current !== null) {
