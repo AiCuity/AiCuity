@@ -16,9 +16,16 @@ interface SpeedControlProps {
   onWpmChange: (value: number[]) => void;
   isFullscreen: boolean;
   onToggleFullscreen: () => void;
+  onSavePosition?: () => void; // Optional prop to manually save position
 }
 
-const SpeedControl = ({ baseWpm, onWpmChange, isFullscreen, onToggleFullscreen }: SpeedControlProps) => {
+const SpeedControl = ({ 
+  baseWpm, 
+  onWpmChange, 
+  isFullscreen, 
+  onToggleFullscreen,
+  onSavePosition 
+}: SpeedControlProps) => {
   const [isSaving, setIsSaving] = useState(false);
   
   // Show saving indicator briefly when WPM changes
@@ -30,6 +37,24 @@ const SpeedControl = ({ baseWpm, onWpmChange, isFullscreen, onToggleFullscreen }
     
     return () => clearTimeout(timer);
   }, [baseWpm]);
+
+  // Handle WPM change with debounce
+  const handleWpmChange = (values: number[]) => {
+    // Call the parent handler
+    onWpmChange(values);
+    
+    // Show saving indicator
+    setIsSaving(true);
+    
+    // If we have a manual save function, call it after a delay
+    if (onSavePosition) {
+      const saveTimer = setTimeout(() => {
+        onSavePosition();
+      }, 1500);
+      
+      return () => clearTimeout(saveTimer);
+    }
+  };
 
   return (
     <div className="max-w-lg mx-auto space-y-4">

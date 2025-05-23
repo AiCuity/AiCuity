@@ -67,8 +67,8 @@ export function useHistoryTracker(
       // Get title from session storage or use the existing title
       const title = sessionStorage.getItem('contentTitle') || existingEntry?.title || "Reading Session";
       
-      // Use current baseWpm instead of profile wpm to ensure we're saving the actual reading speed
-      const wpm = baseWpm;
+      // Always use the current baseWpm from the reader
+      console.log("Current reading speed to save:", baseWpm, "WPM");
       
       // Calculate if the reading is completed (reached end or close to end)
       const isCompleted = currentWordIndex >= totalWords - 5;
@@ -81,7 +81,7 @@ export function useHistoryTracker(
         source_type: existingEntry?.source_type || "unknown",
         source_input: existingEntry?.source_input || sourceUrl || "",
         current_position: currentWordIndex,
-        wpm: wpm,
+        wpm: baseWpm, // Use the current reading speed from the reader
         calibrated: profile?.calibration_status === 'completed' || false,
         summary: existingEntry?.summary || null,
         parsed_text: text,
@@ -93,7 +93,7 @@ export function useHistoryTracker(
       if (showToasts) {
         toast({
           title: "Progress Saved",
-          description: `Your reading position (${progressPercentage}%) has been saved.`,
+          description: `Your reading position (${progressPercentage}%) has been saved at ${baseWpm} WPM.`,
         });
       }
       

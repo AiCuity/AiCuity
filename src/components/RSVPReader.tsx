@@ -41,7 +41,9 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
     formattedWord,
     progress,
     restartReading,
-    savePosition
+    savePosition,
+    showToasts,
+    setShowToasts
   } = useRSVPReader({ 
     text, 
     initialPosition, 
@@ -50,7 +52,7 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
   });
   
   const { isFullscreen, toggleFullscreen } = useFullscreen(readerRef);
-  const [showToasts, setShowToasts] = useState(true);
+  const [showToastsState, setShowToastsState] = useState(true);
 
   // Auto-save WPM when it changes
   useEffect(() => {
@@ -73,6 +75,7 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
   // Save position when user exits the page
   useEffect(() => {
     const handleBeforeUnload = () => {
+      console.log("Saving position before unload, WPM:", baseWpm);
       savePosition();
     };
     
@@ -81,26 +84,35 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
       window.removeEventListener('beforeunload', handleBeforeUnload);
       savePosition();
     };
-  }, [currentWordIndex, contentId, savePosition]);
+  }, [currentWordIndex, contentId, savePosition, baseWpm]);
   
   // Save position when reader is unmounted
   useEffect(() => {
     return () => {
       if (currentWordIndex > 0) {
+        console.log("Saving position on unmount, WPM:", baseWpm);
         savePosition();
       }
     };
-  }, [currentWordIndex, savePosition]);
+  }, [currentWordIndex, savePosition, baseWpm]);
   
   // Toggle notifications
   const toggleNotifications = () => {
-    setShowToasts(!showToasts);
+    const newState = !showToastsState;
+    setShowToastsState(newState);
+    setShowToasts(newState);
+  };
+  
+  // Handle manual save of position with current WPM
+  const handleSavePosition = () => {
+    console.log("Manually saving position with current WPM:", baseWpm);
+    savePosition();
   };
   
   // Log progress for debugging
   useEffect(() => {
-    console.log(`Current progress: ${progress}%, Word index: ${currentWordIndex}/${words.length}, Playing: ${isPlaying}`);
-  }, [progress, currentWordIndex, words.length, isPlaying]);
+    console.log(`Current progress: ${progress}%, Word index: ${currentWordIndex}/${words.length}, Playing: ${isPlaying}, WPM: ${baseWpm}`);
+  }, [progress, currentWordIndex, words.length, isPlaying, baseWpm]);
   
   return (
     <div 
@@ -159,13 +171,13 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
         <div className="flex items-center justify-center gap-4 mb-4">
           <button 
             className={`px-3 py-1 rounded-md flex items-center gap-1 ${
-              showToasts 
+              showToastsState 
                 ? "bg-blue-500 text-white" 
                 : "bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-white"
             }`}
             onClick={toggleNotifications}
           >
-            {showToasts ? "Notifications On" : "Notifications Off"}
+            {showToastsState ? "Notifications On" : "Notifications Off"}
           </button>
         </div>
         
@@ -174,6 +186,7 @@ const RSVPReader = ({ text, contentId, title, source, initialPosition = 0 }: RSV
           onWpmChange={handleWpmChange}
           isFullscreen={isFullscreen}
           onToggleFullscreen={toggleFullscreen}
+          onSavePosition={handleSavePosition} // Pass the save function
         />
       </div>
     </div>

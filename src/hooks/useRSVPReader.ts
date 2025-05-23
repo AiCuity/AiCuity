@@ -80,7 +80,7 @@ export function useRSVPReader({
     contentId,
     currentWordIndex,
     isPlaying,
-    baseWpm, // Make sure this is passed correctly to the history tracker
+    baseWpm, // Pass the current baseWpm to history tracker
     text,
     showToasts
   );
