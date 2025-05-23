@@ -1,33 +1,37 @@
 
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-import { ThemeProvider } from "./components/providers/theme-provider";
-import { Toaster } from "sonner";
-import { AuthProvider } from "./context/AuthContext";
-import Index from "./pages/Index";
-import Reader from "./pages/Reader";
-import Calibration from "./pages/Calibration";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import NotFound from "./pages/NotFound";
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Index from './pages/Index';
+import Reader from './pages/Reader';
+import Login from './pages/Login';
+import Register from './pages/Register';
+import Calibration from './pages/Calibration';
+import SpeedCalibration from './pages/SpeedCalibration';
+import NotFound from './pages/NotFound';
+import { Toaster } from '@/components/ui/toaster';
+import { Toaster as SonnerToaster } from 'sonner';
+import { ThemeProvider } from '@/components/providers/theme-provider';
+import { AuthProvider } from '@/context/AuthContext';
 
-function App() {
+const App = () => {
   return (
-    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme" attribute="class">
+    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <AuthProvider>
         <Router>
           <Routes>
             <Route path="/" element={<Index />} />
-            <Route path="/reader/:contentId" element={<Reader />} />
-            <Route path="/calibration" element={<Calibration />} />
+            <Route path="/reader/:contentId?" element={<Reader />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/calibration" element={<Calibration />} />
+            <Route path="/speed-calibration" element={<SpeedCalibration />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
+          <Toaster />
+          <SonnerToaster position="bottom-right" />
         </Router>
-        <Toaster />
       </AuthProvider>
     </ThemeProvider>
   );
-}
+};
 
 export default App;

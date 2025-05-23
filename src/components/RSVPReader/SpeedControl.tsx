@@ -3,7 +3,8 @@ import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
-import { Maximize, Minimize, Save } from "lucide-react";
+import { Maximize, Minimize, Save, Gauge } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { 
   Tooltip,
   TooltipContent,
@@ -26,6 +27,7 @@ const SpeedControl = ({
   onToggleFullscreen,
   onSavePosition 
 }: SpeedControlProps) => {
+  const navigate = useNavigate();
   const [isSaving, setIsSaving] = useState(false);
   const [localWpm, setLocalWpm] = useState<number>(300); // Local state to track WPM
   
@@ -86,6 +88,11 @@ const SpeedControl = ({
       return () => clearTimeout(saveTimer);
     }
   };
+  
+  // Handle calibration button click
+  const handleCalibrationClick = () => {
+    navigate('/speed-calibration');
+  };
 
   return (
     <div className="max-w-lg mx-auto space-y-4">
@@ -101,27 +108,47 @@ const SpeedControl = ({
             </span>
           )}
         </div>
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant="default" 
-                size="icon"
-                onClick={onToggleFullscreen}
-                type="button"
-              >
-                {isFullscreen ? (
-                  <Minimize className="h-4 w-4" />
-                ) : (
-                  <Maximize className="h-4 w-4" />
-                )}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        <div className="flex gap-2">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="outline" 
+                  size="icon"
+                  onClick={handleCalibrationClick}
+                  type="button"
+                >
+                  <Gauge className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Calibrate your reading speed</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="default" 
+                  size="icon"
+                  onClick={onToggleFullscreen}
+                  type="button"
+                >
+                  {isFullscreen ? (
+                    <Minimize className="h-4 w-4" />
+                  ) : (
+                    <Maximize className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        </div>
       </div>
       
       <TooltipProvider>
