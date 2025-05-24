@@ -5,6 +5,7 @@ import ReadingHistoryTable from "./ReadingHistory/ReadingHistoryTable";
 import DeleteConfirmationDialog from "./ReadingHistory/DeleteConfirmationDialog";
 import EmptyState from "./ReadingHistory/EmptyState";
 import LoadingState from "./ReadingHistory/LoadingState";
+import CleanupButton from "./ReadingHistory/CleanupButton";
 import { calculateProgress } from "./ReadingHistory/utils";
 import { Button } from "./ui/button";
 
@@ -41,6 +42,11 @@ const ReadingHistory = () => {
     }
   };
 
+  const handleCleanupComplete = async () => {
+    // Refresh the history list after cleanup
+    await refreshHistory();
+  };
+
   // Precompute progress for displayed items only
   const progressValues = useMemo(() => {
     const values: Record<string, number> = {};
@@ -63,6 +69,7 @@ const ReadingHistory = () => {
     <div className="space-y-4">
       <div className="flex justify-between items-center">
         <h2 className="text-xl font-semibold">Reading History</h2>
+        <CleanupButton onCleanupComplete={handleCleanupComplete} />
       </div>
 
       <ReadingHistoryTable 
