@@ -9,8 +9,8 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python dependencies
-RUN pip3 install ebooklib beautifulsoup4
+# Install Python dependencies including ebooklib
+RUN pip3 install ebooklib beautifulsoup4 lxml
 
 # Create app directory
 WORKDIR /app

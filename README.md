@@ -1,4 +1,3 @@
-
 # AiCuity - AI-Powered Reading Application
 
 AiCuity is a web application that allows users to extract and read content from websites, PDFs, TXT files, and EPUB files using advanced speed reading technology.
@@ -142,7 +141,7 @@ AiCuity is a web application that allows users to extract and read content from 
 - AI Integration: OpenAI GPT models and Hugging Face Transformers
 - File Processing: 
   - PDF: pdf-parse library
-  - EPUB: Python script using zipfile and ElementTree
+  - EPUB: Python script using ebooklib and BeautifulSoup for robust text extraction
   - TXT: Native Node.js fs module
 - Containerization: Docker
 
@@ -151,7 +150,7 @@ AiCuity is a web application that allows users to extract and read content from 
 ### Prerequisites
 
 - Node.js (v14 or higher)
-- Python 3 (for EPUB processing)
+- Python 3 with ebooklib (for EPUB processing)
 - Docker (optional, for containerized deployment)
 
 ### Local Development
@@ -174,23 +173,28 @@ AiCuity is a web application that allows users to extract and read content from 
    cd ../..
    ```
 
-4. Create a `.env` file in the root directory:
+4. Install Python dependencies for EPUB processing:
+   ```
+   pip3 install ebooklib beautifulsoup4 lxml
+   ```
+
+5. Create a `.env` file in the root directory:
    ```
    VITE_API_URL=http://localhost:5000
    ```
 
-5. Start the backend server:
+6. Start the backend server:
    ```
    cd src/server
    npm run dev
    ```
 
-6. In a new terminal, start the frontend development server:
+7. In a new terminal, start the frontend development server:
    ```
    npm run dev
    ```
 
-7. Access the application at `http://localhost:8080`
+8. Access the application at `http://localhost:8080`
 
 ### Docker Deployment
 
@@ -200,6 +204,8 @@ AiCuity is a web application that allows users to extract and read content from 
    ```
 
 2. Access the application at `http://localhost:8080`
+
+Note: Docker images include all necessary Python dependencies including ebooklib for EPUB processing.
 
 ## Key Features Explained
 
