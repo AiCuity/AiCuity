@@ -1,3 +1,4 @@
+
 # AiCuity - AI-Powered Reading Application
 
 AiCuity is a web application that allows users to extract and read content from websites, PDFs, TXT files, and EPUB files using advanced speed reading technology.
@@ -13,6 +14,7 @@ AiCuity is a web application that allows users to extract and read content from 
 - Save reading history and resume from where you left off
 - Smart pacing that adjusts speed based on word complexity
 - Progress tracking and auto-save functionality
+- Duplicate entry cleanup to maintain clean reading history
 
 ## Component Architecture
 
@@ -72,12 +74,19 @@ AiCuity is a web application that allows users to extract and read content from 
 - **SourceIcon**: Icons for different content sources
 - **TableEntryActions**: Actions menu for history entries
 - **DeleteConfirmationDialog**: Confirmation for deleting entries
+- **CleanupButton**: Removes duplicate entries based on title, keeping only the most recent
 
 #### History Hooks
 - **useReadingHistory**: Main history management hook
 - **useProgressSaver**: Auto-saves reading progress
 - **useHistoryTracker**: Tracks reading sessions
 - **useReaderHistory**: History integration for reader
+
+#### History Operations (`src/hooks/readingHistory/operations/`)
+- **duplicateCleanupOperations**: Handles finding and removing duplicate entries by title
+- **saveOperations**: Manages saving reading history entries
+- **deleteOperations**: Handles deletion of individual entries
+- **findOperations**: Utilities for finding existing entries
 
 ### Core Hooks
 
@@ -219,10 +228,13 @@ The system analyzes word complexity (length, syllables, common words) and automa
 Integrated OpenAI and Hugging Face models provide intelligent text summarization to help users quickly grasp key concepts before detailed reading.
 
 ### Reading History & Progress
-Automatic saving of reading positions, speeds, and preferences with cloud synchronization via Supabase for seamless experience across devices.
+Automatic saving of reading positions, speeds, and preferences with cloud synchronization via Supabase for seamless experience across devices. Includes duplicate cleanup functionality to maintain clean history by removing older entries with the same title.
 
 ### Speed Calibration
 Systematic testing with passages of varying difficulty to determine each user's optimal reading speed that balances speed and comprehension.
+
+### Duplicate Entry Management
+Built-in cleanup system that identifies and removes duplicate reading history entries based on title, keeping only the most recent entry for each unique title to maintain a clean and organized reading history.
 
 ## License
 
