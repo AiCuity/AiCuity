@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,7 +26,6 @@ import UsageDisplay from "@/components/UsageDisplay";
 const Index = () => {
   const [activeTab, setActiveTab] = useState<string>("website");
   const [isCalibrationOpen, setIsCalibrationOpen] = useState(false);
-  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const { user, signOut } = useAuth();
 
   // Check URL parameters for success/cancel messages
@@ -143,7 +141,7 @@ const Index = () => {
             <TabsList className="grid w-full grid-cols-3 mb-8">
               <TabsTrigger value="website">Website URL</TabsTrigger>
               <TabsTrigger value="upload">Upload File</TabsTrigger>
-              <TabsTrigger value="history" onClick={() => setIsHistoryOpen(true)}>Reading History</TabsTrigger>
+              <TabsTrigger value="history">Reading History</TabsTrigger>
             </TabsList>
             
             <TabsContent value="website">
@@ -160,24 +158,14 @@ const Index = () => {
               </section>
             </TabsContent>
             
-            <Dialog open={isHistoryOpen && activeTab === "history"} onOpenChange={setIsHistoryOpen}>
-              <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Reading History</DialogTitle>
-                  <DialogDescription>
-                    View and continue your previous reading sessions
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
-                  <ReadingHistory />
-                </div>
-              </DialogContent>
-            </Dialog>
-            
             <TabsContent value="history">
-              <div className="text-center py-8">
-                <p>Please select the Reading History tab to view your history</p>
-              </div>
+              <section className="rounded border p-6 shadow-sm">
+                <h2 className="mb-4 text-lg font-semibold">Reading History</h2>
+                <p className="mb-6 text-sm text-muted-foreground">
+                  View and continue your previous reading sessions
+                </p>
+                <ReadingHistory />
+              </section>
             </TabsContent>
           </Tabs>
         </Card>
