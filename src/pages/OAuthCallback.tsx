@@ -1,35 +1,40 @@
-
 import { useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/auth';
-import { useNavigate } from 'react-router-dom';
+import qs from 'qs';
 
 export default function OAuthCallback() {
   const navigate = useNavigate();
+  const { search } = useLocation();
+  const params = qs.parse(search, { ignoreQueryPrefix: true });
 
   useEffect(() => {
-    // Kick off token parsing from the URL fragment
+    if (params.error) {
+      // Forward the error to /login so we can show a friendly message
+      navigate(
+        `/login?provider_error=${params.error_code || 'oauth_error'}`,
+        { replace: true }
+      );
+      return;
+    }
+
+    // Otherwise wait for SIGNED_IN as before
     supabase.auth.getSession();
-
-    // Wait until Supabase confirms we're signed in
-    const { data: listener } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (event === 'SIGNED_IN' && session) {
-          listener.subscription.unsubscribe();
-          navigate('/dashboard', { replace: true });
-        }
+    const { data: sub } = supabase.auth.onAuthStateChange((evt, sess) => {
+      if (evt === 'SIGNED_IN' && sess) {
+        sub.subscription.unsubscribe();
+        navigate('/dashboard', { replace: true });
       }
-    );
+    });
 
-    // Optional safety net: after 10 s, give up and send to /login
-    const timer = setTimeout(() => navigate('/login?oauth=timeout'), 10_000);
+    // Fallback timeout
+    const t = setTimeout(() => navigate('/login?provider_error=timeout'), 10000);
 
     return () => {
-      listener.subscription.unsubscribe();
-      clearTimeout(timer);
+      sub?.subscription.unsubscribe();
+      clearTimeout(t);
     };
   }, []);
 
-  return (
-    <p className="mt-10 text-center">Linking Microsoft account…</p>
-  );
+  return <p className="mt-10 text-center">Checking sign-in…</p>;
 }
