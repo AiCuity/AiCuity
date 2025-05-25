@@ -62,6 +62,14 @@ export default function UsageDisplay() {
         <p className="text-xs text-blue-600 dark:text-blue-300">
           This month's uploads: {isLoading ? "..." : usageCount} / {usageLimit}
         </p>
+
+        {usage && usage > 500 && (
+          <div className="mt-4 rounded bg-yellow-100 p-4 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200">
+            You have exceeded 500 uploads this month. Please{' '}
+            <a href="mailto:sales@aicuity.app" className="underline">contact us</a>{' '}
+            for Enterprise pricing.
+          </div>
+        )}
       </div>
     </Card>
   );
