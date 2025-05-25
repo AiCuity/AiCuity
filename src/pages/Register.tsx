@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { z } from 'zod';
@@ -16,7 +17,6 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
-import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
 
 const formSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -67,9 +67,6 @@ const Register = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <SocialAuthButtons />
-          <div className="my-4 text-sm text-center text-gray-500">or</div>
-          
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
               <FormField
