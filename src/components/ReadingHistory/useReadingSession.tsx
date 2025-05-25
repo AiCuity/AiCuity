@@ -52,6 +52,7 @@ export const useReadingSession = () => {
       console.log("Content ID, position, and WPM stored:", item.content_id, readingPosition, wpm);
       
       // Navigate to the reader page with the content ID
+      // NOTE: This is reopening existing content, so we do NOT call record-upload
       navigate(`/reader/${item.content_id}`);
     } 
     // If the item has a source URL, try to fetch the content again
@@ -88,6 +89,7 @@ export const useReadingSession = () => {
           });
           
           // Navigate to the reader
+          // NOTE: This is reopening existing content, so we do NOT call record-upload
           navigate(`/reader/${item.content_id}`);
         } else {
           throw new Error("Could not extract content from the source.");
