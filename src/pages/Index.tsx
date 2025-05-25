@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +21,7 @@ import SubscribeButton from "@/components/SubscribeButton";
 import { useAuth } from "@/context/AuthContext";
 import CalibrationButton from "@/components/CalibrationButton";
 import ThemeToggle from "@/components/ui/theme-toggle";
+import UsageDisplay from "@/components/UsageDisplay";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<string>("website");
@@ -106,6 +106,13 @@ const Index = () => {
         )}
         
         <Hero />
+
+        {/* Usage display for logged-in users */}
+        {user && (
+          <div className="w-full max-w-3xl mx-auto mt-8">
+            <UsageDisplay />
+          </div>
+        )}
 
         {/* Subscription CTA for logged-in users */}
         {user && (
