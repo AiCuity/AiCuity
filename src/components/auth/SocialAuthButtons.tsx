@@ -2,6 +2,7 @@
 import { Auth } from '@supabase/auth-ui-react';
 import { ThemeSupa } from '@supabase/auth-ui-shared';
 import { supabase } from '@/integrations/supabase/client';
+import { getRedirectURL } from '../../lib/getRedirect';
 
 export default function SocialAuthButtons() {
   return (
@@ -9,7 +10,7 @@ export default function SocialAuthButtons() {
       supabaseClient={supabase}
       providers={['google', 'azure']}
       onlyThirdPartyProviders
-      redirectTo={`${window.location.origin}/oauth/callback`}
+      redirectTo={getRedirectURL()}
       appearance={{ theme: ThemeSupa }}
     />
   );
