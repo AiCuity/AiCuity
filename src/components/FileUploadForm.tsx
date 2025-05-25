@@ -1,9 +1,10 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import ContentPreview from "@/components/Reader/ContentPreview";
 import { API_BASE_URL } from '../utils/apiConfig';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/context/AuthContext';
 
 const FileUploadForm = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -11,11 +12,148 @@ const FileUploadForm = () => {
   const [progress, setProgress] = useState(0);
   const [apiError, setApiError] = useState<string | null>(null);
   const [previewContent, setPreviewContent] = useState<string>("");
+  const [msg, setMsg] = useState<string>();
   const { toast } = useToast();
+  const { user } = useAuth();
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setFile(e.target.files[0]);
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    // Check file size (5MB limit)
+    if (selectedFile.size > 5 * 1024 * 1024) {
+      setMsg('File exceeds 5 MB limit.');
+      toast({
+        title: "Error",
+        description: "File exceeds 5 MB limit.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Check if user is authenticated
+    if (!user) {
+      setMsg('You must be signed in.');
+      toast({
+        title: "Error",
+        description: "You must be signed in to upload files.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setFile(selectedFile);
+    setMsg(undefined);
+    setApiError(null);
+    setPreviewContent("");
+
+    // Start upload process
+    setIsLoading(true);
+    
+    try {
+      // 1️⃣ Upload to Supabase Storage
+      const fileName = `${user.id}/${Date.now()}_${selectedFile.name}`;
+      const { error: upErr, data } = await supabase.storage
+        .from('uploads')
+        .upload(fileName, selectedFile);
+
+      if (upErr) {
+        setMsg(upErr.message);
+        setApiError(upErr.message);
+        toast({
+          title: "Upload Error",
+          description: upErr.message,
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      // 2️⃣ Process the file for text extraction
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      console.log(`Processing uploaded file: ${selectedFile.name}`);
+      
+      const response = await fetch(`${API_BASE_URL}/api/files/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `Failed to process file: ${response.status}`);
+      }
+
+      const processedData = await response.json();
+      
+      if (!processedData.text || processedData.text.trim() === '') {
+        throw new Error("Failed to extract any content from the file.");
+      }
+
+      // 3️⃣ Record in reading history
+      const contentId = `file_${Date.now()}_${user.id}`;
+      
+      const { error: historyErr } = await supabase
+        .from('reading_history')
+        .insert({
+          user_id: user.id,
+          content_id: contentId,
+          title: processedData.originalFilename || selectedFile.name,
+          source: data.path, // Store the Supabase storage path
+          wpm: 300, // Default WPM
+          current_position: 0,
+          bytes: selectedFile.size
+        });
+
+      if (historyErr) {
+        console.error('Error saving to reading history:', historyErr);
+        // Don't fail the whole process for this
+      }
+
+      // 4️⃣ Increment Stripe usage
+      try {
+        const { error: fnErr } = await supabase.functions.invoke('record-upload', {
+          body: { uid: user.id }
+        });
+        
+        if (fnErr) {
+          console.error('Error recording usage:', fnErr);
+          // Don't fail the whole process for this
+        }
+      } catch (usageError) {
+        console.error('Error calling record-upload function:', usageError);
+        // Continue without failing
+      }
+
+      // Show success and preview
+      setPreviewContent(processedData.text);
+      
+      // Store the extracted content in sessionStorage
+      sessionStorage.setItem('readerContent', processedData.text);
+      sessionStorage.setItem('contentTitle', processedData.originalFilename || selectedFile.name);
+      sessionStorage.setItem('contentSource', 'file-upload');
+      
+      toast({
+        title: "File uploaded successfully",
+        description: `Successfully processed and extracted ${processedData.text.length} characters of content.`,
+      });
+      
+      setMsg(`File uploaded and processed successfully!`);
+      
+    } catch (error) {
+      console.error('Error during file upload:', error);
+      const errorMessage = error instanceof Error ? error.message : "Failed to process the uploaded file";
+      setApiError(errorMessage);
+      setMsg(errorMessage);
+      
+      toast({
+        title: "Error",
+        description: "Failed to process the uploaded file.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -92,16 +230,25 @@ const FileUploadForm = () => {
           onChange={handleFileChange}
           className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
           accept=".txt,.pdf,.epub,.doc,.docx"
+          disabled={isLoading}
         />
         {file && (
           <p className="mt-2 text-sm text-gray-500">
             Selected file: {file.name} ({file.size} bytes)
           </p>
         )}
+        {msg && (
+          <p className={`mt-2 text-sm ${msg.includes('successfully') ? 'text-green-600' : 'text-red-600'}`}>
+            {msg}
+          </p>
+        )}
       </div>
       
       {isLoading && (
-        <Progress value={progress} className="h-4" />
+        <div className="space-y-2">
+          <Progress value={progress} className="h-4" />
+          <p className="text-sm text-gray-500">Processing file...</p>
+        </div>
       )}
       
       {apiError && (
