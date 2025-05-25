@@ -7,7 +7,7 @@ export default function SocialAuthButtons() {
   return (
     <Auth
       supabaseClient={supabase}
-      providers={['google', 'facebook', 'azure']}
+      providers={['google', 'azure']}
       onlyThirdPartyProviders
       redirectTo={`${window.location.origin}/oauth/callback`}
       appearance={{ theme: ThemeSupa }}
