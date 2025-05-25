@@ -1,148 +1,94 @@
-import { fetchActualContent } from "./contentSource";
-import { generateFallbackContent } from "./fallbackContent";
-import { ExtractedContent } from "./types";
+import { Readability } from '@mozilla/readability';
+import { JSDOM } from 'jsdom';
+import { API_BASE_URL } from './apiConfig';
 
-export type { ExtractedContent } from "./types";
-
-export async function extractContentFromUrl(url: string): Promise<ExtractedContent> {
-  console.log(`Extracting content from URL: ${url}`);
-  
-  // First, try to fetch content directly using our enhanced methods
+const extractContentWithReadability = (html: string, url: string) => {
   try {
-    console.log("Attempting to fetch content directly from source...");
-    const actualContent = await fetchActualContent(url);
-    if (actualContent) {
-      console.log("Successfully fetched content from source directly");
+    const dom = new JSDOM(html, { url });
+    const reader = new Readability(dom.window.document);
+    const article = reader.parse();
+
+    if (article) {
       return {
-        ...actualContent,
-        content: cleanHtmlContent(actualContent.content)
+        content: article.textContent,
+        title: article.title,
+        sourceUrl: url
       };
     }
-  } catch (directError) {
-    console.error("Error fetching direct content:", directError);
+    return null;
+  } catch (error) {
+    console.error("Error during Readability parsing:", error);
+    return null;
   }
+};
+
+const simplifyContent = (content: string) => {
+  // Remove excessive whitespace and newlines
+  let simplified = content.replace(/\s+/g, ' ').trim();
   
-  // If direct fetching fails, try the API (now modularized)
+  // Remove common boilerplate text patterns
+  simplified = simplified.replace(/^(please enable javascript to view the comments powered by disqus\.)/i, '');
+  
+  return simplified;
+};
+
+export const extractContentFromUrl = async (url: string) => {
   try {
-    const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:5000';
-    console.log(`Attempting to connect to ${apiUrl}/api/scrape for URL: ${url}`);
+    console.log(`Attempting to extract content from: ${url}`);
     
-    // Set a timeout for the fetch operation
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 5000); // shorter timeout for faster fallback
-    
-    const response = await fetch(`${apiUrl}/api/scrape`, {
+    // First, try the processing server
+    const response = await fetch(`${API_BASE_URL}/api/web/scrape`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ url }),
-      signal: controller.signal
     });
-    
-    clearTimeout(timeoutId);
-    
-    console.log('Response status:', response.status);
-    
-    if (!response.ok) {
-      const errorData = await response.json();
-      console.error('Error response:', errorData);
-      throw new Error(errorData.error || 'Failed to extract content');
-    }
-    
-    const data = await response.json();
-    console.log('Extracted data:', data);
-    
-    if (!data.text || data.text.trim() === '') {
-      console.error('Empty content received from API');
-      throw new Error('Empty content received from API');
-    }
-    
-    // Clean any remaining HTML
-    const cleanContent = cleanHtmlContent(data.text);
-    
-    return {
-      content: cleanContent,
-      title: data.title || 'Website content',
-      sourceUrl: data.sourceUrl || url
-    };
-  } catch (error) {
-    console.error('API Error:', error);
-    
-    // If both direct fetching and API approach fail, use fallback content
-    const fallbackContent = await generateFallbackContent(url);
-    
-    // Add a notice to the content that this is simulated
-    fallbackContent.content = "⚠️ NOTE: This is simulated content. The content extraction failed. ⚠️\n\n" + fallbackContent.content;
-    
-    return fallbackContent;
-  }
-}
 
-// Enhanced function to clean HTML content and remove problematic characters
-function cleanHtmlContent(content: string): string {
-  return content
-    // Remove HTML tags
-    .replace(/<[^>]*>/g, '')
-    // Fix HTML entities
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'")
-    // Remove non-printable and control characters
-    .replace(/[\x00-\x09\x0B\x0C\x0E-\x1F\x7F-\x9F]/g, '')
-    // Remove excessive whitespace
-    .replace(/[ \t]+/g, ' ')
-    // Fix paragraph breaks (convert multiple newlines to double newlines)
-    .replace(/\n{3,}/g, '\n\n')
-    .replace(/\s*\n\s*/g, '\n')
-    // Remove brackets with numbers (citation references)
-    .replace(/\[\d+\]/g, '')
-    // Remove references and citation markers with various formats
-    .replace(/\[citation needed\]/gi, '')
-    .replace(/\[edit\]/gi, '')
-    .replace(/\[note \d+\]/gi, '')
-    .replace(/\[ref\]/gi, '')
-    .replace(/\[clarification needed\]/gi, '')
-    // Clean up Unicode replacement characters and question marks in boxes
-    .replace(/�/g, '')
-    .replace(/\uFFFD/g, '')
-    // Remove strange character combinations that often appear in extracted text
-    .replace(/\\u[\dA-Fa-f]{4}/g, '')
-    .replace(/\\x[\dA-Fa-f]{2}/g, '')
-    // Remove navigation elements that might have been extracted
-    .replace(/(?:Home|Menu|Navigation|Skip to content)[\s]*(?:\||\•|>|→|»)[\s]*/gi, '')
-    .replace(/(?:Main menu|Main content|Main navigation|Search|Log in|Sign up|Register|Subscribe)/gi, '')
-    // Remove footer elements
-    .replace(/(?:Terms of use|Privacy policy|Copyright|All rights reserved|Terms and conditions|© \d{4})/gi, '')
-    // Remove social media text
-    .replace(/(?:Share on|Follow us on|Connect with us|Like us|Facebook|Twitter|Instagram|LinkedIn|Pinterest|YouTube|TikTok)/gi, '')
-    // Remove CSS class definitions and style information
-    .replace(/\.mw-parser-output[^}]+}/g, '')
-    .replace(/\.[a-zA-Z0-9_-]+{[^}]*}/g, '')
-    // Clean up parenthetical CSS classes
-    .replace(/\([^)]*\.mw-[^)]*\)/g, '')
-    // Preserve legitimate parenthetical foreign language terms (like Japanese)
-    // but clean up CSS contamination within them
-    .replace(/\(([^()]*?\.mw-[^()]*?)\)/g, match => {
-      const inner = match.slice(1, -1);
-      // If it contains foreign characters, clean it and keep only the relevant text
-      if (/[\u3000-\u303F\u3040-\u309F\u30A0-\u30FF\uFF00-\uFFEF\u4E00-\u9FAF]/.test(inner)) {
-        const cleaned = inner.replace(/\.mw-[^,)]*,?/g, '').trim();
-        return cleaned ? `(${cleaned})` : '';
+    if (response.ok) {
+      const data = await response.json();
+      if (data.text && data.text.trim()) {
+        console.log(`Successfully extracted ${data.text.length} characters from processing server`);
+        return {
+          content: data.text,
+          title: data.title || 'Extracted Content',
+          sourceUrl: url
+        };
       }
-      // Otherwise remove the whole thing
-      return '';
-    })
-    // Remove common website UI elements that might appear as text
-    .replace(/(?:Skip to main content|Jump to navigation|Search|Menu|Toggle navigation)/gi, '')
-    // Remove lines that are very short (likely menu items)
-    .replace(/^.{1,3}$/gm, '')
-    // Remove cookie notices
-    .replace(/(?:This website uses cookies|We use cookies|Accept cookies|Cookie policy|Cookie consent|Cookie settings)/gi, '')
-    // Fix up spacing issues after cleaning
-    .replace(/\s{2,}/g, ' ')
-    .trim();
-}
+    } else {
+      console.log(`Processing server returned ${response.status}, falling back to domain-specific extraction`);
+    }
+  } catch (error) {
+    console.log('Processing server unavailable, falling back to domain-specific extraction:', error);
+  }
+
+  try {
+    console.log(`Attempting to fetch content directly from: ${url}`);
+    const response = await fetch(url, {
+      mode: 'cors', // Add this to handle CORS issues
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const html = await response.text();
+    
+    // Use Readability to extract the main content
+    const readabilityResult = extractContentWithReadability(html, url);
+    if (readabilityResult) {
+      console.log(`Successfully extracted content using Readability`);
+      return readabilityResult;
+    }
+    
+    // If Readability fails, return the raw HTML (or an empty string)
+    console.log(`Readability extraction failed, returning raw content`);
+    return { content: simplifyContent(html), title: 'Raw Content', sourceUrl: url };
+    
+  } catch (error) {
+    console.error("Failed to fetch or parse content:", error);
+    return {
+      content: `Failed to extract content. ⚠️ NOTE: This is simulated content. The website may be blocking access, or the content may be dynamically loaded.`,
+      title: 'Error Extracting Content',
+      sourceUrl: url
+    };
+  }
+};

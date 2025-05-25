@@ -1,275 +1,61 @@
+import { Readability } from '@mozilla/readability';
+import { JSDOM } from 'jsdom';
+import { API_BASE_URL } from './apiConfig';
 
-import { ExtractedContent } from "./types";
-import { Readability } from "@mozilla/readability";
-
-/**
- * Tries to fetch actual content from sources that allow direct access
- */
-export async function fetchActualContent(url: string): Promise<ExtractedContent | null> {
+// Utility function to extract content from a URL using the processing server
+export const fetchActualContent = async (sourceUrl: string) => {
   try {
-    // For Wikipedia articles, try to extract content via their API
-    if (url.includes('wikipedia.org/wiki/')) {
-      // Extract the article title from the URL
-      const articleName = url.split('/wiki/')[1].split('#')[0].split('?')[0];
-      
-      // Use the full content API instead of the summary API
-      const apiUrl = `https://en.wikipedia.org/api/rest_v1/page/html/${articleName}`;
-      
-      console.log(`Fetching full Wikipedia article via API: ${apiUrl}`);
-      
-      const response = await fetch(apiUrl);
-      if (!response.ok) {
-        throw new Error(`Wikipedia API error: ${response.statusText}`);
-      }
-      
-      // Get the HTML content
-      const htmlContent = await response.text();
-      
-      // Parse the HTML to extract the main content
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(htmlContent, 'text/html');
-      
-      // Remove navigation, references, and non-content elements
-      const elementsToRemove = [
-        '.mw-navigation',
-        '.mw-references',
-        '.mw-editsection',
-        '#mw-panel',
-        '#mw-head',
-        '.mw-indicators',
-        '.mw-jump-link',
-        '.mw-disambig',
-        '.reference',
-        '.noprint',
-        '.mbox-image',
-        '.navbox',
-        '.catlinks',
-        '.printfooter',
-        '#siteSub',
-        '#contentSub',
-        '#footer',
-        '#mw-navigation'
-      ];
-      
-      elementsToRemove.forEach(selector => {
-        const elements = doc.querySelectorAll(selector);
-        elements.forEach(el => el.remove());
-      });
-      
-      // Extract all paragraphs, headings, and lists
-      const contentElements = Array.from(doc.querySelectorAll('p, h1, h2, h3, h4, h5, h6, ul, ol, li'));
-      
-      // Convert to a readable text format, preserving headers with markdown-style formatting
-      let extractedContent = '';
-      
-      contentElements.forEach(element => {
-        const tagName = element.tagName.toLowerCase();
-        const text = element.textContent?.trim();
-        
-        if (!text) return;
-        
-        if (tagName.startsWith('h')) {
-          // Add markdown-style headers
-          const headerLevel = parseInt(tagName.charAt(1));
-          const prefix = '#'.repeat(headerLevel);
-          extractedContent += `\n\n${prefix} ${text}\n\n`;
-        } else if (tagName === 'li') {
-          // List items
-          extractedContent += `- ${text}\n`;
-        } else if (tagName === 'ul' || tagName === 'ol') {
-          // Skip direct list containers as we process the list items individually
-          return;
-        } else {
-          // Regular paragraph
-          extractedContent += `${text}\n\n`;
-        }
-      });
-      
-      // Get the page title from meta tags or the first heading
-      const title = doc.querySelector('title')?.textContent || 
-                   doc.querySelector('h1')?.textContent || 
-                   articleName.replace(/_/g, ' ');
-      
-      return {
-        content: extractedContent || "No content available",
-        title: title || articleName,
-        sourceUrl: url
-      };
-    }
+    console.log(`Fetching actual content from: ${sourceUrl}`);
     
-    // For other websites, try to use a CORS proxy and Readability
-    try {
-      // Use a CORS proxy to fetch the website content
-      const corsProxyUrl = `https://corsproxy.io/?${encodeURIComponent(url)}`;
-      console.log(`Attempting to fetch website via CORS proxy: ${corsProxyUrl}`);
-      
-      const response = await fetch(corsProxyUrl, {
-        headers: {
-          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
-        }
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Failed to fetch via CORS proxy: ${response.statusText}`);
-      }
-      
-      const htmlContent = await response.text();
-      
-      // Use Readability to extract the main content
-      const parser = new DOMParser();
-      const doc = parser.parseFromString(htmlContent, 'text/html');
-      
-      // Remove common navigation and non-content elements before running Readability
-      const elementsToRemove = [
-        'nav',
-        'header',
-        'footer',
-        'aside',
-        '.nav',
-        '.navbar',
-        '.navigation',
-        '.menu',
-        '.sidebar',
-        '.comments',
-        '.share',
-        '.social',
-        '.related',
-        '.recommended',
-        '.footer',
-        '.header',
-        '.cookie',
-        '.advertisement',
-        '.ad-container',
-        '#navigation',
-        '#header',
-        '#footer',
-        '#sidebar',
-        '#menu',
-        '[role=navigation]',
-        '[role=banner]',
-        '[role=contentinfo]'
-      ];
-      
-      elementsToRemove.forEach(selector => {
-        try {
-          const elements = doc.querySelectorAll(selector);
-          elements.forEach(el => el.remove());
-        } catch (e) {
-          console.log(`Error removing element with selector ${selector}:`, e);
-        }
-      });
-      
-      // Get the page title
-      const pageTitle = doc.querySelector('title')?.textContent || new URL(url).hostname;
-      
-      // Use Readability with stricter content extraction settings
-      const readerOptions = {
-        classesToPreserve: ['article', 'content', 'post', 'entry'],
-        disableJSONLD: true,
-        serializer: (node: Document) => node.textContent || ""
-      };
-      
-      const reader = new Readability(doc, readerOptions);
-      const article = reader.parse();
-      
-      if (!article || !article.textContent || article.textContent.trim().length < 100) {
-        throw new Error('Readability could not extract sufficient content');
-      }
-      
-      // Return the extracted content
-      return {
-        content: article.textContent || "No content available",
-        title: article.title || pageTitle,
-        sourceUrl: url
-      };
-    } catch (corsError) {
-      console.error("CORS proxy error:", corsError);
-      
-      // Try another CORS proxy as a fallback
-      try {
-        const allOrigins = `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`;
-        console.log(`Attempting with alternate CORS proxy: ${allOrigins}`);
-        
-        const response = await fetch(allOrigins);
-        if (!response.ok) {
-          throw new Error(`Failed to fetch via alternate CORS proxy: ${response.statusText}`);
-        }
-        
-        const htmlContent = await response.text();
-        
-        // Use Readability to extract the main content
-        const parser = new DOMParser();
-        const doc = parser.parseFromString(htmlContent, 'text/html');
-        
-        // Remove common navigation and non-content elements before running Readability
-        const elementsToRemove = [
-          'nav',
-          'header',
-          'footer',
-          'aside',
-          '.nav',
-          '.navbar',
-          '.navigation',
-          '.menu',
-          '.sidebar',
-          '.comments',
-          '.share',
-          '.social',
-          '.related',
-          '.recommended',
-          '.footer',
-          '.header',
-          '.cookie',
-          '.advertisement',
-          '.ad-container',
-          '#navigation',
-          '#header',
-          '#footer',
-          '#sidebar',
-          '#menu',
-          '[role=navigation]',
-          '[role=banner]',
-          '[role=contentinfo]'
-        ];
-        
-        elementsToRemove.forEach(selector => {
-          try {
-            const elements = doc.querySelectorAll(selector);
-            elements.forEach(el => el.remove());
-          } catch (e) {
-            console.log(`Error removing element with selector ${selector}:`, e);
-          }
-        });
-        
-        // Get the page title
-        const pageTitle = doc.querySelector('title')?.textContent || new URL(url).hostname;
-        
-        // Use Readability with stricter content extraction settings
-        const readerOptions = {
-          classesToPreserve: ['article', 'content', 'post', 'entry'],
-          disableJSONLD: true
-        };
-        
-        const reader = new Readability(doc, readerOptions);
-        const article = reader.parse();
-        
-        if (!article) {
-          throw new Error('Readability could not extract content');
-        }
-        
-        // Return the extracted content
+    // Try the processing server first
+    const response = await fetch(`${API_BASE_URL}/api/web/scrape`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ url: sourceUrl }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.text && data.text.trim()) {
+        console.log(`Successfully fetched ${data.text.length} characters from processing server`);
         return {
-          content: article.textContent || "No content available",
-          title: article.title || pageTitle,
-          sourceUrl: url
+          content: data.text,
+          title: data.title || 'Fetched Content',
+          sourceUrl: sourceUrl
         };
-      } catch (fallbackError) {
-        console.error("Fallback CORS proxy error:", fallbackError);
-        throw fallbackError;
       }
+    } else {
+      console.log(`Processing server returned ${response.status}, trying fallback methods`);
     }
   } catch (error) {
-    console.error("Error fetching actual content:", error);
+    console.log('Processing server unavailable, trying fallback methods:', error);
+  }
+
+  try {
+    console.log(`Falling back to client-side extraction for: ${sourceUrl}`);
+    const response = await fetch(sourceUrl);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const html = await response.text();
+    const dom = new JSDOM(html, { url: sourceUrl });
+    const reader = new Readability(dom.window.document);
+    const article = reader.parse();
+
+    if (article) {
+      console.log(`Successfully extracted content client-side`);
+      return {
+        content: article.textContent,
+        title: article.title,
+        sourceUrl: sourceUrl
+      };
+    } else {
+      throw new Error('Failed to parse document with Readability.');
+    }
+  } catch (error) {
+    console.error('Error fetching or parsing content:', error);
     return null;
   }
-}
+};
