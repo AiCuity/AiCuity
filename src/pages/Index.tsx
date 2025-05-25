@@ -12,10 +12,13 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Crown, CheckCircle, XCircle } from "lucide-react";
 import Hero from "@/components/Hero";
 import WebsiteForm from "@/components/WebsiteForm";
 import FileUploadForm from "@/components/FileUploadForm";
 import ReadingHistory from "@/components/ReadingHistory";
+import SubscribeButton from "@/components/SubscribeButton";
 import { useAuth } from "@/context/AuthContext";
 import CalibrationButton from "@/components/CalibrationButton";
 import ThemeToggle from "@/components/ui/theme-toggle";
@@ -26,6 +29,11 @@ const Index = () => {
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const { user, signOut } = useAuth();
+
+  // Check URL parameters for success/cancel messages
+  const urlParams = new URLSearchParams(window.location.search);
+  const success = urlParams.get('success');
+  const canceled = urlParams.get('canceled');
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
@@ -77,8 +85,51 @@ const Index = () => {
             </div>
           )}
         </div>
+
+        {/* Success/Cancel messages */}
+        {success && (
+          <Alert className="mb-6 border-green-500 bg-green-50 dark:bg-green-900/20">
+            <CheckCircle className="h-4 w-4 text-green-600" />
+            <AlertDescription className="text-green-800 dark:text-green-200">
+              Subscription successful! Welcome to premium features.
+            </AlertDescription>
+          </Alert>
+        )}
+        
+        {canceled && (
+          <Alert className="mb-6 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20">
+            <XCircle className="h-4 w-4 text-yellow-600" />
+            <AlertDescription className="text-yellow-800 dark:text-yellow-200">
+              Subscription was canceled. You can try again anytime.
+            </AlertDescription>
+          </Alert>
+        )}
         
         <Hero />
+
+        {/* Subscription CTA for logged-in users */}
+        {user && (
+          <Card className="w-full max-w-3xl mx-auto mt-8 p-6 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200 dark:border-purple-700">
+            <div className="flex items-center gap-4">
+              <Crown className="h-8 w-8 text-purple-600" />
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-purple-800 dark:text-purple-200">
+                  Unlock Premium Features
+                </h3>
+                <p className="text-sm text-purple-600 dark:text-purple-300">
+                  Subscribe to upload unlimited documents and access advanced reading features
+                </p>
+              </div>
+              <SubscribeButton 
+                priceId="price_1234567890" // Replace with your actual Stripe price ID
+                className="bg-purple-600 hover:bg-purple-700"
+              >
+                <Crown className="mr-2 h-4 w-4" />
+                Subscribe Now
+              </SubscribeButton>
+            </div>
+          </Card>
+        )}
         
         <Card className="w-full max-w-3xl mx-auto mt-8 p-6 shadow-lg">
           <Tabs defaultValue="website" className="w-full" onValueChange={setActiveTab}>
