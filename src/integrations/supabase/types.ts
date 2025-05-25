@@ -65,6 +65,7 @@ export type Database = {
       }
       reading_history: {
         Row: {
+          bytes: number | null
           content_id: string
           created_at: string
           current_position: number | null
@@ -78,6 +79,7 @@ export type Database = {
           wpm: number
         }
         Insert: {
+          bytes?: number | null
           content_id: string
           created_at?: string
           current_position?: number | null
@@ -91,6 +93,7 @@ export type Database = {
           wpm: number
         }
         Update: {
+          bytes?: number | null
           content_id?: string
           created_at?: string
           current_position?: number | null

@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -7,6 +6,8 @@ import { Upload, File, Loader2, AlertCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { FileProcessingResult } from "@/utils/types";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
 
@@ -19,6 +20,7 @@ const FileUploadForm = () => {
   const [serverStatus, setServerStatus] = useState<'checking' | 'online' | 'offline'>('checking');
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   // Define checkServerStatus as a useCallback function
   const checkServerStatus = useCallback(async () => {
@@ -86,6 +88,18 @@ const FileUploadForm = () => {
     // Clear any previous errors
     setUploadError(null);
     
+    // Check file size first (5MB limit)
+    if (file.size > 5 * 1024 * 1024) {
+      const errorMsg = "File exceeds 5 MB limit";
+      setUploadError(errorMsg);
+      toast({
+        title: "File too large",
+        description: errorMsg,
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const validTypes = ['application/pdf', 'text/plain', 'application/epub+zip'];
     const validExtensions = ['.pdf', '.txt', '.epub'];
     const fileType = file.type;
@@ -112,18 +126,41 @@ const FileUploadForm = () => {
       return;
     }
     
-    if (file.size > 50 * 1024 * 1024) { // 50MB limit
-      const errorMsg = "File size exceeds the 50MB limit";
-      setUploadError(errorMsg);
-      toast({
-        title: "File too large",
-        description: errorMsg,
-        variant: "destructive",
-      });
-      return;
+    setFile(file);
+  };
+
+  const uploadToSupabase = async (file: File) => {
+    if (!user) throw new Error('User not authenticated');
+    
+    const fileName = `${Date.now()}_${file.name}`;
+    const filePath = `${user.id}/${fileName}`;
+    
+    // Upload to Supabase storage
+    const { data, error } = await supabase.storage
+      .from('uploads')
+      .upload(filePath, file);
+      
+    if (error) {
+      throw new Error(`Upload failed: ${error.message}`);
     }
     
-    setFile(file);
+    // Insert history row
+    await supabase.from('reading_history').insert({
+      user_id: user.id,
+      content_id: data.path,
+      title: file.name,
+      source: 'file_upload',
+      wpm: 300, // Default WPM
+      current_position: 0,
+      bytes: file.size
+    });
+    
+    // Record usage for Stripe
+    await supabase.functions.invoke('record-upload', {
+      body: { uid: user.id }
+    });
+    
+    return data;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -153,11 +190,25 @@ const FileUploadForm = () => {
       return;
     }
     
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "Please sign in to upload files",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     setIsLoading(true);
     setUploadProgress(0);
     setUploadError(null);
     
     try {
+      // First upload to Supabase storage
+      const supabaseData = await uploadToSupabase(file);
+      setUploadProgress(50);
+      
+      // Then process with the existing API
       const formData = new FormData();
       formData.append('file', file);
       
@@ -165,7 +216,7 @@ const FileUploadForm = () => {
       
       xhr.upload.addEventListener('progress', (event) => {
         if (event.lengthComputable) {
-          const percentComplete = Math.round((event.loaded / event.total) * 100);
+          const percentComplete = Math.round(50 + (event.loaded / event.total) * 50);
           setUploadProgress(percentComplete);
         }
       });
@@ -304,7 +355,7 @@ const FileUploadForm = () => {
               Drag & drop your PDF, TXT, or EPUB file here, or click to browse
             </p>
             <p className="text-xs text-gray-500 dark:text-gray-400">
-              Maximum file size: 50MB
+              Maximum file size: 5MB
             </p>
           </div>
         </div>
@@ -348,7 +399,7 @@ const FileUploadForm = () => {
             style={{ width: `${uploadProgress}%` }}
           ></div>
           <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 text-center">
-            {uploadProgress}% Uploaded
+            {uploadProgress}% {uploadProgress < 50 ? 'Uploading to storage...' : uploadProgress < 100 ? 'Processing...' : 'Complete'}
           </p>
         </div>
       )}
@@ -356,7 +407,7 @@ const FileUploadForm = () => {
       <div className="flex justify-end pt-2">
         <Button 
           type="submit" 
-          disabled={!file || isLoading || serverStatus === 'offline'}
+          disabled={!file || isLoading || serverStatus === 'offline' || !user}
         >
           {isLoading ? (
             <>
