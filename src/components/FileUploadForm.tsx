@@ -1,7 +1,6 @@
+
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { useUpload } from "@/hooks/use-upload";
-import { UploadButton } from "@/components/upload-button";
 import { Progress } from "@/components/ui/progress";
 import ContentPreview from "@/components/Reader/ContentPreview";
 import { API_BASE_URL } from '../utils/apiConfig';
@@ -13,7 +12,12 @@ const FileUploadForm = () => {
   const [apiError, setApiError] = useState<string | null>(null);
   const [previewContent, setPreviewContent] = useState<string>("");
   const { toast } = useToast();
-  const { upload } = useUpload();
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      setFile(e.target.files[0]);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -83,12 +87,11 @@ const FileUploadForm = () => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <UploadButton
-          onChange={(files) => {
-            if (files && files.length > 0) {
-              setFile(files[0]);
-            }
-          }}
+        <input
+          type="file"
+          onChange={handleFileChange}
+          className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+          accept=".txt,.pdf,.epub,.doc,.docx"
         />
         {file && (
           <p className="mt-2 text-sm text-gray-500">
