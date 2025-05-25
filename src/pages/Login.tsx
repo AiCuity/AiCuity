@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { z } from 'zod';
@@ -18,6 +17,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Loader2, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
 
 const formSchema = z.object({
   email: z.string().email('Please enter a valid email'),
@@ -71,6 +71,9 @@ const Login = () => {
           </CardDescription>
         </CardHeader>
         <CardContent>
+          <SocialAuthButtons />
+          <div className="my-4 text-sm text-center text-gray-500">or</div>
+
           {authError && (
             <Alert variant="destructive" className="mb-6">
               <AlertCircle className="h-4 w-4" />
