@@ -239,3 +239,11 @@ Built-in cleanup system that identifies and removes duplicate reading history en
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+---
+### Supabase Site URL
+
+All Supabase e-mail links use **Auth → Settings → URL Configuration → Site URL**.
+Set it to the production domain (`https://aicuity.app`)
+and add `http://localhost:5173` 'http://localhost:5050' in "Additional Redirect URLs" for local dev.
+---
