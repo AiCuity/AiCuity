@@ -1,3 +1,4 @@
+
 import { useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/auth';
@@ -23,7 +24,7 @@ export default function OAuthCallback() {
     const { data: sub } = supabase.auth.onAuthStateChange((evt, sess) => {
       if (evt === 'SIGNED_IN' && sess) {
         sub.subscription.unsubscribe();
-        navigate('/dashboard', { replace: true });
+        navigate('/', { replace: true });
       }
     });
 
