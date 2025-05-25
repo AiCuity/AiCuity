@@ -8,6 +8,8 @@ import WebsiteInput from "./Website/WebsiteInput";
 import ExamplesList from "./Website/ExamplesList";
 import AlertMessages from "./Website/AlertMessages";
 import SubmitButton from "./Website/SubmitButton";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const WebsiteForm = () => {
   const [url, setUrl] = useState("");
@@ -17,6 +19,7 @@ const WebsiteForm = () => {
   const [isSimulatedContent, setIsSimulatedContent] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -62,6 +65,19 @@ const WebsiteForm = () => {
       sessionStorage.setItem('readerContent', extractedContent.content);
       sessionStorage.setItem('contentTitle', extractedContent.title || 'Website content');
       sessionStorage.setItem('contentSource', extractedContent.sourceUrl || processedUrl);
+      
+      // Record usage for authenticated users (only on successful content extraction)
+      if (user) {
+        try {
+          await supabase.functions.invoke('record-upload', {
+            body: { uid: user.id }
+          });
+          console.log('Usage recorded for URL submission');
+        } catch (recordError) {
+          console.error('Error recording usage:', recordError);
+          // Don't fail the main flow if usage recording fails
+        }
+      }
       
       const toastMessage = contentIsSimulated 
         ? "Using simulated content because the extraction API couldn't access the website."
