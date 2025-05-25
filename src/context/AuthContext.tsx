@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '@/integrations/supabase/client';
@@ -22,41 +23,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const { toast } = useToast();
 
   useEffect(() => {
-    // Get initial session
-    const getInitialSession = async () => {
-      setIsLoading(true);
-      
-      const { data, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('Error getting session:', error);
-        toast({
-          title: 'Authentication Error',
-          description: 'Failed to get user session.',
-          variant: 'destructive'
-        });
-      }
-      
-      setSession(data.session);
-      setUser(data.session?.user ?? null);
-      setIsLoading(false);
-    };
-
-    getInitialSession();
-
-    // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, currentSession) => {
-        setSession(currentSession);
-        setUser(currentSession?.user ?? null);
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null);
+        setSession(session);
         setIsLoading(false);
       }
     );
 
-    return () => {
-      subscription.unsubscribe();
-    };
-  }, [toast]);
+    // Load any existing session on first mount
+    supabase.auth.getSession().then(({ data }) => {
+      setUser(data.session?.user ?? null);
+      setSession(data.session);
+      setIsLoading(false);
+    });
+
+    return () => listener.subscription.unsubscribe();
+  }, []);
 
   const signUp = async (email: string, password: string) => {
     setIsLoading(true);
