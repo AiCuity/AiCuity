@@ -1,26 +1,5 @@
-import { Readability } from '@mozilla/readability';
-import { JSDOM } from 'jsdom';
+
 import { API_BASE_URL } from './apiConfig';
-
-const extractContentWithReadability = (html: string, url: string) => {
-  try {
-    const dom = new JSDOM(html, { url });
-    const reader = new Readability(dom.window.document);
-    const article = reader.parse();
-
-    if (article) {
-      return {
-        content: article.textContent,
-        title: article.title,
-        sourceUrl: url
-      };
-    }
-    return null;
-  } catch (error) {
-    console.error("Error during Readability parsing:", error);
-    return null;
-  }
-};
 
 const simplifyContent = (content: string) => {
   // Remove excessive whitespace and newlines
@@ -36,7 +15,7 @@ export const extractContentFromUrl = async (url: string) => {
   try {
     console.log(`Attempting to extract content from: ${url}`);
     
-    // First, try the processing server
+    // Use the processing server for content extraction
     const response = await fetch(`${API_BASE_URL}/api/web/scrape`, {
       method: 'POST',
       headers: {
@@ -55,38 +34,15 @@ export const extractContentFromUrl = async (url: string) => {
           sourceUrl: url
         };
       }
-    } else {
-      console.log(`Processing server returned ${response.status}, falling back to domain-specific extraction`);
-    }
-  } catch (error) {
-    console.log('Processing server unavailable, falling back to domain-specific extraction:', error);
-  }
-
-  try {
-    console.log(`Attempting to fetch content directly from: ${url}`);
-    const response = await fetch(url, {
-      mode: 'cors', // Add this to handle CORS issues
-    });
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    const html = await response.text();
-    
-    // Use Readability to extract the main content
-    const readabilityResult = extractContentWithReadability(html, url);
-    if (readabilityResult) {
-      console.log(`Successfully extracted content using Readability`);
-      return readabilityResult;
     }
     
-    // If Readability fails, return the raw HTML (or an empty string)
-    console.log(`Readability extraction failed, returning raw content`);
-    return { content: simplifyContent(html), title: 'Raw Content', sourceUrl: url };
+    // If processing server fails, return error message
+    throw new Error(`Processing server unavailable or returned ${response.status}`);
     
   } catch (error) {
-    console.error("Failed to fetch or parse content:", error);
+    console.error("Failed to extract content:", error);
     return {
-      content: `Failed to extract content. ⚠️ NOTE: This is simulated content. The website may be blocking access, or the content may be dynamically loaded.`,
+      content: `Failed to extract content. ⚠️ NOTE: This is simulated content. The website may be blocking access, or the content may be dynamically loaded. Please ensure the processing server is running.`,
       title: 'Error Extracting Content',
       sourceUrl: url
     };
