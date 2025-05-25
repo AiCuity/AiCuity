@@ -1,39 +1,35 @@
 
 import { useEffect } from 'react';
+import { supabase } from '../lib/auth';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '@/integrations/supabase/client';
 
-const OAuthCallback = () => {
+export default function OAuthCallback() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    const handleAuthCallback = async () => {
-      const { data, error } = await supabase.auth.getSession();
-      
-      if (error) {
-        console.error('OAuth callback error:', error);
-        navigate('/login?error=oauth_error');
-        return;
-      }
-      
-      if (data.session) {
-        navigate('/');
-      } else {
-        navigate('/login');
-      }
-    };
+    // Kick off token parsing from the URL fragment
+    supabase.auth.getSession();
 
-    handleAuthCallback();
-  }, [navigate]);
+    // Wait until Supabase confirms we're signed in
+    const { data: listener } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          listener.subscription.unsubscribe();
+          navigate('/dashboard', { replace: true });
+        }
+      }
+    );
+
+    // Optional safety net: after 10 s, give up and send to /login
+    const timer = setTimeout(() => navigate('/login?oauth=timeout'), 10_000);
+
+    return () => {
+      listener.subscription.unsubscribe();
+      clearTimeout(timer);
+    };
+  }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="text-center">
-        <h2 className="text-lg font-semibold">Completing sign in...</h2>
-        <p className="text-muted-foreground">Please wait while we redirect you.</p>
-      </div>
-    </div>
+    <p className="mt-10 text-center">Linking Microsoft account…</p>
   );
-};
-
-export default OAuthCallback;
+}
