@@ -7,6 +7,7 @@ import Register from './pages/Register';
 import Calibration from './pages/Calibration';
 import SpeedCalibration from './pages/SpeedCalibration';
 import NotFound from './pages/NotFound';
+import OAuthCallback from './pages/OAuthCallback';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster } from 'sonner';
 import { ThemeProvider } from '@/components/providers/theme-provider';
@@ -24,6 +25,7 @@ const App = () => {
             <Route path="/register" element={<Register />} />
             <Route path="/calibration" element={<Calibration />} />
             <Route path="/speed-calibration" element={<SpeedCalibration />} />
+            <Route path="/oauth/callback" element={<OAuthCallback />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
           <Toaster />
