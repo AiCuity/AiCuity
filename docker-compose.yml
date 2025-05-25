@@ -1,6 +1,3 @@
-
-version: '3.8'
-
 services:
   app:
     build:
@@ -9,7 +6,7 @@ services:
       target: dependencies  # Use this for development
     ports:
       - "8080:8080"  # React app
-      - "5000:5000"  # Express API
+      - "5050:5050"  # Express API
     volumes:
       - ./src:/app/src
       - ./public:/app/public
@@ -18,25 +15,25 @@ services:
       - ./server/node_modules:/app/server/node_modules
     environment:
       - NODE_ENV=development
-      - VITE_API_URL=http://localhost:5000
+      - VITE_API_URL=http://localhost:5050
     networks:
       - app-network
     command: sh -c "cd /app && npm run dev & cd /app/server && npm run dev"
 
-  # Uncomment the following section if you want a dedicated Python service
-  # python-service:
-  #   build:
-  #     context: ./python
-  #     dockerfile: Dockerfile.python
-  #   ports:
-  #     - "5001:5001"  # Python service port
-  #   volumes:
-  #     - ./python:/app
-  #     - ./src/server/uploads:/app/uploads
-  #   environment:
-  #     - PYTHONUNBUFFERED=1
-  #   networks:
-  #     - app-network
+# Uncomment the following section if you want a dedicated Python service
+# python-service:
+#   build:
+#     context: ./python
+#     dockerfile: Dockerfile.python
+#   ports:
+#     - "5001:5001"  # Python service port
+#   volumes:
+#     - ./python:/app
+#     - ./src/server/uploads:/app/uploads
+#   environment:
+#     - PYTHONUNBUFFERED=1
+#   networks:
+#     - app-network
 
 networks:
   app-network:

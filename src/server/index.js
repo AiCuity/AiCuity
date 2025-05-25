@@ -1,4 +1,3 @@
-
 const express = require('express');
 const cors = require('cors');
 const apiRoutes = require('./routes/apiRoutes');
@@ -6,7 +5,7 @@ const path = require('path');
 const fs = require('fs');
 
 const app = express();
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5050;
 
 // Comprehensive CORS configuration for Docker environment
 app.use(cors({
