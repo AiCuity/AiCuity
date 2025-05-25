@@ -1,5 +1,6 @@
+
 import React, { useState } from 'react';
-import { useNavigate, useLocation, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link, useSearchParams } from 'react-router-dom';
 import { z } from 'zod';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -27,6 +28,8 @@ const formSchema = z.object({
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [params] = useSearchParams();
+  const providerErr = params.get('provider_error');
   const { signIn } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
@@ -83,6 +86,14 @@ const Login = () => {
               </span>
             </div>
           </div>
+
+          {providerErr && (
+            <div className="mb-4 rounded bg-red-100 p-3 text-red-800">
+              {providerErr === 'unexpected_failure'
+                ? 'We could not retrieve your e-mail from Microsoft. Check Azure app configuration.'
+                : 'OAuth sign-in failed. Please try again or use another method.'}
+            </div>
+          )}
 
           {authError && (
             <Alert variant="destructive" className="mb-6">
