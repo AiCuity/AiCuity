@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,7 +28,6 @@ const Index = () => {
   const [activeTab, setActiveTab] = useState<string>("website");
   const [isCalibrationOpen, setIsCalibrationOpen] = useState(false);
   const [isHistoryOpen, setIsHistoryOpen] = useState(false);
-  const [isUploadOpen, setIsUploadOpen] = useState(false);
   const { user, signOut } = useAuth();
 
   // Check URL parameters for success/cancel messages
@@ -142,7 +142,7 @@ const Index = () => {
           <Tabs defaultValue="website" className="w-full" onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3 mb-8">
               <TabsTrigger value="website">Website URL</TabsTrigger>
-              <TabsTrigger value="upload" onClick={() => setIsUploadOpen(true)}>Upload File</TabsTrigger>
+              <TabsTrigger value="upload">Upload File</TabsTrigger>
               <TabsTrigger value="history" onClick={() => setIsHistoryOpen(true)}>Reading History</TabsTrigger>
             </TabsList>
             
@@ -150,19 +150,15 @@ const Index = () => {
               <WebsiteForm />
             </TabsContent>
             
-            <Dialog open={isUploadOpen && activeTab === "upload"} onOpenChange={setIsUploadOpen}>
-              <DialogContent className="sm:max-w-[600px]">
-                <DialogHeader>
-                  <DialogTitle>Upload Document</DialogTitle>
-                  <DialogDescription>
-                    Upload a document to start reading with RSVP
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="py-4">
-                  <FileUploadForm />
-                </div>
-              </DialogContent>
-            </Dialog>
+            <TabsContent value="upload">
+              <section className="rounded border p-6 shadow-sm">
+                <h2 className="mb-4 text-lg font-semibold">Upload Document</h2>
+                <p className="mb-6 text-sm text-muted-foreground">
+                  Upload a document to start reading with RSVP
+                </p>
+                <FileUploadForm />
+              </section>
+            </TabsContent>
             
             <Dialog open={isHistoryOpen && activeTab === "history"} onOpenChange={setIsHistoryOpen}>
               <DialogContent className="sm:max-w-[800px] max-h-[80vh] overflow-y-auto">
@@ -177,12 +173,6 @@ const Index = () => {
                 </div>
               </DialogContent>
             </Dialog>
-            
-            <TabsContent value="upload">
-              <div className="text-center py-8">
-                <p>Please select the Upload File tab to upload documents</p>
-              </div>
-            </TabsContent>
             
             <TabsContent value="history">
               <div className="text-center py-8">
