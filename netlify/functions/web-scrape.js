@@ -4,7 +4,7 @@ const { JSDOM } = require('jsdom');
 const { Readability } = require('@mozilla/readability');
 const cheerio = require('cheerio');
 
-exports.handler = async (event) => {
+module.exports.handler = async (event) => {
   const start = Date.now();
   try {
     const { url } = JSON.parse(event.body || '{}');
