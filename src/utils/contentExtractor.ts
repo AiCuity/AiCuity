@@ -11,6 +11,47 @@ const simplifyContent = (content: string) => {
   return simplified;
 };
 
+// Fallback content extraction using a client-side approach
+const extractContentFallback = async (url: string) => {
+  console.log(`Using fallback content extraction for: ${url}`);
+  
+  // Check if it's a Wikipedia URL and extract the title
+  if (url.includes('wikipedia.org/wiki/')) {
+    const titleMatch = url.match(/\/wiki\/([^#?]+)/);
+    const title = titleMatch ? decodeURIComponent(titleMatch[1]).replace(/_/g, ' ') : 'Wikipedia Article';
+    
+    return {
+      content: `This is a Wikipedia article about "${title}". The content extraction system is currently experiencing technical difficulties, but you can still practice your speed reading with this simulated content. 
+
+Wikipedia is a free online encyclopedia that contains millions of articles on various topics. The article you're trying to read likely contains detailed information about ${title}, including its history, significance, and related topics.
+
+This simulated content allows you to test the reading interface while we work on resolving the content extraction issues. You can adjust the reading speed, practice different techniques, and familiarize yourself with the reader controls.
+
+Once the technical issues are resolved, you'll be able to extract and read the actual content from websites and documents seamlessly.`,
+      title: title,
+      sourceUrl: url
+    };
+  }
+  
+  // For other URLs, provide a generic fallback
+  const domain = new URL(url).hostname;
+  return {
+    content: `Content extraction is currently experiencing technical difficulties. This simulated content allows you to test the speed reading interface while we work on resolving the issues.
+
+The website you're trying to read (${domain}) likely contains interesting articles and information. Our system typically extracts the main content from web pages, removing navigation menus, advertisements, and other distractions to provide a clean reading experience.
+
+You can use this simulated content to:
+- Test different reading speeds
+- Practice speed reading techniques
+- Familiarize yourself with the reader controls
+- Adjust settings to your preference
+
+Once the technical issues are resolved, you'll be able to extract actual content from any website or upload your own documents for speed reading practice.`,
+    title: `Content from ${domain}`,
+    sourceUrl: url
+  };
+};
+
 export const extractContentFromUrl = async (url: string) => {
   try {
     console.log(`Attempting to extract content from: ${url}`);
@@ -39,8 +80,8 @@ export const extractContentFromUrl = async (url: string) => {
       
       // Check if response is HTML (error page) instead of JSON
       if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
-        console.error('Netlify function returned HTML instead of JSON - function may not be deployed correctly');
-        throw new Error('Function returned HTML instead of JSON - deployment issue');
+        console.error('Netlify function returned HTML instead of JSON - using fallback extraction');
+        return await extractContentFallback(url);
       }
       
       try {
@@ -56,21 +97,17 @@ export const extractContentFromUrl = async (url: string) => {
           };
         }
       } catch (parseError) {
-        console.error('JSON parsing failed:', parseError);
-        console.error('Response text that failed to parse:', responseText);
-        throw new Error(`Invalid JSON response from function: ${parseError.message}`);
+        console.error('JSON parsing failed, using fallback:', parseError);
+        return await extractContentFallback(url);
       }
     }
     
-    // If extraction fails, return error message
-    throw new Error(`Content extraction failed with status ${response.status}`);
+    // If extraction fails, use fallback
+    console.log(`Content extraction failed with status ${response.status}, using fallback`);
+    return await extractContentFallback(url);
     
   } catch (error) {
-    console.error("Failed to extract content:", error);
-    return {
-      content: `Failed to extract content. ⚠️ NOTE: This is simulated content. The website may be blocking access, or the content may be dynamically loaded. Please ensure the processing server is running.`,
-      title: 'Error Extracting Content',
-      sourceUrl: url
-    };
+    console.error("Failed to extract content, using fallback:", error);
+    return await extractContentFallback(url);
   }
 };
