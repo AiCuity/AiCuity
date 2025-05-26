@@ -68,41 +68,40 @@ export async function handler(event) {
       };
     }
 
-    console.log('[web-scrape] Fetching content with headers...');
+    console.log('[web-scrape] Fetching content...');
 
-    // Use native fetch with better error handling
-    const fetchFn = typeof fetch === 'function' ? fetch : 
-      (...args) => import('node-fetch').then(m => m.default(...args));
-
-    const res = await fetchFn(url, {
+    // Use fetch (available in Netlify Functions runtime)
+    const response = await fetch(url, {
       headers: { 
-        'User-Agent': 'Mozilla/5.0 (compatible; NetlifyScraper/1.0; +https://aicuity.app)' 
+        'User-Agent': 'Mozilla/5.0 (compatible; NetlifyScraper/1.0; +https://aicuity.app)',
+        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+        'Accept-Language': 'en-US,en;q=0.5'
       },
-      timeout: 10000
+      timeout: 15000
     });
 
-    console.log('[web-scrape] Fetch response status:', res.status);
-    console.log('[web-scrape] Fetch response ok:', res.ok);
+    console.log('[web-scrape] Fetch response status:', response.status);
+    console.log('[web-scrape] Fetch response ok:', response.ok);
 
-    if (!res.ok) {
-      console.log('[web-scrape] ERROR: Non-200 status code:', res.status);
+    if (!response.ok) {
+      console.log('[web-scrape] ERROR: Non-200 status code:', response.status);
       return {
-        statusCode: res.status,
+        statusCode: 502,
         headers,
         body: JSON.stringify({ 
-          error: `Failed to fetch URL: ${res.status} ${res.statusText}`,
+          error: `Failed to fetch URL: ${response.status} ${response.statusText}`,
           elapsed: Date.now() - start 
         })
       };
     }
 
-    const html = await res.text();
+    const html = await response.text();
     console.log('[web-scrape] HTML content length:', html.length);
 
     if (!html || html.trim().length === 0) {
       console.log('[web-scrape] ERROR: Empty HTML content');
       return {
-        statusCode: 500,
+        statusCode: 502,
         headers,
         body: JSON.stringify({ 
           error: 'No content received from URL',
@@ -111,86 +110,59 @@ export async function handler(event) {
       };
     }
 
-    let title, content;
+    let title = '';
+    let content = '';
 
-    // Try to use JSDOM and Readability if available
-    try {
-      const { JSDOM } = await import('jsdom');
-      const { Readability } = await import('@mozilla/readability');
-      
-      console.log('[web-scrape] Attempting Readability extraction...');
-      
-      const dom = new JSDOM(html, { url });
-      const reader = new Readability(dom.window.document);
-      const article = reader.parse();
-      
-      if (article && article.textContent && article.textContent.length > 100) {
-        title = article.title?.trim();
-        content = article.textContent;
-        console.log('[web-scrape] Readability success - Title:', title);
-        console.log('[web-scrape] Readability content length:', content?.length || 0);
-      } else {
-        console.log('[web-scrape] Readability returned insufficient content');
-        throw new Error('Readability extraction insufficient');
-      }
-    } catch (readabilityError) {
-      console.log('[web-scrape] Readability failed, using Cheerio fallback:', readabilityError.message);
-      
-      // Fallback to Cheerio if available
-      try {
-        const cheerio = await import('cheerio');
-        const $ = cheerio.load(html);
-        
-        title = title || $('title').text().trim();
-        
-        // Remove script, style, nav, header, footer, and other non-content elements
-        $('script, style, nav, header, footer, aside, [role=banner], [role=navigation], iframe, .share, .comments, .ad, .advertisement, .sidebar, .menu').remove();
-        
-        // Try to get main content areas first
-        let mainContent = '';
-        const contentSelectors = ['main', 'article', '.content', '#content', '.post-content', '.entry-content'];
-        
-        for (const selector of contentSelectors) {
-          const element = $(selector);
-          if (element.length > 0) {
-            mainContent = element.text().trim();
-            if (mainContent.length > 200) {
-              console.log('[web-scrape] Found content using selector:', selector);
-              break;
-            }
-          }
-        }
-        
-        // Fallback to body if no main content found
-        if (!mainContent || mainContent.length < 200) {
-          mainContent = $('body').text().trim();
-          console.log('[web-scrape] Using body text fallback');
-        }
-        
-        content = mainContent.slice(0, 5000); // Limit content size
-        console.log('[web-scrape] Cheerio content length:', content.length);
-        
-      } catch (cheerioError) {
-        console.log('[web-scrape] Cheerio also failed:', cheerioError.message);
-        
-        // Last resort: basic text extraction
-        title = 'Extracted Content';
-        // Remove script and style tags with regex
-        const cleanHtml = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
-                             .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
-        // Remove all HTML tags
-        content = cleanHtml.replace(/<[^>]*>/g, ' ')
-                          .replace(/\s+/g, ' ')
-                          .trim()
-                          .slice(0, 3000);
-        console.log('[web-scrape] Using basic text extraction, length:', content.length);
+    // Simple HTML parsing without external dependencies
+    console.log('[web-scrape] Extracting content with basic parsing');
+    
+    // Extract title
+    const titleMatch = html.match(/<title[^>]*>([^<]+)</i);
+    title = titleMatch ? titleMatch[1].trim() : 'Extracted Content';
+    
+    // Remove script and style tags
+    let cleanHtml = html.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
+    cleanHtml = cleanHtml.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '');
+    
+    // For Wikipedia, try to extract main content
+    if (url.includes('wikipedia.org')) {
+      const contentMatch = cleanHtml.match(/<div[^>]*id="mw-content-text"[^>]*>(.*?)<div[^>]*class="printfooter"/is);
+      if (contentMatch) {
+        cleanHtml = contentMatch[1];
+        console.log('[web-scrape] Extracted Wikipedia main content');
       }
     }
+    
+    // Extract text from paragraphs
+    const paragraphMatches = cleanHtml.match(/<p[^>]*>([^<]+(?:<[^>]+>[^<]*<\/[^>]+>[^<]*)*)<\/p>/gi);
+    if (paragraphMatches && paragraphMatches.length > 0) {
+      content = paragraphMatches
+        .map(p => p.replace(/<[^>]*>/g, ' ').trim())
+        .filter(p => p.length > 20)
+        .join('\n\n');
+      console.log('[web-scrape] Extracted content from paragraphs, length:', content.length);
+    }
+    
+    // Fallback: extract all text
+    if (!content || content.length < 100) {
+      content = cleanHtml
+        .replace(/<[^>]*>/g, ' ')
+        .replace(/\s+/g, ' ')
+        .trim();
+      console.log('[web-scrape] Using fallback text extraction, length:', content.length);
+    }
+    
+    // Clean up content
+    content = content
+      .replace(/\s+/g, ' ')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+      .slice(0, 10000); // Limit content size
 
     if (!content || content.length < 50) {
       console.log('[web-scrape] ERROR: Unable to extract meaningful content');
       return {
-        statusCode: 500,
+        statusCode: 502,
         headers,
         body: JSON.stringify({ 
           error: 'Unable to extract meaningful content from the page',
@@ -217,15 +189,15 @@ export async function handler(event) {
       body: JSON.stringify(result),
     };
     
-  } catch (e) {
-    console.error('[web-scrape] ERROR:', e.message);
-    console.error('[web-scrape] ERROR stack:', e.stack);
+  } catch (error) {
+    console.error('[web-scrape] ERROR:', error.message);
+    console.error('[web-scrape] ERROR stack:', error.stack);
     
     return {
       statusCode: 500,
       headers,
       body: JSON.stringify({ 
-        error: e.message || 'Internal server error',
+        error: `Internal server error: ${error.message}`,
         elapsed: Date.now() - start 
       }),
     };
