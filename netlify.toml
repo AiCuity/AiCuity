@@ -4,23 +4,23 @@
   command = "npm run build"
 
 [build.environment]
-  PYTHON_VERSION = "3.9"
   # Completely disable mise tool manager
   MISE_INSTALL_PATH = ""
   MISE_DATA_DIR = ""
   MISE_CONFIG_FILE = ""
   MISE_DISABLE = "1"
   MISE_SKIP = "1"
-  # Use standard Python installation
-  PIP_DISABLE_PIP_VERSION_CHECK = "1"
-  PYTHONUNBUFFERED = "1"
   # Force use of runtime.txt
   NETLIFY_USE_RUNTIME_TXT = "true"
   # Bypass any version managers
   PYENV_ROOT = ""
   ASDF_DIR = ""
-  # Ensure we use system Python
-  PATH = "/usr/bin:/bin"
+  ASDF_SKIP = "1"
+  # Standard Python settings
+  PIP_DISABLE_PIP_VERSION_CHECK = "1"
+  PYTHONUNBUFFERED = "1"
+  # Clear any Python version override
+  PYTHON_VERSION = ""
 
 [functions]
   included_files = ["netlify/functions/**"]
