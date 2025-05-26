@@ -32,7 +32,7 @@ export const uploadFileToNetlify = async (file: File) => {
         } else {
           // If it's HTML (like an error page), provide a more user-friendly message
           if (errorText.includes('<!DOCTYPE') || errorText.includes('<html')) {
-            errorMessage = 'Netlify function not found or not properly deployed. Please check that the upload-handler function is deployed.';
+            errorMessage = 'File processing service is currently unavailable. The Netlify function may not be properly deployed or configured.';
           } else {
             errorMessage = errorText || errorMessage;
           }
@@ -70,9 +70,13 @@ export const uploadFileToNetlify = async (file: File) => {
   } catch (error) {
     console.error('Error uploading file to Netlify:', error);
     
-    // Provide more specific error messages
-    if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error('Network error: Unable to connect to the file processing service. Please check your internet connection and ensure the Netlify function is deployed.');
+    // Provide more specific error messages based on the error type
+    if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+      throw new Error('Network error: Unable to connect to the file processing service. This could be due to:\n• The Netlify function not being deployed\n• Network connectivity issues\n• Server configuration problems\n\nPlease try again or contact support if the issue persists.');
+    }
+    
+    if (error instanceof Error && error.message.includes('net::ERR_HTTP2_PROTOCOL_ERROR')) {
+      throw new Error('Connection protocol error: The file processing service encountered a communication error. Please try again with a smaller file or contact support.');
     }
     
     throw error;

@@ -22,11 +22,12 @@ export const processFileLocally = async (file: File): Promise<ProcessedFileData>
     };
   }
   
-  // For PDF and EPUB files, try the Netlify function first, then fallback
+  // For PDF and EPUB files, try the Netlify function with better error handling
   if (fileExtension === 'pdf' || fileExtension === 'epub') {
     console.log(`Processing ${fileExtension.toUpperCase()} file via Netlify function`);
     try {
       const result = await uploadFileToNetlify(file);
+      console.log(`Successfully extracted ${result.extractedLength} characters from ${fileExtension.toUpperCase()}`);
       return {
         text: result.text,
         originalFilename: result.originalFilename,
@@ -35,21 +36,24 @@ export const processFileLocally = async (file: File): Promise<ProcessedFileData>
     } catch (error) {
       console.error(`Error processing ${fileExtension.toUpperCase()} file:`, error);
       
-      // Provide a fallback message instead of failing completely
-      const fallbackText = `Unable to process ${fileExtension.toUpperCase()} file automatically.
+      // Provide a helpful fallback message with the specific error
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+      const fallbackText = `Unable to process ${fileExtension.toUpperCase()} file: ${file.name}
 
-File: ${file.name}
-Size: ${(file.size / 1024).toFixed(2)} KB
-Type: ${fileExtension.toUpperCase()}
+Error Details: ${errorMessage}
 
-Error: ${error instanceof Error ? error.message : 'Unknown error'}
+File Information:
+• Name: ${file.name}
+• Size: ${(file.size / 1024 / 1024).toFixed(2)} MB
+• Type: ${fileExtension.toUpperCase()}
 
-Please try:
-1. Converting the file to a .txt format
-2. Copy and paste the text content directly
-3. Check that the file is not corrupted
+Possible Solutions:
+1. Try converting the file to a .txt format first
+2. Use a different file if possible
+3. Check if the file is corrupted
+4. Ensure the file is not password protected
 
-The file has been uploaded to storage but text extraction failed.`;
+The file upload to storage was attempted but text extraction failed due to the processing service being unavailable.`;
       
       return {
         text: fallbackText,
@@ -59,10 +63,12 @@ The file has been uploaded to storage but text extraction failed.`;
     }
   }
   
-  throw new Error(`Unsupported file type: ${fileExtension}`);
+  throw new Error(`Unsupported file type: ${fileExtension}. Supported formats: .txt, .pdf, .epub`);
 };
 
 export const uploadToSupabaseStorage = async (file: File, userId: string) => {
+  console.log(`Uploading ${file.name} to Supabase storage for user ${userId}`);
+  
   const fileName = `${userId}/${Date.now()}_${file.name}`;
   
   const { error: uploadError, data } = await supabase.storage
@@ -70,9 +76,10 @@ export const uploadToSupabaseStorage = async (file: File, userId: string) => {
     .upload(fileName, file);
 
   if (uploadError) {
-    console.error('Supabase upload error:', uploadError);
-    throw new Error(uploadError.message);
+    console.error('Supabase storage upload error:', uploadError);
+    throw new Error(`Storage upload failed: ${uploadError.message}`);
   }
 
+  console.log(`File successfully uploaded to Supabase storage: ${data.path}`);
   return data;
 };
