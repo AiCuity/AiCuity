@@ -4,10 +4,14 @@
 
 [build.environment]
   PYTHON_VERSION = "3.9"
-  # Use standard Python installation, not mise
+  # Explicitly disable mise to use standard Python
+  MISE_INSTALL_PATH = ""
+  MISE_DATA_DIR = ""
+  # Use standard Python installation
   PIP_DISABLE_PIP_VERSION_CHECK = "1"
-  # Ensure we use the runtime.txt specified version
   PYTHONUNBUFFERED = "1"
+  # Force use of runtime.txt
+  NETLIFY_USE_RUNTIME_TXT = "true"
 
 [functions]
   included_files = ["netlify/functions/**"]
