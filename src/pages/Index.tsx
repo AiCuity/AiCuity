@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,8 @@ import { useAuth } from "@/context/AuthContext";
 import CalibrationButton from "@/components/CalibrationButton";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import UsageDisplay from "@/components/UsageDisplay";
+
+const PRICE_ID = import.meta.env.VITE_STRIPE_PRICE_ID;
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<string>("website");
@@ -126,7 +129,7 @@ const Index = () => {
                 </p>
               </div>
               <SubscribeButton 
-                priceId="price_1RSniSE3adEW3BI1vC9XUd4D"
+                priceId={PRICE_ID || "price_1RSniSE3adEW3BI1vC9XUd4D"}
                 className="bg-purple-600 hover:bg-purple-700"
               >
                 <Crown className="mr-2 h-4 w-4" />
