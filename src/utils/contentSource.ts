@@ -4,7 +4,8 @@ import { API_BASE } from '@/lib/apiBase';
 // Utility function to extract content from a URL using the processing server
 export const fetchActualContent = async (sourceUrl: string) => {
   try {
-    console.log(`Fetching actual content from: ${sourceUrl}`);
+    console.log(`[contentSource] Fetching actual content from: ${sourceUrl}`);
+    console.log(`[contentSource] Using API endpoint: ${API_BASE}/web-scrape`);
     
     const response = await fetch(`${API_BASE}/web-scrape`, {
       method: 'POST',
@@ -14,22 +15,35 @@ export const fetchActualContent = async (sourceUrl: string) => {
       body: JSON.stringify({ url: sourceUrl }),
     });
 
+    console.log(`[contentSource] Response status: ${response.status}`);
+    console.log(`[contentSource] Response ok: ${response.ok}`);
+
+    // Log non-200 status codes
+    if (response.status !== 200) {
+      console.log(`[contentSource] NON-200 STATUS CODE: ${response.status} for URL: ${sourceUrl}`);
+    }
+
     if (response.ok) {
       const data = await response.json();
+      console.log(`[contentSource] Response data:`, data);
+      
       if (data.text && data.text.trim()) {
-        console.log(`Successfully fetched ${data.text.length} characters from processing server`);
+        console.log(`[contentSource] Successfully fetched ${data.text.length} characters from processing server`);
         return {
           content: data.text,
           title: data.title || 'Fetched Content',
           sourceUrl: sourceUrl
         };
+      } else {
+        console.log(`[contentSource] Response missing text content`);
+        throw new Error('No text content in response');
       }
     } else {
-      console.log(`Content extraction returned ${response.status}`);
+      console.log(`[contentSource] Content extraction returned ${response.status}`);
       throw new Error(`Server returned ${response.status}`);
     }
   } catch (error) {
-    console.error('Error fetching content:', error);
+    console.error('[contentSource] Error fetching content:', error);
     throw error;
   }
 };

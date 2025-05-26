@@ -1,3 +1,4 @@
+
 import { API_BASE } from '@/lib/apiBase';
 
 const simplifyContent = (content: string) => {
@@ -12,7 +13,7 @@ const simplifyContent = (content: string) => {
 
 // Fallback content extraction using a client-side approach
 const extractContentFallback = async (url: string) => {
-  console.log(`Using fallback content extraction for: ${url}`);
+  console.log(`[contentExtractor] Using fallback content extraction for: ${url}`);
   
   // Check if it's a Wikipedia URL and extract the title
   if (url.includes('wikipedia.org/wiki/')) {
@@ -53,9 +54,9 @@ Once the technical issues are resolved, you'll be able to extract actual content
 
 export const extractContentFromUrl = async (url: string) => {
   try {
-    console.log(`Attempting to extract content from: ${url}`);
-    console.log(`Using API_BASE: ${API_BASE}`);
-    console.log(`Full endpoint URL: ${API_BASE}/web-scrape`);
+    console.log(`[contentExtractor] Attempting to extract content from: ${url}`);
+    console.log(`[contentExtractor] Using API_BASE: ${API_BASE}`);
+    console.log(`[contentExtractor] Full endpoint URL: ${API_BASE}/web-scrape`);
     
     // Add timeout and better error handling
     const controller = new AbortController();
@@ -73,59 +74,64 @@ export const extractContentFromUrl = async (url: string) => {
 
     clearTimeout(timeoutId);
     
-    console.log(`Response status: ${response.status}`);
-    console.log(`Response ok: ${response.ok}`);
+    console.log(`[contentExtractor] Response status: ${response.status}`);
+    console.log(`[contentExtractor] Response ok: ${response.ok}`);
+    
+    // Log non-200 status codes
+    if (response.status !== 200) {
+      console.log(`[contentExtractor] NON-200 STATUS CODE: ${response.status} for URL: ${url}`);
+    }
     
     if (response.ok) {
       const contentType = response.headers.get('content-type');
-      console.log(`Response content-type: ${contentType}`);
+      console.log(`[contentExtractor] Response content-type: ${contentType}`);
       
       const responseText = await response.text();
-      console.log(`Raw response (first 500 chars):`, responseText.substring(0, 500));
+      console.log(`[contentExtractor] Raw response (first 500 chars):`, responseText.substring(0, 500));
       
       // Check if response is HTML (error page) instead of JSON
       if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
-        console.error('Netlify function returned HTML instead of JSON - using fallback extraction');
+        console.error('[contentExtractor] Netlify function returned HTML instead of JSON - using fallback extraction');
         return await extractContentFallback(url);
       }
       
       try {
         const data = JSON.parse(responseText);
-        console.log(`Successfully parsed JSON response:`, data);
+        console.log(`[contentExtractor] Successfully parsed JSON response:`, data);
         
         if (data.text && data.text.trim()) {
-          console.log(`Successfully extracted ${data.text.length} characters from processing server`);
+          console.log(`[contentExtractor] Successfully extracted ${data.text.length} characters from processing server`);
           return {
             content: simplifyContent(data.text),
             title: data.title || 'Extracted Content',
             sourceUrl: url
           };
         } else {
-          console.warn('Response missing text content, using fallback');
+          console.warn('[contentExtractor] Response missing text content, using fallback');
           return await extractContentFallback(url);
         }
       } catch (parseError) {
-        console.error('JSON parsing failed, using fallback:', parseError);
+        console.error('[contentExtractor] JSON parsing failed, using fallback:', parseError);
         return await extractContentFallback(url);
       }
     } else {
       // Log the error response for debugging
       try {
         const errorText = await response.text();
-        console.error(`Server error response (${response.status}): ${errorText}`);
+        console.error(`[contentExtractor] Server error response (${response.status}): ${errorText}`);
       } catch (e) {
-        console.error('Failed to read error response');
+        console.error('[contentExtractor] Failed to read error response');
       }
       
-      console.log(`Content extraction failed with status ${response.status}, using fallback`);
+      console.log(`[contentExtractor] Content extraction failed with status ${response.status}, using fallback`);
       return await extractContentFallback(url);
     }
     
   } catch (error) {
     if (error.name === 'AbortError') {
-      console.error("Request timeout, using fallback");
+      console.error("[contentExtractor] Request timeout, using fallback");
     } else {
-      console.error("Failed to extract content, using fallback:", error);
+      console.error("[contentExtractor] Failed to extract content, using fallback:", error);
     }
     return await extractContentFallback(url);
   }
