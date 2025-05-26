@@ -39,6 +39,8 @@ def process_epub(file_data):
             temp_file.write(file_data)
             temp_path = temp_file.name
         
+        print(f"Processing EPUB file at: {temp_path}")
+        
         # Read the EPUB file
         book = epub.read_epub(temp_path)
         
@@ -76,6 +78,7 @@ def process_epub(file_data):
         if not final_text.strip():
             raise Exception("No text content found in EPUB")
         
+        print(f"Successfully extracted {len(final_text)} characters from EPUB")
         return final_text
         
     except Exception as e:
@@ -85,16 +88,21 @@ def process_epub(file_data):
                 os.unlink(temp_path)
             except:
                 pass
+        print(f"EPUB processing error: {str(e)}")
         raise Exception(f"Failed to process EPUB: {str(e)}")
 
 def process_pdf(file_data):
     """Process PDF file and extract text."""
     try:
+        print(f"Processing PDF file, size: {len(file_data)} bytes")
+        
         # Create a BytesIO object from the file data
         pdf_stream = io.BytesIO(file_data)
         
         # Create PDF reader
         pdf_reader = PyPDF2.PdfReader(pdf_stream)
+        
+        print(f"PDF has {len(pdf_reader.pages)} pages")
         
         # Extract text from all pages
         all_text = []
@@ -110,9 +118,11 @@ def process_pdf(file_data):
         if not final_text.strip():
             raise Exception("No text content found in PDF")
         
+        print(f"Successfully extracted {len(final_text)} characters from PDF")
         return final_text
         
     except Exception as e:
+        print(f"PDF processing error: {str(e)}")
         raise Exception(f"Failed to process PDF: {str(e)}")
 
 def process_text(file_data):
@@ -120,12 +130,18 @@ def process_text(file_data):
     try:
         # Decode the text file
         text = file_data.decode('utf-8', errors='ignore')
-        return clean_text(text)
+        cleaned = clean_text(text)
+        print(f"Successfully processed text file, {len(cleaned)} characters")
+        return cleaned
     except Exception as e:
+        print(f"Text processing error: {str(e)}")
         raise Exception(f"Failed to process text file: {str(e)}")
 
 def handler(event, context):
     """Main handler for file upload processing."""
+    
+    print(f"Handler called with method: {event.get('httpMethod')}")
+    print(f"Headers: {event.get('headers', {})}")
     
     # Set CORS headers
     headers = {
@@ -138,6 +154,7 @@ def handler(event, context):
     try:
         # Handle preflight OPTIONS request
         if event.get('httpMethod') == 'OPTIONS':
+            print("Handling OPTIONS request")
             return {
                 'statusCode': 200,
                 'headers': headers,
@@ -146,6 +163,7 @@ def handler(event, context):
         
         # Only allow POST requests
         if event.get('httpMethod') != 'POST':
+            print(f"Method not allowed: {event.get('httpMethod')}")
             return {
                 'statusCode': 405,
                 'headers': headers,
@@ -154,6 +172,7 @@ def handler(event, context):
         
         # Check for required fields
         if not event.get('body'):
+            print("No request body provided")
             return {
                 'statusCode': 400,
                 'headers': headers,
@@ -165,7 +184,10 @@ def handler(event, context):
         if not content_type:
             content_type = event.get('headers', {}).get('Content-Type', '')
         
+        print(f"Content-Type: {content_type}")
+        
         if 'multipart/form-data' not in content_type:
+            print("Invalid content type")
             return {
                 'statusCode': 400,
                 'headers': headers,
@@ -176,10 +198,14 @@ def handler(event, context):
         body = event.get('body', '')
         is_base64 = event.get('isBase64Encoded', False)
         
+        print(f"Body length: {len(body)}, isBase64Encoded: {is_base64}")
+        
         if is_base64:
             try:
                 body = base64.b64decode(body)
+                print(f"Decoded body length: {len(body)}")
             except Exception as decode_error:
+                print(f"Base64 decode error: {decode_error}")
                 return {
                     'statusCode': 400,
                     'headers': headers,
@@ -191,7 +217,9 @@ def handler(event, context):
         # Extract boundary from content type
         try:
             boundary = content_type.split('boundary=')[1]
+            print(f"Boundary: {boundary}")
         except IndexError:
+            print("No boundary found")
             return {
                 'statusCode': 400,
                 'headers': headers,
@@ -200,28 +228,30 @@ def handler(event, context):
         
         # Parse multipart data
         parts = body.split(f'--{boundary}'.encode())
+        print(f"Found {len(parts)} parts")
         
         file_data = None
         filename = None
         
-        for part in parts:
+        for i, part in enumerate(parts):
             if b'Content-Disposition: form-data' in part and b'filename=' in part:
                 try:
+                    print(f"Processing part {i}")
                     # Extract filename
                     disposition_line = part.split(b'\r\n')[1].decode('utf-8')
                     filename = disposition_line.split('filename="')[1].split('"')[0]
+                    print(f"Found filename: {filename}")
                     
                     # Extract file data (after double CRLF)
                     file_data = part.split(b'\r\n\r\n', 1)[1].rsplit(b'\r\n', 1)[0]
+                    print(f"File data length: {len(file_data)}")
                     break
                 except Exception as parse_error:
-                    return {
-                        'statusCode': 400,
-                        'headers': headers,
-                        'body': json.dumps({'error': f'Failed to parse multipart data: {str(parse_error)}'})
-                    }
+                    print(f"Parse error for part {i}: {parse_error}")
+                    continue
         
         if not file_data or not filename:
+            print("No file uploaded or filename missing")
             return {
                 'statusCode': 400,
                 'headers': headers,
@@ -230,6 +260,7 @@ def handler(event, context):
         
         # Determine file type
         file_extension = os.path.splitext(filename)[1].lower()
+        print(f"File extension: {file_extension}")
         
         # Process based on file type
         extracted_text = ""
@@ -242,12 +273,14 @@ def handler(event, context):
             elif file_extension == '.txt':
                 extracted_text = process_text(file_data)
             else:
+                print(f"Unsupported file type: {file_extension}")
                 return {
                     'statusCode': 400,
                     'headers': headers,
                     'body': json.dumps({'error': f'Unsupported file type: {file_extension}. Supported types: .epub, .pdf, .txt'})
                 }
         except Exception as processing_error:
+            print(f"Processing error: {processing_error}")
             return {
                 'statusCode': 500,
                 'headers': headers,
@@ -261,6 +294,7 @@ def handler(event, context):
         
         # Validate extracted text
         if not extracted_text or len(extracted_text.strip()) < 10:
+            print(f"Insufficient text extracted: {len(extracted_text.strip())} characters")
             return {
                 'statusCode': 400,
                 'headers': headers,
@@ -272,16 +306,20 @@ def handler(event, context):
             }
         
         # Return the extracted text
+        response_data = {
+            'success': True,
+            'text': extracted_text,
+            'originalFilename': filename,
+            'extractedLength': len(extracted_text),
+            'message': f'Successfully processed {filename}'
+        }
+        
+        print(f"Success! Returning {len(extracted_text)} characters")
+        
         return {
             'statusCode': 200,
             'headers': headers,
-            'body': json.dumps({
-                'success': True,
-                'text': extracted_text,
-                'originalFilename': filename,
-                'extractedLength': len(extracted_text),
-                'message': f'Successfully processed {filename}'
-            })
+            'body': json.dumps(response_data)
         }
         
     except Exception as e:

@@ -22,7 +22,7 @@ export const processFileLocally = async (file: File): Promise<ProcessedFileData>
     };
   }
   
-  // For PDF and EPUB files, try the Netlify function with better error handling
+  // For PDF and EPUB files, use the Netlify function
   if (fileExtension === 'pdf' || fileExtension === 'epub') {
     console.log(`Processing ${fileExtension.toUpperCase()} file via Netlify function`);
     try {
@@ -36,30 +36,8 @@ export const processFileLocally = async (file: File): Promise<ProcessedFileData>
     } catch (error) {
       console.error(`Error processing ${fileExtension.toUpperCase()} file:`, error);
       
-      // Provide a helpful fallback message with the specific error
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      const fallbackText = `Unable to process ${fileExtension.toUpperCase()} file: ${file.name}
-
-Error Details: ${errorMessage}
-
-File Information:
-• Name: ${file.name}
-• Size: ${(file.size / 1024 / 1024).toFixed(2)} MB
-• Type: ${fileExtension.toUpperCase()}
-
-Possible Solutions:
-1. Try converting the file to a .txt format first
-2. Use a different file if possible
-3. Check if the file is corrupted
-4. Ensure the file is not password protected
-
-The file upload to storage was attempted but text extraction failed due to the processing service being unavailable.`;
-      
-      return {
-        text: fallbackText,
-        originalFilename: file.name,
-        extractedLength: fallbackText.length
-      };
+      // Re-throw the error so the UI can handle it properly
+      throw error;
     }
   }
   
