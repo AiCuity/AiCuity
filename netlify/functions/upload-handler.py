@@ -135,25 +135,35 @@ def handler(event, context):
         'Content-Type': 'application/json'
     }
     
-    # Handle preflight OPTIONS request
-    if event['httpMethod'] == 'OPTIONS':
-        return {
-            'statusCode': 200,
-            'headers': headers,
-            'body': ''
-        }
-    
-    # Only allow POST requests
-    if event['httpMethod'] != 'POST':
-        return {
-            'statusCode': 405,
-            'headers': headers,
-            'body': json.dumps({'error': 'Method not allowed'})
-        }
-    
     try:
+        # Handle preflight OPTIONS request
+        if event.get('httpMethod') == 'OPTIONS':
+            return {
+                'statusCode': 200,
+                'headers': headers,
+                'body': json.dumps({'message': 'CORS preflight successful'})
+            }
+        
+        # Only allow POST requests
+        if event.get('httpMethod') != 'POST':
+            return {
+                'statusCode': 405,
+                'headers': headers,
+                'body': json.dumps({'error': 'Method not allowed. Only POST requests are supported.'})
+            }
+        
+        # Check for required fields
+        if not event.get('body'):
+            return {
+                'statusCode': 400,
+                'headers': headers,
+                'body': json.dumps({'error': 'No request body provided'})
+            }
+        
         # Parse the multipart form data
         content_type = event.get('headers', {}).get('content-type', '')
+        if not content_type:
+            content_type = event.get('headers', {}).get('Content-Type', '')
         
         if 'multipart/form-data' not in content_type:
             return {
@@ -167,39 +177,55 @@ def handler(event, context):
         is_base64 = event.get('isBase64Encoded', False)
         
         if is_base64:
-            body = base64.b64decode(body)
+            try:
+                body = base64.b64decode(body)
+            except Exception as decode_error:
+                return {
+                    'statusCode': 400,
+                    'headers': headers,
+                    'body': json.dumps({'error': f'Failed to decode base64 body: {str(decode_error)}'})
+                }
         else:
             body = body.encode('utf-8')
         
-        # Simple multipart parsing (basic implementation)
-        # In production, you might want to use a more robust parser
-        boundary = content_type.split('boundary=')[1]
+        # Extract boundary from content type
+        try:
+            boundary = content_type.split('boundary=')[1]
+        except IndexError:
+            return {
+                'statusCode': 400,
+                'headers': headers,
+                'body': json.dumps({'error': 'No boundary found in Content-Type header'})
+            }
+        
+        # Parse multipart data
         parts = body.split(f'--{boundary}'.encode())
         
         file_data = None
         filename = None
-        content_type_file = None
         
         for part in parts:
             if b'Content-Disposition: form-data' in part and b'filename=' in part:
-                # Extract filename
-                disposition_line = part.split(b'\r\n')[1].decode('utf-8')
-                filename = disposition_line.split('filename="')[1].split('"')[0]
-                
-                # Extract content type
-                content_type_line = part.split(b'\r\n')[2].decode('utf-8')
-                if content_type_line.startswith('Content-Type:'):
-                    content_type_file = content_type_line.split(': ')[1]
-                
-                # Extract file data (after double CRLF)
-                file_data = part.split(b'\r\n\r\n', 1)[1].rsplit(b'\r\n', 1)[0]
-                break
+                try:
+                    # Extract filename
+                    disposition_line = part.split(b'\r\n')[1].decode('utf-8')
+                    filename = disposition_line.split('filename="')[1].split('"')[0]
+                    
+                    # Extract file data (after double CRLF)
+                    file_data = part.split(b'\r\n\r\n', 1)[1].rsplit(b'\r\n', 1)[0]
+                    break
+                except Exception as parse_error:
+                    return {
+                        'statusCode': 400,
+                        'headers': headers,
+                        'body': json.dumps({'error': f'Failed to parse multipart data: {str(parse_error)}'})
+                    }
         
         if not file_data or not filename:
             return {
                 'statusCode': 400,
                 'headers': headers,
-                'body': json.dumps({'error': 'No file uploaded'})
+                'body': json.dumps({'error': 'No file uploaded or filename missing'})
             }
         
         # Determine file type
@@ -208,17 +234,41 @@ def handler(event, context):
         # Process based on file type
         extracted_text = ""
         
-        if file_extension == '.epub':
-            extracted_text = process_epub(file_data)
-        elif file_extension == '.pdf':
-            extracted_text = process_pdf(file_data)
-        elif file_extension == '.txt':
-            extracted_text = process_text(file_data)
-        else:
+        try:
+            if file_extension == '.epub':
+                extracted_text = process_epub(file_data)
+            elif file_extension == '.pdf':
+                extracted_text = process_pdf(file_data)
+            elif file_extension == '.txt':
+                extracted_text = process_text(file_data)
+            else:
+                return {
+                    'statusCode': 400,
+                    'headers': headers,
+                    'body': json.dumps({'error': f'Unsupported file type: {file_extension}. Supported types: .epub, .pdf, .txt'})
+                }
+        except Exception as processing_error:
+            return {
+                'statusCode': 500,
+                'headers': headers,
+                'body': json.dumps({
+                    'error': 'Failed to process file',
+                    'details': str(processing_error),
+                    'filename': filename,
+                    'file_type': file_extension
+                })
+            }
+        
+        # Validate extracted text
+        if not extracted_text or len(extracted_text.strip()) < 10:
             return {
                 'statusCode': 400,
                 'headers': headers,
-                'body': json.dumps({'error': f'Unsupported file type: {file_extension}'})
+                'body': json.dumps({
+                    'error': 'Insufficient text content extracted from file',
+                    'details': f'Only {len(extracted_text.strip())} characters extracted',
+                    'filename': filename
+                })
             }
         
         # Return the extracted text
@@ -228,17 +278,21 @@ def handler(event, context):
             'body': json.dumps({
                 'success': True,
                 'text': extracted_text,
-                'originalFilename': filename
+                'originalFilename': filename,
+                'extractedLength': len(extracted_text),
+                'message': f'Successfully processed {filename}'
             })
         }
         
     except Exception as e:
-        print(f"Error processing file: {str(e)}")
+        # Catch-all error handler
+        print(f"Unexpected error in handler: {str(e)}")
         return {
             'statusCode': 500,
             'headers': headers,
             'body': json.dumps({
-                'error': 'Failed to process file',
-                'details': str(e)
+                'error': 'Internal server error',
+                'details': str(e),
+                'message': 'An unexpected error occurred while processing the file'
             })
         }
