@@ -1,6 +1,7 @@
 
 [build]
   functions = "netlify/functions"
+  command = "npm run build"
 
 [build.environment]
   PYTHON_VERSION = "3.9"
@@ -9,6 +10,7 @@
   MISE_DATA_DIR = ""
   MISE_CONFIG_FILE = ""
   MISE_DISABLE = "1"
+  MISE_SKIP = "1"
   # Use standard Python installation
   PIP_DISABLE_PIP_VERSION_CHECK = "1"
   PYTHONUNBUFFERED = "1"
@@ -17,6 +19,8 @@
   # Bypass any version managers
   PYENV_ROOT = ""
   ASDF_DIR = ""
+  # Ensure we use system Python
+  PATH = "/usr/bin:/bin"
 
 [functions]
   included_files = ["netlify/functions/**"]
