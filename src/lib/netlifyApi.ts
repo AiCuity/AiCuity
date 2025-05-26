@@ -7,6 +7,7 @@ export const uploadFileToNetlify = async (file: File) => {
 
   try {
     console.log(`Uploading file to Netlify: ${file.name} (${file.size} bytes)`);
+    console.log(`Using endpoint: ${NETLIFY_FUNCTION_URL}`);
     
     const response = await fetch(NETLIFY_FUNCTION_URL, {
       method: 'POST',
@@ -72,7 +73,7 @@ export const uploadFileToNetlify = async (file: File) => {
     
     // Provide more specific error messages
     if (error instanceof TypeError && error.message.includes('fetch')) {
-      throw new Error('Network error: Unable to connect to the file processing service. Please check your internet connection.');
+      throw new Error('Network error: Unable to connect to the file processing service. Please check your internet connection and ensure the Netlify function is deployed.');
     }
     
     throw error;

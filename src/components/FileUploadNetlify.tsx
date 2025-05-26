@@ -52,6 +52,8 @@ const FileUploadNetlify = () => {
     setIsLoading(true);
     
     try {
+      console.log(`Starting file processing for: ${selectedFile.name}`);
+      
       // 1️⃣ Upload to Supabase Storage
       const fileName = `${user!.id}/${Date.now()}_${selectedFile.name}`;
       const { error: upErr, data } = await supabase.storage
@@ -59,6 +61,7 @@ const FileUploadNetlify = () => {
         .upload(fileName, selectedFile);
 
       if (upErr) {
+        console.error('Supabase upload error:', upErr);
         setMsg(upErr.message);
         setApiError(upErr.message);
         toast({
@@ -70,10 +73,13 @@ const FileUploadNetlify = () => {
         return;
       }
 
+      console.log('File uploaded to Supabase storage successfully');
+
       // 2️⃣ Process the file for text extraction using Netlify Functions
       console.log(`Processing uploaded file: ${selectedFile.name}`);
       
       const processedData = await uploadFileToNetlify(selectedFile);
+      console.log('File processed successfully by Netlify function');
 
       // 3️⃣ Record in reading history
       const contentId = `file_${Date.now()}_${user!.id}`;
@@ -133,7 +139,7 @@ const FileUploadNetlify = () => {
       
       toast({
         title: "Error",
-        description: "Failed to process the uploaded file.",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
