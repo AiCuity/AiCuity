@@ -1,41 +1,9 @@
 
 [build]
   functions = "netlify/functions"
-  command = "npm run build"
 
 [build.environment]
-  # Force use of Ubuntu 20.04 focal build image (doesn't use mise by default)
-  NETLIFY_BUILD_IMAGE = "focal"
-  NETLIFY_EXPERIMENTAL_BUILD_IMAGE = "focal"
-  # Completely disable mise tool manager - ALL methods
-  NETLIFY_USE_MISE = "false"
-  MISE_INSTALL_PATH = ""
-  MISE_DATA_DIR = ""
-  MISE_CONFIG_FILE = ""
-  MISE_DISABLE = "1"
-  MISE_SKIP = "1"
-  MISE_EXPERIMENTAL = "0"
-  MISE_QUIET = "1"
-  # Disable mise Python specifically
-  MISE_PYTHON_INSTALL = "false"
-  MISE_PYTHON_COMPILE = "false"
-  # DO NOT SET PYTHON_VERSION - this triggers mise installation
-  # PYTHON_VERSION = "" <-- REMOVED
-  # NETLIFY_PYTHON_VERSION = "" <-- REMOVED
-  # Bypass any version managers completely
-  PYENV_ROOT = ""
-  ASDF_DIR = ""
-  ASDF_SKIP = "1"
-  NODENV_ROOT = ""
-  RBENV_ROOT = ""
-  # Use system Python directly without version specification
-  PATH = "/usr/bin:$PATH"
-  # Standard Python settings
-  PIP_DISABLE_PIP_VERSION_CHECK = "1"
-  PYTHONUNBUFFERED = "1"
-  # Force clean build
-  NETLIFY_CLEAR_CACHE = "true"
-  NETLIFY_BUILD_DEBUG = "true"
+  PYTHON_VERSION = "3.11"
 
 [functions]
   included_files = ["netlify/functions/**"]

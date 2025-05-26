@@ -1,4 +1,3 @@
-
 # Multi-stage build for optimized Docker image
 FROM node:18-slim AS base
 
