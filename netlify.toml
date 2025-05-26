@@ -4,6 +4,8 @@
   command = "npm run build"
 
 [build.environment]
+  # Explicitly disable Netlify's mise integration
+  NETLIFY_USE_MISE = "false"
   # Completely disable mise tool manager
   MISE_INSTALL_PATH = ""
   MISE_DATA_DIR = ""
