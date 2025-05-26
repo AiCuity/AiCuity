@@ -78,9 +78,7 @@ serve(async (req) => {
     }
 
     // Create checkout session
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
-      customer_email: customerId ? undefined : user.email,
+    const sessionConfig: any = {
       mode: 'subscription',
       line_items: [
         {
@@ -98,10 +96,19 @@ serve(async (req) => {
           supabase_uid: user.id,
         },
       },
-      customer_update: {
+    }
+
+    // Only add customer-related fields if we have an existing customer
+    if (customerId) {
+      sessionConfig.customer = customerId
+      sessionConfig.customer_update = {
         name: 'auto',
-      },
-    })
+      }
+    } else {
+      sessionConfig.customer_email = user.email
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig)
 
     // If we created a new customer, update their metadata
     if (session.customer && !customerId) {
