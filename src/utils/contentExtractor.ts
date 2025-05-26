@@ -15,8 +15,12 @@ export const extractContentFromUrl = async (url: string) => {
   try {
     console.log(`Attempting to extract content from: ${url}`);
     
-    // Use the processing server for content extraction
-    const response = await fetch(`${API_BASE_URL}/api/web/scrape`, {
+    // Determine the correct endpoint based on environment
+    const endpoint = import.meta.env.PROD 
+      ? `${API_BASE_URL}/web-scrape`  // Netlify function
+      : `${API_BASE_URL}/api/web/scrape`;  // Local server
+    
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -27,7 +31,7 @@ export const extractContentFromUrl = async (url: string) => {
     if (response.ok) {
       const data = await response.json();
       if (data.text && data.text.trim()) {
-        console.log(`Successfully extracted ${data.text.length} characters from processing server`);
+        console.log(`Successfully extracted ${data.text.length} characters from ${import.meta.env.PROD ? 'Netlify function' : 'processing server'}`);
         return {
           content: data.text,
           title: data.title || 'Extracted Content',
@@ -36,8 +40,8 @@ export const extractContentFromUrl = async (url: string) => {
       }
     }
     
-    // If processing server fails, return error message
-    throw new Error(`Processing server unavailable or returned ${response.status}`);
+    // If extraction fails, return error message
+    throw new Error(`Content extraction failed with status ${response.status}`);
     
   } catch (error) {
     console.error("Failed to extract content:", error);
