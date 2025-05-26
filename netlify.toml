@@ -1,3 +1,4 @@
+
 [build]
   functions = "netlify/functions"
   command = "npm run build"
@@ -5,6 +6,7 @@
 [build.environment]
   # Force use of Ubuntu 20.04 focal build image (doesn't use mise by default)
   NETLIFY_BUILD_IMAGE = "focal"
+  NETLIFY_EXPERIMENTAL_BUILD_IMAGE = "focal"
   # Explicitly disable Netlify's mise integration
   NETLIFY_USE_MISE = "false"
   # Completely disable mise tool manager
