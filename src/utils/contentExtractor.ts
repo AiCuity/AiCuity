@@ -58,14 +58,22 @@ export const extractContentFromUrl = async (url: string) => {
     console.log(`Using API_BASE: ${API_BASE}`);
     console.log(`Full endpoint URL: ${API_BASE}/web-scrape`);
     
+    // Add timeout and better error handling
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    
     const response = await fetch(`${API_BASE}/web-scrape`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
       },
       body: JSON.stringify({ url }),
+      signal: controller.signal,
     });
 
+    clearTimeout(timeoutId);
+    
     console.log(`Response status: ${response.status}`);
     console.log(`Response ok: ${response.ok}`);
     console.log(`Response headers:`, Object.fromEntries(response.headers.entries()));
@@ -91,23 +99,37 @@ export const extractContentFromUrl = async (url: string) => {
         if (data.text && data.text.trim()) {
           console.log(`Successfully extracted ${data.text.length} characters from processing server`);
           return {
-            content: data.text,
+            content: simplifyContent(data.text),
             title: data.title || 'Extracted Content',
             sourceUrl: url
           };
+        } else {
+          console.warn('Response missing text content, using fallback');
+          return await extractContentFallback(url);
         }
       } catch (parseError) {
         console.error('JSON parsing failed, using fallback:', parseError);
         return await extractContentFallback(url);
       }
+    } else {
+      // Log the error response for debugging
+      try {
+        const errorText = await response.text();
+        console.error(`Server error response: ${errorText}`);
+      } catch (e) {
+        console.error('Failed to read error response');
+      }
+      
+      console.log(`Content extraction failed with status ${response.status}, using fallback`);
+      return await extractContentFallback(url);
     }
     
-    // If extraction fails, use fallback
-    console.log(`Content extraction failed with status ${response.status}, using fallback`);
-    return await extractContentFallback(url);
-    
   } catch (error) {
-    console.error("Failed to extract content, using fallback:", error);
+    if (error.name === 'AbortError') {
+      console.error("Request timeout, using fallback");
+    } else {
+      console.error("Failed to extract content, using fallback:", error);
+    }
     return await extractContentFallback(url);
   }
 };
