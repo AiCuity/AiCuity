@@ -16,7 +16,7 @@ const FileUploadNetlify = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
 
@@ -46,9 +46,6 @@ const FileUploadNetlify = () => {
     setMsg(undefined);
     setApiError(null);
     setPreviewContent("");
-
-    // Start upload process
-    await processFile(selectedFile);
   };
 
   const processFile = async (selectedFile: File) => {
