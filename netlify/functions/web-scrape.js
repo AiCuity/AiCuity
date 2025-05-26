@@ -1,3 +1,4 @@
+
 const https = require('https');
 const http = require('http');
 const cheerio = require('cheerio');
@@ -20,7 +21,7 @@ const fetchHtml = (url) => {
   return new Promise((resolve, reject) => {
     const protocol = url.startsWith('https') ? https : http;
     
-    protocol.get(url, (response) => {
+    const request = protocol.get(url, (response) => {
       if (response.statusCode >= 300 && response.statusCode < 400 && response.headers.location) {
         // Handle redirects
         fetchHtml(response.headers.location).then(resolve).catch(reject);
@@ -40,8 +41,16 @@ const fetchHtml = (url) => {
       response.on('end', () => {
         resolve(data);
       });
-    }).on('error', (err) => {
+    });
+
+    request.on('error', (err) => {
       reject(err);
+    });
+
+    // Set timeout
+    request.setTimeout(10000, () => {
+      request.destroy();
+      reject(new Error('Request timeout'));
     });
   });
 };
@@ -169,7 +178,10 @@ const scrapeWebsite = async (url) => {
 };
 
 // Netlify function handler
-exports.handler = async (event) => {
+exports.handler = async (event, context) => {
+  console.log('Web scrape function called');
+  console.log('Event:', JSON.stringify(event, null, 2));
+
   // Handle CORS preflight requests
   if (event.httpMethod === 'OPTIONS') {
     return {
@@ -209,6 +221,7 @@ exports.handler = async (event) => {
       };
     }
 
+    console.log(`Processing scrape request for: ${url}`);
     const result = await scrapeWebsite(url);
     
     return {
