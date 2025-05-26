@@ -1,5 +1,6 @@
 
 import { supabase } from '@/integrations/supabase/client';
+import { uploadFileToNetlify } from '@/lib/netlifyApi';
 
 export interface ProcessedFileData {
   text: string;
@@ -21,24 +22,20 @@ export const processFileLocally = async (file: File): Promise<ProcessedFileData>
     };
   }
   
-  // For PDF and EPUB files, we'll provide a fallback message
-  // since client-side processing of these formats requires additional libraries
+  // For PDF and EPUB files, use the Netlify function
   if (fileExtension === 'pdf' || fileExtension === 'epub') {
-    const fallbackText = `This is a ${fileExtension.toUpperCase()} file that requires server-side processing. 
-    
-For now, please try uploading a .txt file or copy and paste the text content directly into the website form instead.
-
-File: ${file.name}
-Size: ${file.size} bytes
-Type: ${fileExtension.toUpperCase()}
-
-To properly extract text from PDF and EPUB files, we would need server-side processing capabilities.`;
-    
-    return {
-      text: fallbackText,
-      originalFilename: file.name,
-      extractedLength: fallbackText.length
-    };
+    console.log(`Processing ${fileExtension.toUpperCase()} file via Netlify function`);
+    try {
+      const result = await uploadFileToNetlify(file);
+      return {
+        text: result.text,
+        originalFilename: result.originalFilename,
+        extractedLength: result.extractedLength
+      };
+    } catch (error) {
+      console.error(`Error processing ${fileExtension.toUpperCase()} file:`, error);
+      throw error;
+    }
   }
   
   throw new Error(`Unsupported file type: ${fileExtension}`);

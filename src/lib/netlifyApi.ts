@@ -15,7 +15,6 @@ export const uploadFileToNetlify = async (file: File) => {
     });
 
     console.log(`Response status: ${response.status}`);
-    console.log(`Response headers:`, response.headers);
 
     // Check if response is ok
     if (!response.ok) {
@@ -33,7 +32,7 @@ export const uploadFileToNetlify = async (file: File) => {
         } else {
           // If it's HTML (like an error page), provide a more user-friendly message
           if (errorText.includes('<!DOCTYPE') || errorText.includes('<html')) {
-            errorMessage = 'Server configuration error. Please check that the Netlify function is properly deployed.';
+            errorMessage = 'Netlify function not found or not properly deployed. Please check that the upload-handler function is deployed.';
           } else {
             errorMessage = errorText || errorMessage;
           }

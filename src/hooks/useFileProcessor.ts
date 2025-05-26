@@ -25,8 +25,8 @@ export const useFileProcessor = () => {
         throw new Error('User must be authenticated to upload files');
       }
 
-      // 1️⃣ Process the file locally for text extraction
-      console.log(`Processing file locally: ${selectedFile.name}`);
+      // 1️⃣ Process the file for text extraction
+      console.log(`Processing file: ${selectedFile.name}`);
       const processedData = await processFileLocally(selectedFile);
 
       // 2️⃣ Upload to Supabase Storage
