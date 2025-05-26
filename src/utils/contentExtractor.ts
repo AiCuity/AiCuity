@@ -1,3 +1,4 @@
+
 import { API_BASE } from '@/lib/apiBase';
 
 const simplifyContent = (content: string) => {
@@ -14,12 +15,7 @@ export const extractContentFromUrl = async (url: string) => {
   try {
     console.log(`Attempting to extract content from: ${url}`);
     
-    // Use the correct endpoint based on environment
-    const endpoint = API_BASE.includes('netlify') 
-      ? `${API_BASE}/api/web/scrape`  // Netlify function path with /api/
-      : `${API_BASE}/api/web/scrape`;  // Local server path
-    
-    const response = await fetch(endpoint, {
+    const response = await fetch(`${API_BASE}/web-scrape`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

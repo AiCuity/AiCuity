@@ -1,3 +1,4 @@
+
 import { API_BASE } from '@/lib/apiBase';
 
 // Utility function to extract content from a URL using the processing server
@@ -5,12 +6,7 @@ export const fetchActualContent = async (sourceUrl: string) => {
   try {
     console.log(`Fetching actual content from: ${sourceUrl}`);
     
-    // Use the correct endpoint based on environment
-    const endpoint = API_BASE.includes('netlify') 
-      ? `${API_BASE}/api/web/scrape`  // Netlify function path with /api/
-      : `${API_BASE}/api/web/scrape`;  // Local server path
-    
-    const response = await fetch(endpoint, {
+    const response = await fetch(`${API_BASE}/web-scrape`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
