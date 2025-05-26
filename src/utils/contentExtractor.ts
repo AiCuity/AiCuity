@@ -17,7 +17,7 @@ export const extractContentFromUrl = async (url: string) => {
     
     // Use the correct endpoint based on environment
     const endpoint = API_BASE_URL.includes('netlify') 
-      ? `${API_BASE_URL}/web-scrape`  // Netlify function path
+      ? `${API_BASE_URL}/api/web/scrape`  // Netlify function path with /api/
       : `${API_BASE_URL}/api/web/scrape`;  // Local server path
     
     const response = await fetch(endpoint, {
