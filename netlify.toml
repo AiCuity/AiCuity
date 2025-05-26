@@ -4,6 +4,10 @@
 
 [build.environment]
   PYTHON_VERSION = "3.11"
+  # Fallback for mise compatibility
+  MISE_PYTHON_VERSION = "3.11"
+  # Ensure pip is available
+  PIP_DISABLE_PIP_VERSION_CHECK = "1"
 
 [functions]
   included_files = ["netlify/functions/**"]

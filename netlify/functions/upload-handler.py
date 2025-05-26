@@ -4,13 +4,26 @@ import base64
 import tempfile
 import os
 from urllib.parse import parse_qs
-import ebooklib
-from ebooklib import epub
-from bs4 import BeautifulSoup
-import PyPDF2
-import io
 import re
 from html import unescape
+
+# Try to import required libraries with fallbacks
+try:
+    import ebooklib
+    from ebooklib import epub
+    from bs4 import BeautifulSoup
+    EPUB_SUPPORT = True
+except ImportError as e:
+    print(f"EPUB support unavailable: {e}")
+    EPUB_SUPPORT = False
+
+try:
+    import PyPDF2
+    import io
+    PDF_SUPPORT = True
+except ImportError as e:
+    print(f"PDF support unavailable: {e}")
+    PDF_SUPPORT = False
 
 def clean_text(text):
     """Clean the extracted text."""
@@ -33,6 +46,9 @@ def clean_text(text):
 
 def process_epub(file_data):
     """Process EPUB file and extract text."""
+    if not EPUB_SUPPORT:
+        raise Exception("EPUB processing is not available. Required libraries are missing.")
+    
     try:
         # Create temporary file
         with tempfile.NamedTemporaryFile(suffix='.epub', delete=False) as temp_file:
@@ -93,6 +109,9 @@ def process_epub(file_data):
 
 def process_pdf(file_data):
     """Process PDF file and extract text."""
+    if not PDF_SUPPORT:
+        raise Exception("PDF processing is not available. Required libraries are missing.")
+    
     try:
         print(f"Processing PDF file, size: {len(file_data)} bytes")
         
@@ -141,7 +160,9 @@ def handler(event, context):
     """Main handler for file upload processing."""
     
     print(f"Handler called with method: {event.get('httpMethod')}")
-    print(f"Headers: {event.get('headers', {})}")
+    print(f"Python version info: {os.sys.version}")
+    print(f"EPUB support: {EPUB_SUPPORT}")
+    print(f"PDF support: {PDF_SUPPORT}")
     
     # Set CORS headers
     headers = {
