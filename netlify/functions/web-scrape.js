@@ -1,5 +1,8 @@
 
-const fetch = require('node-fetch');
+// Use global fetch on Node 18+; fallback to node-fetch for older runtimes
+const fetch = global.fetch || (async (...args) =>
+  (await import('node-fetch')).default(...args));
+
 const { JSDOM } = require('jsdom');
 const { Readability } = require('@mozilla/readability');
 const cheerio = require('cheerio');
