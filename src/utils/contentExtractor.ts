@@ -27,17 +27,38 @@ export const extractContentFromUrl = async (url: string) => {
 
     console.log(`Response status: ${response.status}`);
     console.log(`Response ok: ${response.ok}`);
+    console.log(`Response headers:`, Object.fromEntries(response.headers.entries()));
 
     if (response.ok) {
-      const data = await response.json();
-      console.log(`Successfully extracted content:`, data);
-      if (data.text && data.text.trim()) {
-        console.log(`Successfully extracted ${data.text.length} characters from processing server`);
-        return {
-          content: data.text,
-          title: data.title || 'Extracted Content',
-          sourceUrl: url
-        };
+      // Check if the response is actually JSON
+      const contentType = response.headers.get('content-type');
+      console.log(`Response content-type: ${contentType}`);
+      
+      const responseText = await response.text();
+      console.log(`Raw response (first 500 chars):`, responseText.substring(0, 500));
+      
+      // Check if response is HTML (error page) instead of JSON
+      if (responseText.trim().startsWith('<!DOCTYPE') || responseText.trim().startsWith('<html')) {
+        console.error('Netlify function returned HTML instead of JSON - function may not be deployed correctly');
+        throw new Error('Function returned HTML instead of JSON - deployment issue');
+      }
+      
+      try {
+        const data = JSON.parse(responseText);
+        console.log(`Successfully parsed JSON response:`, data);
+        
+        if (data.text && data.text.trim()) {
+          console.log(`Successfully extracted ${data.text.length} characters from processing server`);
+          return {
+            content: data.text,
+            title: data.title || 'Extracted Content',
+            sourceUrl: url
+          };
+        }
+      } catch (parseError) {
+        console.error('JSON parsing failed:', parseError);
+        console.error('Response text that failed to parse:', responseText);
+        throw new Error(`Invalid JSON response from function: ${parseError.message}`);
       }
     }
     
