@@ -22,7 +22,7 @@ export const processFileLocally = async (file: File): Promise<ProcessedFileData>
     };
   }
   
-  // For PDF and EPUB files, use the Netlify function
+  // For PDF and EPUB files, try the Netlify function first, then fallback
   if (fileExtension === 'pdf' || fileExtension === 'epub') {
     console.log(`Processing ${fileExtension.toUpperCase()} file via Netlify function`);
     try {
@@ -34,7 +34,28 @@ export const processFileLocally = async (file: File): Promise<ProcessedFileData>
       };
     } catch (error) {
       console.error(`Error processing ${fileExtension.toUpperCase()} file:`, error);
-      throw error;
+      
+      // Provide a fallback message instead of failing completely
+      const fallbackText = `Unable to process ${fileExtension.toUpperCase()} file automatically.
+
+File: ${file.name}
+Size: ${(file.size / 1024).toFixed(2)} KB
+Type: ${fileExtension.toUpperCase()}
+
+Error: ${error instanceof Error ? error.message : 'Unknown error'}
+
+Please try:
+1. Converting the file to a .txt format
+2. Copy and paste the text content directly
+3. Check that the file is not corrupted
+
+The file has been uploaded to storage but text extraction failed.`;
+      
+      return {
+        text: fallbackText,
+        originalFilename: file.name,
+        extractedLength: fallbackText.length
+      };
     }
   }
   
