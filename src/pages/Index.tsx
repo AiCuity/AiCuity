@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -16,7 +15,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Crown, CheckCircle, XCircle } from "lucide-react";
 import Hero from "@/components/Hero";
 import WebsiteForm from "@/components/WebsiteForm";
-import FileUploadForm from "@/components/FileUploadForm";
+import FileUploadNetlify from "@/components/FileUploadNetlify";
 import ReadingHistory from "@/components/ReadingHistory";
 import SubscribeButton from "@/components/SubscribeButton";
 import { useAuth } from "@/context/AuthContext";
@@ -155,9 +154,9 @@ const Index = () => {
               <section className="rounded border p-6 shadow-sm">
                 <h2 className="mb-4 text-lg font-semibold">Upload Document</h2>
                 <p className="mb-6 text-sm text-muted-foreground">
-                  Upload a document to start reading with RSVP
+                  Upload a document to start reading with RSVP (powered by Netlify Functions)
                 </p>
-                <FileUploadForm />
+                <FileUploadNetlify />
               </section>
             </TabsContent>
             
