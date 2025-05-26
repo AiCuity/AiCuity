@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -190,9 +189,12 @@ const SpeedCalibrationTool: React.FC<SpeedCalibrationToolProps> = ({
       // Also save to localStorage for anonymous users
       localStorage.setItem('preferred-wpm', preferredWpm.toString());
       
+      // Enable smart pacing by default after calibration
+      localStorage.setItem('smart-pacing', 'true');
+      
       toast({
         title: "Reading Speed Saved",
-        description: `Your preferred reading speed is now set to ${preferredWpm} WPM.`,
+        description: `Your preferred reading speed is now set to ${preferredWpm} WPM with Smart Pacing enabled.`,
       });
       
       // Call onComplete callback if provided
