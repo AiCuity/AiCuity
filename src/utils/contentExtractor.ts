@@ -1,5 +1,4 @@
-
-import { API_BASE_URL } from './apiConfig';
+import { API_BASE } from '@/lib/apiBase';
 
 const simplifyContent = (content: string) => {
   // Remove excessive whitespace and newlines
@@ -16,9 +15,9 @@ export const extractContentFromUrl = async (url: string) => {
     console.log(`Attempting to extract content from: ${url}`);
     
     // Use the correct endpoint based on environment
-    const endpoint = API_BASE_URL.includes('netlify') 
-      ? `${API_BASE_URL}/api/web/scrape`  // Netlify function path with /api/
-      : `${API_BASE_URL}/api/web/scrape`;  // Local server path
+    const endpoint = API_BASE.includes('netlify') 
+      ? `${API_BASE}/api/web/scrape`  // Netlify function path with /api/
+      : `${API_BASE}/api/web/scrape`;  // Local server path
     
     const response = await fetch(endpoint, {
       method: 'POST',

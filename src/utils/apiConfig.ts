@@ -1,6 +1,7 @@
+import { API_BASE } from '@/lib/apiBase';
 
 // Use environment variable for API base URL, with fallback to localhost
-export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5050";
+export const API_BASE_URL = API_BASE;
 
 export const checkServerHealth = async () => {
   try {
