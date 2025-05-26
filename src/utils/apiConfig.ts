@@ -1,9 +1,6 @@
 
-// Use Netlify functions when deployed, fallback to local server for development
-export const API_BASE_URL = 
-  import.meta.env.PROD 
-    ? '/.netlify/functions' 
-    : import.meta.env.VITE_PROCESSING_SERVER_URL || "http://localhost:5050";
+// Use environment variable for API base URL, with fallback to localhost
+export const API_BASE_URL = import.meta.env.VITE_API_URL || "http://localhost:5050";
 
 export const checkServerHealth = async () => {
   try {

@@ -1,17 +1,12 @@
 
 import { API_BASE_URL } from './apiConfig';
 
-// Utility function to extract content from a URL using the processing server or Netlify function
+// Utility function to extract content from a URL using the processing server
 export const fetchActualContent = async (sourceUrl: string) => {
   try {
     console.log(`Fetching actual content from: ${sourceUrl}`);
     
-    // Determine the correct endpoint based on environment
-    const endpoint = import.meta.env.PROD 
-      ? `${API_BASE_URL}/web-scrape`  // Netlify function
-      : `${API_BASE_URL}/api/web/scrape`;  // Local server
-    
-    const response = await fetch(endpoint, {
+    const response = await fetch(`${API_BASE_URL}/api/web/scrape`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -22,7 +17,7 @@ export const fetchActualContent = async (sourceUrl: string) => {
     if (response.ok) {
       const data = await response.json();
       if (data.text && data.text.trim()) {
-        console.log(`Successfully fetched ${data.text.length} characters from ${import.meta.env.PROD ? 'Netlify function' : 'processing server'}`);
+        console.log(`Successfully fetched ${data.text.length} characters from processing server`);
         return {
           content: data.text,
           title: data.title || 'Fetched Content',

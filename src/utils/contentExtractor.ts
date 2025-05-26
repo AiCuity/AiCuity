@@ -15,12 +15,8 @@ export const extractContentFromUrl = async (url: string) => {
   try {
     console.log(`Attempting to extract content from: ${url}`);
     
-    // Determine the correct endpoint based on environment
-    const endpoint = import.meta.env.PROD 
-      ? `${API_BASE_URL}/web-scrape`  // Netlify function
-      : `${API_BASE_URL}/api/web/scrape`;  // Local server
-    
-    const response = await fetch(endpoint, {
+    // Use API_BASE_URL instead of hard-coded localhost
+    const response = await fetch(`${API_BASE_URL}/api/web/scrape`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -31,7 +27,7 @@ export const extractContentFromUrl = async (url: string) => {
     if (response.ok) {
       const data = await response.json();
       if (data.text && data.text.trim()) {
-        console.log(`Successfully extracted ${data.text.length} characters from ${import.meta.env.PROD ? 'Netlify function' : 'processing server'}`);
+        console.log(`Successfully extracted ${data.text.length} characters from processing server`);
         return {
           content: data.text,
           title: data.title || 'Extracted Content',
