@@ -3,9 +3,9 @@
   functions = "netlify/functions"
 
 [build.environment]
-  PYTHON_VERSION = "3.13"
+  PYTHON_VERSION = "3.9"
   # Fallback for mise compatibility
-  MISE_PYTHON_VERSION = "3.13"
+  MISE_PYTHON_VERSION = "3.9"
   # Ensure pip is available
   PIP_DISABLE_PIP_VERSION_CHECK = "1"
 
