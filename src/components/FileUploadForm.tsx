@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import ContentPreview from "@/components/Reader/ContentPreview";
-import { API_BASE_URL } from '../utils/apiConfig';
+import { API_BASE } from '@/lib/apiBase';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 
@@ -75,7 +75,7 @@ const FileUploadForm = () => {
 
       console.log(`Processing uploaded file: ${selectedFile.name}`);
       
-      const response = await fetch(`${API_BASE_URL}/api/files/upload`, {
+      const response = await fetch(`${API_BASE}/files/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -179,7 +179,7 @@ const FileUploadForm = () => {
     try {
       console.log(`Uploading file: ${file.name}`);
       
-      const response = await fetch(`${API_BASE_URL}/api/files/upload`, {
+      const response = await fetch(`${API_BASE}/files/upload`, {
         method: 'POST',
         body: formData,
       });

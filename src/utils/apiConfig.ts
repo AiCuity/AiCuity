@@ -1,3 +1,4 @@
+
 import { API_BASE } from '@/lib/apiBase';
 
 // Use environment variable for API base URL, with fallback to localhost
@@ -12,7 +13,7 @@ export const checkServerHealth = async () => {
     }
     
     // In development, check the local server
-    const response = await fetch(`${API_BASE_URL}/api/health`, {
+    const response = await fetch(`${API_BASE_URL}/health`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
