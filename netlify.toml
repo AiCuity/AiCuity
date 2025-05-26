@@ -1,4 +1,5 @@
 
+
 [build]
   functions = "netlify/functions"
   command = "npm run build"
@@ -15,17 +16,18 @@
   MISE_CONFIG_FILE = ""
   MISE_DISABLE = "1"
   MISE_SKIP = "1"
-  # Force use of runtime.txt
-  NETLIFY_USE_RUNTIME_TXT = "true"
   # Bypass any version managers
   PYENV_ROOT = ""
   ASDF_DIR = ""
   ASDF_SKIP = "1"
+  # Force specific versions without runtime.txt
+  NODE_VERSION = "18"
+  PYTHON_VERSION = "3.9"
   # Standard Python settings
   PIP_DISABLE_PIP_VERSION_CHECK = "1"
   PYTHONUNBUFFERED = "1"
-  # Clear any Python version override
-  PYTHON_VERSION = ""
+  # Enable build debugging
+  NETLIFY_BUILD_DEBUG = "true"
 
 [functions]
   included_files = ["netlify/functions/**"]
