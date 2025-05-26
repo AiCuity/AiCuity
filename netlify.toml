@@ -4,10 +4,10 @@
 
 [build.environment]
   PYTHON_VERSION = "3.9"
-  # Fallback for mise compatibility
-  MISE_PYTHON_VERSION = "3.9"
-  # Ensure pip is available
+  # Use standard Python installation, not mise
   PIP_DISABLE_PIP_VERSION_CHECK = "1"
+  # Ensure we use the runtime.txt specified version
+  PYTHONUNBUFFERED = "1"
 
 [functions]
   included_files = ["netlify/functions/**"]
