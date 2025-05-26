@@ -6,6 +6,7 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import Calibration from './pages/Calibration';
 import SpeedCalibration from './pages/SpeedCalibration';
+import CalibratePage from './pages/Calibrate';
 import NotFound from './pages/NotFound';
 import OAuthCallback from './pages/OAuthCallback';
 import { Toaster } from '@/components/ui/toaster';
@@ -25,6 +26,7 @@ const App = () => {
             <Route path="/register" element={<Register />} />
             <Route path="/calibration" element={<Calibration />} />
             <Route path="/speed-calibration" element={<SpeedCalibration />} />
+            <Route path="/calibrate" element={<CalibratePage />} />
             <Route path="/oauth/callback" element={<OAuthCallback />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
