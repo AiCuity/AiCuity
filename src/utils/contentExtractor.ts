@@ -1,4 +1,3 @@
-
 import { API_BASE } from '@/lib/apiBase';
 
 const simplifyContent = (content: string) => {
@@ -60,7 +59,7 @@ export const extractContentFromUrl = async (url: string) => {
     
     // Add timeout and better error handling
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 second timeout
+    const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
     
     const response = await fetch(`${API_BASE}/web-scrape`, {
       method: 'POST',
@@ -76,10 +75,8 @@ export const extractContentFromUrl = async (url: string) => {
     
     console.log(`Response status: ${response.status}`);
     console.log(`Response ok: ${response.ok}`);
-    console.log(`Response headers:`, Object.fromEntries(response.headers.entries()));
-
+    
     if (response.ok) {
-      // Check if the response is actually JSON
       const contentType = response.headers.get('content-type');
       console.log(`Response content-type: ${contentType}`);
       
@@ -115,7 +112,7 @@ export const extractContentFromUrl = async (url: string) => {
       // Log the error response for debugging
       try {
         const errorText = await response.text();
-        console.error(`Server error response: ${errorText}`);
+        console.error(`Server error response (${response.status}): ${errorText}`);
       } catch (e) {
         console.error('Failed to read error response');
       }

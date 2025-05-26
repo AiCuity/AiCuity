@@ -1,11 +1,15 @@
 
+[build]
+  command = "npm run build"
+  publish = "dist"
+
 [dev]
   targetPort = 8080
   port = 9999
 
 [[redirects]]
   from = "/.netlify/functions/*"
-  to   = "/.netlify/functions/:splat"
+  to = "/.netlify/functions/:splat"
   status = 200
 
 [[redirects]]
