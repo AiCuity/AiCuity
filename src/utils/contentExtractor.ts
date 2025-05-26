@@ -14,6 +14,8 @@ const simplifyContent = (content: string) => {
 export const extractContentFromUrl = async (url: string) => {
   try {
     console.log(`Attempting to extract content from: ${url}`);
+    console.log(`Using API_BASE: ${API_BASE}`);
+    console.log(`Full endpoint URL: ${API_BASE}/web-scrape`);
     
     const response = await fetch(`${API_BASE}/web-scrape`, {
       method: 'POST',
@@ -23,8 +25,12 @@ export const extractContentFromUrl = async (url: string) => {
       body: JSON.stringify({ url }),
     });
 
+    console.log(`Response status: ${response.status}`);
+    console.log(`Response ok: ${response.ok}`);
+
     if (response.ok) {
       const data = await response.json();
+      console.log(`Successfully extracted content:`, data);
       if (data.text && data.text.trim()) {
         console.log(`Successfully extracted ${data.text.length} characters from processing server`);
         return {
