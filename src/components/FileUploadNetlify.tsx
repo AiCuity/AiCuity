@@ -59,30 +59,50 @@ const FileUploadNetlify = () => {
       return;
     }
 
+    if (!user) {
+      toast({
+        title: "Error",
+        description: "You must be signed in to upload files",
+        variant: "destructive",
+      });
+      return;
+    }
+
     await processFile(file);
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
-      <FileInput
-        onFileChange={handleFileChange}
-        file={file}
-        isLoading={isLoading}
-        msg={msg}
-      />
-      
-      <ProgressDisplay isLoading={isLoading} />
-      
-      <ErrorDisplay apiError={apiError} />
-      
-      {previewContent && (
-        <div className="mt-6">
-          <ContentPreview content={previewContent} />
+    <div className="space-y-6">
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 className="font-medium text-blue-900 mb-2">File Upload Information</h3>
+        <div className="text-sm text-blue-700 space-y-1">
+          <p>• Text files (.txt) are processed directly in your browser</p>
+          <p>• PDF and EPUB files require server-side processing (coming soon)</p>
+          <p>• Files are uploaded to secure Supabase storage</p>
         </div>
-      )}
-      
-      <SubmitButton isLoading={isLoading} hasFile={!!file} />
-    </form>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <FileInput
+          onFileChange={handleFileChange}
+          file={file}
+          isLoading={isLoading}
+          msg={msg}
+        />
+        
+        <ProgressDisplay isLoading={isLoading} />
+        
+        <ErrorDisplay apiError={apiError} />
+        
+        {previewContent && (
+          <div className="mt-6">
+            <ContentPreview content={previewContent} />
+          </div>
+        )}
+        
+        <SubmitButton isLoading={isLoading} hasFile={!!file} />
+      </form>
+    </div>
   );
 };
 

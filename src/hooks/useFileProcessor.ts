@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
-import { uploadFileToNetlify } from '@/lib/netlifyApi';
+import { processFileLocally, uploadToSupabaseStorage } from '@/lib/fileProcessor';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 
@@ -21,42 +21,29 @@ export const useFileProcessor = () => {
     try {
       console.log(`Starting file processing for: ${selectedFile.name}`);
       
-      // 1️⃣ Upload to Supabase Storage
-      const fileName = `${user!.id}/${Date.now()}_${selectedFile.name}`;
-      const { error: upErr, data } = await supabase.storage
-        .from('uploads')
-        .upload(fileName, selectedFile);
-
-      if (upErr) {
-        console.error('Supabase upload error:', upErr);
-        setMsg(upErr.message);
-        setApiError(upErr.message);
-        toast({
-          title: "Upload Error",
-          description: upErr.message,
-          variant: "destructive",
-        });
-        return;
+      if (!user) {
+        throw new Error('User must be authenticated to upload files');
       }
 
+      // 1️⃣ Process the file locally for text extraction
+      console.log(`Processing file locally: ${selectedFile.name}`);
+      const processedData = await processFileLocally(selectedFile);
+
+      // 2️⃣ Upload to Supabase Storage
+      console.log('Uploading file to Supabase storage...');
+      const uploadData = await uploadToSupabaseStorage(selectedFile, user.id);
       console.log('File uploaded to Supabase storage successfully');
 
-      // 2️⃣ Process the file for text extraction using Netlify Functions
-      console.log(`Processing uploaded file: ${selectedFile.name}`);
-      
-      const processedData = await uploadFileToNetlify(selectedFile);
-      console.log('File processed successfully by Netlify function');
-
       // 3️⃣ Record in reading history
-      const contentId = `file_${Date.now()}_${user!.id}`;
+      const contentId = `file_${Date.now()}_${user.id}`;
       
       const { error: historyErr } = await supabase
         .from('reading_history')
         .insert({
-          user_id: user!.id,
+          user_id: user.id,
           content_id: contentId,
           title: processedData.originalFilename || selectedFile.name,
-          source: data.path, // Store the Supabase storage path
+          source: uploadData.path, // Store the Supabase storage path
           wpm: 300, // Default WPM
           current_position: 0,
           bytes: selectedFile.size
@@ -70,7 +57,7 @@ export const useFileProcessor = () => {
       // 4️⃣ Increment Stripe usage
       try {
         const { error: fnErr } = await supabase.functions.invoke('record-upload', {
-          body: { uid: user!.id }
+          body: { uid: user.id }
         });
         
         if (fnErr) {
