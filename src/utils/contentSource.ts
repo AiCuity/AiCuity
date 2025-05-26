@@ -6,7 +6,12 @@ export const fetchActualContent = async (sourceUrl: string) => {
   try {
     console.log(`Fetching actual content from: ${sourceUrl}`);
     
-    const response = await fetch(`${API_BASE_URL}/api/web/scrape`, {
+    // Use the correct endpoint based on environment
+    const endpoint = API_BASE_URL.includes('netlify') 
+      ? `${API_BASE_URL}/web-scrape`  // Netlify function path
+      : `${API_BASE_URL}/api/web/scrape`;  // Local server path
+    
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

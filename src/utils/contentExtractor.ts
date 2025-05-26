@@ -15,8 +15,12 @@ export const extractContentFromUrl = async (url: string) => {
   try {
     console.log(`Attempting to extract content from: ${url}`);
     
-    // Use API_BASE_URL instead of hard-coded localhost
-    const response = await fetch(`${API_BASE_URL}/api/web/scrape`, {
+    // Use the correct endpoint based on environment
+    const endpoint = API_BASE_URL.includes('netlify') 
+      ? `${API_BASE_URL}/web-scrape`  // Netlify function path
+      : `${API_BASE_URL}/api/web/scrape`;  // Local server path
+    
+    const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
