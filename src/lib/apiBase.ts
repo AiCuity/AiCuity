@@ -9,8 +9,8 @@ const isLocalhost =
 
 export const API_BASE =
   envBase && envBase !== ''           ? envBase
-  : '/.netlify/functions/api';        // use Netlify functions for both dev and prod
+  : '/.netlify/functions';        // use Netlify functions for both dev and prod
 
 // API_BASE will resolve to, in order of priority:
 //   • the VITE_API_URL env var (if set)
-//   • /.netlify/functions/api for both development and production
+//   • /.netlify/functions for both development and production
