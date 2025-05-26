@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -124,9 +125,12 @@ const Index = () => {
                 <p className="text-sm text-purple-600 dark:text-purple-300">
                   Subscribe to upload unlimited documents and access advanced reading features
                 </p>
+                <p className="text-xs text-purple-500 dark:text-purple-400 mt-2">
+                  Note: Please replace with your actual Stripe price ID from your dashboard
+                </p>
               </div>
               <SubscribeButton 
-                priceId="price_1234567890" // Replace with your actual Stripe price ID
+                priceId="price_REPLACE_WITH_YOUR_ACTUAL_STRIPE_PRICE_ID"
                 className="bg-purple-600 hover:bg-purple-700"
               >
                 <Crown className="mr-2 h-4 w-4" />
