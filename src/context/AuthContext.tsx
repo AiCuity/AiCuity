@@ -12,7 +12,6 @@ type AuthContextType = {
   signIn: (email: string, password: string) => Promise<{ error?: string }>;
   signInWithEmailLink: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
-  handleDuplicateEmail: (email: string) => Promise<{ isDuplicate: boolean; provider?: string }>;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -71,52 +70,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  // Check if email already exists and with which provider
-  const handleDuplicateEmail = async (email: string): Promise<{ isDuplicate: boolean; provider?: string }> => {
-    try {
-      // Since we can't directly check email in profiles (no email column in schema),
-      // we'll try a sign-in attempt to check if the user exists
-      const { error: authError } = await supabase.auth.signInWithPassword({
-        email,
-        password: 'dummy-password-for-check'
-      });
-
-      if (authError) {
-        if (authError.message.includes('Invalid login credentials')) {
-          // User exists but wrong password
-          return { isDuplicate: true, provider: 'email' };
-        } else if (authError.message.includes('Email not confirmed')) {
-          // User exists but not confirmed
-          return { isDuplicate: true, provider: 'email' };
-        } else if (authError.message.includes('User not found') || authError.message.includes('Invalid email')) {
-          // User doesn't exist
-          return { isDuplicate: false };
-        }
-        
-        // For other errors, assume user might exist
-        return { isDuplicate: true, provider: 'unknown' };
-      }
-
-      // If no error, user exists and password was correct (shouldn't happen with dummy password)
-      return { isDuplicate: true, provider: 'email' };
-    } catch (error) {
-      console.error('Error checking duplicate email:', error);
-      return { isDuplicate: false };
-    }
-  };
-
   const signUp = async (email: string, password: string) => {
     setIsLoading(true);
     
     try {
-      // First check for duplicate email
-      const duplicateCheck = await handleDuplicateEmail(email);
-      
-      if (duplicateCheck.isDuplicate) {
-        throw new Error(`An account with this email already exists. Please try signing in${duplicateCheck.provider === 'email' ? ' with your password' : ' with your social provider'} or use the email link option.`);
-      }
-
-      const { error } = await supabase.auth.signUp({ 
+      const { data, error } = await supabase.auth.signUp({ 
         email, 
         password,
         options: { 
@@ -130,6 +88,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           throw new Error('An account with this email already exists. Please try signing in or use the email link option.');
         }
         throw error;
+      }
+
+      if (data?.user) {
+        // Check if this is a duplicate email using the identities array
+        const isNewUser = data.user.identities && data.user.identities.length > 0;
+        const isExistingUser = !isNewUser;
+
+        if (isExistingUser) {
+          // User already exists - sign out the temporary session and show error
+          await supabase.auth.signOut();
+          throw new Error('An account with this email already exists. Please try signing in with your password or use the email link option.');
+        }
       }
       
       toast({
@@ -243,7 +213,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         signIn,
         signInWithEmailLink,
         signOut,
-        handleDuplicateEmail,
       }}
     >
       {children}
