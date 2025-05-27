@@ -1,4 +1,3 @@
-
 # AiCuity - AI-Powered Reading Application
 
 AiCuity is a web application that allows users to extract and read content from websites, PDFs, TXT files, and EPUB files using advanced speed reading technology.
@@ -15,6 +14,147 @@ AiCuity is a web application that allows users to extract and read content from 
 - Smart pacing that adjusts speed based on word complexity
 - Progress tracking and auto-save functionality
 - Duplicate entry cleanup to maintain clean reading history
+
+## Authentication & SSO Setup
+
+This application supports multiple authentication methods through Supabase Auth:
+
+### Supported Authentication Methods
+
+1. **Email/Password**: Traditional email and password authentication
+2. **Email Link**: Passwordless authentication via email links (fallback option)
+3. **Google OAuth**: Sign in with Google accounts
+4. **Microsoft Azure OAuth**: Sign in with Microsoft/Azure accounts
+
+### Environment Variables
+
+Create a `.env.local` file in the root directory with the following variables:
+
+```env
+# Supabase Configuration
+VITE_SUPABASE_URL=https://syykisxxasxonnhnusts.supabase.co
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+
+# OAuth Configuration (configured in Supabase Dashboard)
+# Google OAuth
+VITE_GOOGLE_CLIENT_ID=your_google_client_id_here
+
+# Microsoft Azure OAuth  
+VITE_AZURE_CLIENT_ID=your_azure_client_id_here
+VITE_AZURE_TENANT_ID=your_azure_tenant_id_here
+
+# Stripe Configuration (for premium features)
+VITE_STRIPE_PUBLISHABLE_KEY=your_stripe_publishable_key_here
+VITE_STRIPE_PRICE_ID=your_stripe_price_id_here
+
+# Application URLs
+VITE_APP_URL=http://localhost:8080
+VITE_PRODUCTION_URL=https://your-domain.com
+```
+
+### OAuth Redirect URIs Configuration
+
+Configure the following redirect URIs in your OAuth provider settings:
+
+#### Supabase Auth Callback URLs
+- **Development**: `http://localhost:8080/oauth/callback`
+- **Production**: `https://your-domain.com/oauth/callback`
+
+#### Google OAuth Setup
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Create a new project or select existing one
+3. Enable Google+ API
+4. Create OAuth 2.0 credentials
+5. Add authorized redirect URIs:
+   - Development: `https://syykisxxasxonnhnusts.supabase.co/auth/v1/callback`
+   - Production: `https://your-supabase-project.supabase.co/auth/v1/callback`
+6. Add authorized JavaScript origins:
+   - Development: `http://localhost:8080`
+   - Production: `https://your-domain.com`
+
+#### Microsoft Azure OAuth Setup
+1. Go to [Azure Portal](https://portal.azure.com/)
+2. Navigate to Azure Active Directory > App registrations
+3. Create a new registration
+4. Add redirect URIs under "Authentication":
+   - Type: Web
+   - Development: `https://syykisxxasxonnhnusts.supabase.co/auth/v1/callback`
+   - Production: `https://your-supabase-project.supabase.co/auth/v1/callback`
+5. Configure API permissions for Microsoft Graph:
+   - `openid`
+   - `profile`
+   - `email`
+
+#### Supabase Configuration
+In your Supabase Dashboard:
+
+1. **Authentication > Settings > Auth Providers**
+2. **Google Provider**:
+   - Enable Google provider
+   - Add your Google Client ID
+   - Add your Google Client Secret
+   - Redirect URL: `https://your-supabase-project.supabase.co/auth/v1/callback`
+
+3. **Azure Provider**:
+   - Enable Azure provider
+   - Add your Azure Client ID
+   - Add your Azure Client Secret
+   - Azure Tenant ID: `your-tenant-id` or `common` for multi-tenant
+   - Redirect URL: `https://your-supabase-project.supabase.co/auth/v1/callback`
+
+4. **Site URL Configuration**:
+   - Development: `http://localhost:8080`
+   - Production: `https://your-domain.com`
+
+5. **Additional Redirect URLs**:
+   - `http://localhost:8080/oauth/callback`
+   - `https://your-domain.com/oauth/callback`
+
+### Duplicate Email Handling
+
+The application includes comprehensive duplicate email collision handling:
+
+1. **Detection**: Checks if email already exists before registration
+2. **Provider Identification**: Attempts to identify which authentication provider was used
+3. **Fallback Options**: Provides multiple recovery options:
+   - Email link authentication
+   - Redirect to sign-in page
+   - Clear error messaging about existing accounts
+4. **Social Login Hints**: Suggests using social login if account was created with OAuth
+
+### Automatic User Record Creation
+
+- User profiles are automatically created upon successful authentication
+- Supports both email/password and OAuth sign-ins
+- Profile includes: user ID, email, full name, avatar URL, and timestamps
+- Uses upsert operations to handle existing records gracefully
+
+## Database Schema
+
+### Profiles Table
+```sql
+CREATE TABLE public.profiles (
+    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+    email TEXT,
+    full_name TEXT,
+    avatar_url TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Enable RLS
+ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
+
+-- Create policies
+CREATE POLICY "Users can view own profile" ON public.profiles
+    FOR SELECT USING (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile" ON public.profiles
+    FOR UPDATE USING (auth.uid() = id);
+
+CREATE POLICY "Users can insert own profile" ON public.profiles
+    FOR INSERT WITH CHECK (auth.uid() = id);
+```
 
 ## Component Architecture
 
@@ -245,5 +385,5 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 
 All Supabase e-mail links use **Auth → Settings → URL Configuration → Site URL**.
 Set it to the production domain (`https://aicuity.app`)
-and add `http://localhost:5173` 'http://localhost:5050' in "Additional Redirect URLs" for local dev.
+and add `http://localhost:8080` 'http://localhost:5050` in "Additional Redirect URLs" for local dev.
 ---
