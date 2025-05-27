@@ -1,5 +1,4 @@
-
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Index from './pages/Index';
 import Reader from './pages/Reader';
 import Login from './pages/Login';
@@ -21,6 +20,7 @@ const App = () => {
         <Router>
           <Routes>
             <Route path="/" element={<Index />} />
+            <Route path="/dashboard" element={<Navigate to="/" replace />} />
             <Route path="/reader/:contentId?" element={<Reader />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
