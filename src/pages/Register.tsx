@@ -14,7 +14,8 @@ import {
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Loader2 } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Loader2, Mail, AlertCircle } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import SocialAuthButtons from '@/components/auth/SocialAuthButtons';
 
@@ -31,8 +32,11 @@ const formSchema = z.object({
 
 const Register = () => {
   const navigate = useNavigate();
-  const { signUp } = useAuth();
+  const { signUp, signInWithEmailLink } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [showEmailLinkOption, setShowEmailLinkOption] = useState(false);
+  const [duplicateEmail, setDuplicateEmail] = useState<string>('');
+  const [registrationError, setRegistrationError] = useState<string>('');
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -45,13 +49,41 @@ const Register = () => {
 
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     setIsLoading(true);
+    setRegistrationError('');
+    setShowEmailLinkOption(false);
     
     try {
       await signUp(values.email, values.password);
       navigate('/login', { state: { message: 'Please check your email to verify your account' } });
-    } catch (error) {
-      // Error is handled in the auth context
+    } catch (error: any) {
       console.error('Registration error:', error);
+      
+      // Check if it's a duplicate email error
+      if (error.message?.includes('already exists') || error.message?.includes('already registered')) {
+        setDuplicateEmail(values.email);
+        setShowEmailLinkOption(true);
+        setRegistrationError(error.message);
+      } else {
+        setRegistrationError(error.message || 'Registration failed. Please try again.');
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEmailLink = async () => {
+    if (!duplicateEmail) return;
+    
+    setIsLoading(true);
+    try {
+      await signInWithEmailLink(duplicateEmail);
+      navigate('/login', { 
+        state: { 
+          message: 'Please check your email for a sign-in link. If you already have an account, this will sign you in directly.' 
+        } 
+      });
+    } catch (error: any) {
+      setRegistrationError(error.message || 'Failed to send email link. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -79,6 +111,52 @@ const Register = () => {
               </span>
             </div>
           </div>
+
+          {registrationError && (
+            <Alert variant="destructive" className="mb-6">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                {registrationError}
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {showEmailLinkOption && (
+            <Alert className="mb-6 border-blue-500 bg-blue-50 dark:bg-blue-900/20">
+              <Mail className="h-4 w-4 text-blue-600" />
+              <AlertDescription className="text-blue-800 dark:text-blue-200">
+                <div className="space-y-3">
+                  <p>An account with this email already exists. You can:</p>
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleEmailLink}
+                      disabled={isLoading}
+                      className="w-full"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending email link...
+                        </>
+                      ) : (
+                        <>
+                          <Mail className="mr-2 h-4 w-4" />
+                          Send me a sign-in email link
+                        </>
+                      )}
+                    </Button>
+                    <Link to="/login" className="w-full">
+                      <Button variant="outline" size="sm" className="w-full">
+                        Go to Sign In page
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </AlertDescription>
+            </Alert>
+          )}
 
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
@@ -136,7 +214,7 @@ const Register = () => {
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={isLoading}>
+              <Button type="submit" className="w-full" disabled={isLoading || showEmailLinkOption}>
                 {isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Creating account...
