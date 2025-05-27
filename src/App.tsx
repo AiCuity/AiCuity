@@ -3,6 +3,8 @@ import Index from './pages/Index';
 import Reader from './pages/Reader';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import Calibration from './pages/Calibration';
 import SpeedCalibration from './pages/SpeedCalibration';
 import CalibratePage from './pages/Calibrate';
@@ -24,6 +26,8 @@ const App = () => {
             <Route path="/reader/:contentId?" element={<Reader />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/calibration" element={<Calibration />} />
             <Route path="/speed-calibration" element={<SpeedCalibration />} />
             <Route path="/calibrate" element={<CalibratePage />} />
