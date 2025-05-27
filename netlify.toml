@@ -4,7 +4,7 @@
   functions = "netlify/functions"
 
 [build.environment]
-  PYTHON_VERSION = "3.11"
+  PYTHON_VERSION = "3.9"
 
 [functions]
   included_files = ["netlify/functions/**"]
