@@ -9,6 +9,49 @@
 [functions]
   included_files = ["netlify/functions/**"]
 
+# Handle specific SPA routes
+[[redirects]]
+  from = "/login"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/register"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/reader/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/calibration"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/speed-calibration"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/calibrate"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/oauth/callback"
+  to = "/index.html"
+  status = 200
+
+# Catch-all for any other routes (but not files or functions)
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  force = false
+
 [[headers]]
   for = "/.netlify/functions/*"
   [headers.values]
