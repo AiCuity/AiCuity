@@ -1,5 +1,4 @@
-
-import { API_BASE } from '@/lib/apiBase';
+const API_BASE = import.meta.env.VITE_API_URL;
 
 const simplifyContent = (content: string) => {
   // Remove excessive whitespace and newlines
@@ -62,7 +61,7 @@ export const extractContentFromUrl = async (url: string) => {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
     
-    const response = await fetch(`${API_BASE}/web-scrape`, {
+    const response = await fetch(`${API_BASE}/scrape`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

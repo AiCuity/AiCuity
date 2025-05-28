@@ -1,5 +1,4 @@
-
-const NETLIFY_FUNCTION_URL = '/.netlify/functions/upload-handler';
+const API_BASE = import.meta.env.VITE_API_URL;
 
 export const uploadFileToNetlify = async (file: File) => {
   const formData = new FormData();
@@ -7,13 +6,13 @@ export const uploadFileToNetlify = async (file: File) => {
 
   try {
     console.log(`Uploading file to Netlify: ${file.name} (${file.size} bytes)`);
-    console.log(`Using endpoint: ${NETLIFY_FUNCTION_URL}`);
+    console.log(`Using endpoint: ${API_BASE}/upload`);
     
-    const response = await fetch(NETLIFY_FUNCTION_URL, {
+    const response = await fetch(`${API_BASE}/upload`, {
       method: 'POST',
       body: formData,
     });
-
+    
     console.log(`Response status: ${response.status}`);
 
     // Check if response is ok
