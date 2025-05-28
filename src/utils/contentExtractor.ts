@@ -55,7 +55,7 @@ export const extractContentFromUrl = async (url: string) => {
   try {
     console.log(`[contentExtractor] Attempting to extract content from: ${url}`);
     console.log(`[contentExtractor] Using API_BASE: ${API_BASE}`);
-    console.log(`[contentExtractor] Full endpoint URL: ${API_BASE}/web-scrape`);
+    console.log(`[contentExtractor] Full endpoint URL: ${API_BASE}/scrape`);
     
     // Add timeout and better error handling
     const controller = new AbortController();

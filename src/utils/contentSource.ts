@@ -1,13 +1,12 @@
-
-import { API_BASE } from '@/lib/apiBase';
+const API_BASE = import.meta.env.VITE_API_URL;
 
 // Utility function to extract content from a URL using the processing server
 export const fetchActualContent = async (sourceUrl: string) => {
   try {
     console.log(`[contentSource] Fetching actual content from: ${sourceUrl}`);
-    console.log(`[contentSource] Using API endpoint: ${API_BASE}/web-scrape`);
+    console.log(`[contentSource] Using API endpoint: ${API_BASE}/scrape`);
     
-    const response = await fetch(`${API_BASE}/web-scrape`, {
+    const response = await fetch(`${API_BASE}/scrape`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
