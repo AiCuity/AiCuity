@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { generateWikipediaArticle } from "@/utils/wikiContent";
@@ -111,10 +110,12 @@ export const useContentLoader = (contentId?: string) => {
           // For file uploads, get content from sessionStorage
           const storedContent = sessionStorage.getItem('readerContent');
           const storedTitle = sessionStorage.getItem('contentTitle') || 'Uploaded document';
+          const storedSource = sessionStorage.getItem('contentSource') || 'File upload';
           
           if (storedContent) {
             setContent(storedContent);
             setTitle(storedTitle);
+            setSource(storedSource);
             console.log("Loaded file content:", storedContent.substring(0, 100) + "...");
           } else {
             toast({

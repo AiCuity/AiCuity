@@ -1,6 +1,6 @@
-
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useNavigate } from "react-router-dom";
 import ContentPreview from "@/components/Reader/ContentPreview";
 import { useAuth } from '@/context/AuthContext';
 import { validateFile } from '@/utils/fileValidation';
@@ -13,6 +13,7 @@ import SubmitButton from '@/components/FileUpload/SubmitButton';
 const FileUploadNetlify = () => {
   const [file, setFile] = useState<File | null>(null);
   const { toast } = useToast();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const {
     isLoading,
@@ -68,7 +69,16 @@ const FileUploadNetlify = () => {
       return;
     }
 
-    await processFile(file);
+    try {
+      const contentId = await processFile(file);
+      
+      // Navigate to the reader page after successful processing
+      navigate(`/reader/${contentId}`);
+      
+    } catch (error) {
+      // Error handling is already done in processFile
+      console.error('Error processing file:', error);
+    }
   };
 
   return (

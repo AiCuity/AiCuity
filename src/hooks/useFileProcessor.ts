@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { useToast } from "@/hooks/use-toast";
 import { processFileLocally, uploadToSupabaseStorage } from '@/lib/fileProcessor';
@@ -13,7 +12,7 @@ export const useFileProcessor = () => {
   const { toast } = useToast();
   const { user } = useAuth();
 
-  const processFile = async (selectedFile: File) => {
+  const processFile = async (selectedFile: File): Promise<string> => {
     setIsLoading(true);
     setApiError(null);
     setPreviewContent("");
@@ -43,7 +42,7 @@ export const useFileProcessor = () => {
           user_id: user.id,
           content_id: contentId,
           title: processedData.originalFilename || selectedFile.name,
-          source: uploadData.path, // Store the Supabase storage path
+          source: `File: ${processedData.originalFilename || selectedFile.name}`, // More descriptive source
           wpm: 300, // Default WPM
           current_position: 0,
           bytes: selectedFile.size
@@ -72,10 +71,11 @@ export const useFileProcessor = () => {
       // Show success and preview
       setPreviewContent(processedData.text);
       
-      // Store the extracted content in sessionStorage
+      // Store the extracted content in sessionStorage with contentId
       sessionStorage.setItem('readerContent', processedData.text);
       sessionStorage.setItem('contentTitle', processedData.originalFilename || selectedFile.name);
-      sessionStorage.setItem('contentSource', 'file-upload');
+      sessionStorage.setItem('contentSource', `File: ${processedData.originalFilename || selectedFile.name}`);
+      sessionStorage.setItem('currentContentId', contentId);
       
       toast({
         title: "File uploaded successfully",
@@ -83,6 +83,8 @@ export const useFileProcessor = () => {
       });
       
       setMsg(`File uploaded and processed successfully!`);
+      
+      return contentId;
       
     } catch (error) {
       console.error('Error during file upload:', error);
@@ -95,6 +97,8 @@ export const useFileProcessor = () => {
         description: errorMessage,
         variant: "destructive",
       });
+      
+      throw error;
     } finally {
       setIsLoading(false);
     }
