@@ -1,13 +1,19 @@
-
 import json
 import base64
 import tempfile
 import os
 from urllib.parse import parse_qs
-import ebooklib
-from ebooklib import epub
-from bs4 import BeautifulSoup
-import PyPDF2
+
+# Import with error handling for dependencies
+try:
+    import ebooklib
+    from ebooklib import epub
+    from bs4 import BeautifulSoup
+    import PyPDF2
+except ImportError as e:
+    print(f"Import error: {e}")
+    # These will be handled in the function if missing
+
 import io
 import re
 from html import unescape
@@ -34,6 +40,10 @@ def clean_text(text):
 def process_epub(file_data):
     """Process EPUB file and extract text."""
     try:
+        # Check if required modules are available
+        if 'ebooklib' not in globals() or 'BeautifulSoup' not in globals():
+            raise Exception("Required dependencies (ebooklib, beautifulsoup4) are not available")
+        
         # Create temporary file
         with tempfile.NamedTemporaryFile(suffix='.epub', delete=False) as temp_file:
             temp_file.write(file_data)
@@ -94,6 +104,10 @@ def process_epub(file_data):
 def process_pdf(file_data):
     """Process PDF file and extract text."""
     try:
+        # Check if PyPDF2 is available
+        if 'PyPDF2' not in globals():
+            raise Exception("Required dependency (PyPDF2) is not available")
+        
         print(f"Processing PDF file, size: {len(file_data)} bytes")
         
         # Create a BytesIO object from the file data
@@ -137,10 +151,12 @@ def process_text(file_data):
         print(f"Text processing error: {str(e)}")
         raise Exception(f"Failed to process text file: {str(e)}")
 
+# Main handler function - this is the entry point for Netlify
 def handler(event, context):
     """Main handler for file upload processing."""
     
     print(f"Handler called with method: {event.get('httpMethod')}")
+    print(f"Event keys: {list(event.keys())}")
     print(f"Headers: {event.get('headers', {})}")
     
     # Set CORS headers
@@ -325,6 +341,8 @@ def handler(event, context):
     except Exception as e:
         # Catch-all error handler
         print(f"Unexpected error in handler: {str(e)}")
+        import traceback
+        print(f"Traceback: {traceback.format_exc()}")
         return {
             'statusCode': 500,
             'headers': headers,
