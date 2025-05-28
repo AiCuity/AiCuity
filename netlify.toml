@@ -13,6 +13,9 @@
 [functions."upload-handler"]
   runtime = "python3.10"
 
+[functions."test-handler"]
+  runtime = "python3.10"
+
 # Handle specific SPA routes
 [[redirects]]
   from = "/login"
