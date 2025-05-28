@@ -57,6 +57,7 @@
   status = 200
 
 # Catch-all for any other routes (but not files or functions)
+# force = false ensures functions are not caught by this rule
 [[redirects]]
   from = "/*"
   to = "/index.html"

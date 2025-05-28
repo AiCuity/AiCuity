@@ -1,6 +1,3 @@
-# Netlify Functions
-/.netlify/functions/* /.netlify/functions/:splat 200
-
 # SPA Routes
 /login /index.html 200
 /register /index.html 200
@@ -10,5 +7,5 @@
 /calibrate /index.html 200
 /oauth/callback /index.html 200
 
-# Catch-all fallback
+# Catch-all fallback (but don't catch function calls)
 /* /index.html 200 
