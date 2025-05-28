@@ -5,6 +5,7 @@
 
 [build.environment]
   PYTHON_VERSION = "3.10"
+  NETLIFY_FUNCTIONS_LOG_LEVEL = "debug"
 
 [functions]
   included_files = ["netlify/functions/**"]
@@ -14,6 +15,9 @@
   runtime = "python3.10"
 
 [functions."test-handler"]
+  runtime = "python3.10"
+
+[functions."hello"]
   runtime = "python3.10"
 
 # Handle specific SPA routes

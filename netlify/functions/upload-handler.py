@@ -155,9 +155,9 @@ def process_text(file_data):
 def handler(event, context):
     """Main handler for file upload processing."""
     
-    print(f"Handler called with method: {event.get('httpMethod')}")
-    print(f"Event keys: {list(event.keys())}")
-    print(f"Headers: {event.get('headers', {})}")
+    print(f"[upload-handler] Handler called with method: {event.get('httpMethod')}")
+    print(f"[upload-handler] Event keys: {list(event.keys())}")
+    print(f"[upload-handler] Headers: {event.get('headers', {})}")
     
     # Set CORS headers
     headers = {
@@ -170,7 +170,7 @@ def handler(event, context):
     try:
         # Handle preflight OPTIONS request
         if event.get('httpMethod') == 'OPTIONS':
-            print("Handling OPTIONS request")
+            print("[upload-handler] Handling OPTIONS request")
             return {
                 'statusCode': 200,
                 'headers': headers,
@@ -179,7 +179,7 @@ def handler(event, context):
         
         # Only allow POST requests
         if event.get('httpMethod') != 'POST':
-            print(f"Method not allowed: {event.get('httpMethod')}")
+            print(f"[upload-handler] Method not allowed: {event.get('httpMethod')}")
             return {
                 'statusCode': 405,
                 'headers': headers,
@@ -188,7 +188,7 @@ def handler(event, context):
         
         # Check for required fields
         if not event.get('body'):
-            print("No request body provided")
+            print("[upload-handler] No request body provided")
             return {
                 'statusCode': 400,
                 'headers': headers,
@@ -200,10 +200,10 @@ def handler(event, context):
         if not content_type:
             content_type = event.get('headers', {}).get('Content-Type', '')
         
-        print(f"Content-Type: {content_type}")
+        print(f"[upload-handler] Content-Type: {content_type}")
         
         if 'multipart/form-data' not in content_type:
-            print("Invalid content type")
+            print("[upload-handler] Invalid content type")
             return {
                 'statusCode': 400,
                 'headers': headers,
@@ -214,14 +214,14 @@ def handler(event, context):
         body = event.get('body', '')
         is_base64 = event.get('isBase64Encoded', False)
         
-        print(f"Body length: {len(body)}, isBase64Encoded: {is_base64}")
+        print(f"[upload-handler] Body length: {len(body)}, isBase64Encoded: {is_base64}")
         
         if is_base64:
             try:
                 body = base64.b64decode(body)
-                print(f"Decoded body length: {len(body)}")
+                print(f"[upload-handler] Decoded body length: {len(body)}")
             except Exception as decode_error:
-                print(f"Base64 decode error: {decode_error}")
+                print(f"[upload-handler] Base64 decode error: {decode_error}")
                 return {
                     'statusCode': 400,
                     'headers': headers,
@@ -233,9 +233,9 @@ def handler(event, context):
         # Extract boundary from content type
         try:
             boundary = content_type.split('boundary=')[1]
-            print(f"Boundary: {boundary}")
+            print(f"[upload-handler] Boundary: {boundary}")
         except IndexError:
-            print("No boundary found")
+            print("[upload-handler] No boundary found")
             return {
                 'statusCode': 400,
                 'headers': headers,
@@ -244,7 +244,7 @@ def handler(event, context):
         
         # Parse multipart data
         parts = body.split(f'--{boundary}'.encode())
-        print(f"Found {len(parts)} parts")
+        print(f"[upload-handler] Found {len(parts)} parts")
         
         file_data = None
         filename = None
@@ -252,22 +252,22 @@ def handler(event, context):
         for i, part in enumerate(parts):
             if b'Content-Disposition: form-data' in part and b'filename=' in part:
                 try:
-                    print(f"Processing part {i}")
+                    print(f"[upload-handler] Processing part {i}")
                     # Extract filename
                     disposition_line = part.split(b'\r\n')[1].decode('utf-8')
                     filename = disposition_line.split('filename="')[1].split('"')[0]
-                    print(f"Found filename: {filename}")
+                    print(f"[upload-handler] Found filename: {filename}")
                     
                     # Extract file data (after double CRLF)
                     file_data = part.split(b'\r\n\r\n', 1)[1].rsplit(b'\r\n', 1)[0]
-                    print(f"File data length: {len(file_data)}")
+                    print(f"[upload-handler] File data length: {len(file_data)}")
                     break
                 except Exception as parse_error:
-                    print(f"Parse error for part {i}: {parse_error}")
+                    print(f"[upload-handler] Parse error for part {i}: {parse_error}")
                     continue
         
         if not file_data or not filename:
-            print("No file uploaded or filename missing")
+            print("[upload-handler] No file uploaded or filename missing")
             return {
                 'statusCode': 400,
                 'headers': headers,
@@ -276,7 +276,7 @@ def handler(event, context):
         
         # Determine file type
         file_extension = os.path.splitext(filename)[1].lower()
-        print(f"File extension: {file_extension}")
+        print(f"[upload-handler] File extension: {file_extension}")
         
         # Process based on file type
         extracted_text = ""
@@ -289,14 +289,14 @@ def handler(event, context):
             elif file_extension == '.txt':
                 extracted_text = process_text(file_data)
             else:
-                print(f"Unsupported file type: {file_extension}")
+                print(f"[upload-handler] Unsupported file type: {file_extension}")
                 return {
                     'statusCode': 400,
                     'headers': headers,
                     'body': json.dumps({'error': f'Unsupported file type: {file_extension}. Supported types: .epub, .pdf, .txt'})
                 }
         except Exception as processing_error:
-            print(f"Processing error: {processing_error}")
+            print(f"[upload-handler] Processing error: {processing_error}")
             return {
                 'statusCode': 500,
                 'headers': headers,
@@ -310,7 +310,7 @@ def handler(event, context):
         
         # Validate extracted text
         if not extracted_text or len(extracted_text.strip()) < 10:
-            print(f"Insufficient text extracted: {len(extracted_text.strip())} characters")
+            print(f"[upload-handler] Insufficient text extracted: {len(extracted_text.strip())} characters")
             return {
                 'statusCode': 400,
                 'headers': headers,
@@ -330,7 +330,7 @@ def handler(event, context):
             'message': f'Successfully processed {filename}'
         }
         
-        print(f"Success! Returning {len(extracted_text)} characters")
+        print(f"[upload-handler] Success! Returning {len(extracted_text)} characters")
         
         return {
             'statusCode': 200,
@@ -340,9 +340,9 @@ def handler(event, context):
         
     except Exception as e:
         # Catch-all error handler
-        print(f"Unexpected error in handler: {str(e)}")
+        print(f"[upload-handler] Unexpected error in handler: {str(e)}")
         import traceback
-        print(f"Traceback: {traceback.format_exc()}")
+        print(f"[upload-handler] Traceback: {traceback.format_exc()}")
         return {
             'statusCode': 500,
             'headers': headers,
@@ -352,3 +352,6 @@ def handler(event, context):
                 'message': 'An unexpected error occurred while processing the file'
             })
         }
+
+# Netlify sometimes expects 'main' as the entry point
+main = handler
