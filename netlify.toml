@@ -9,6 +9,10 @@
 [functions]
   included_files = ["netlify/functions/**"]
 
+# Python function configuration
+[functions."upload-handler"]
+  runtime = "python3.10"
+
 # Handle specific SPA routes
 [[redirects]]
   from = "/login"
