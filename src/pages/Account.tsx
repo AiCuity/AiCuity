@@ -40,7 +40,7 @@ const Account = () => {
     const fetchUsage = async () => {
       setIsLoadingUsage(true);
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/subscription/usage/${user.id}`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/subscription/usage/${user.id}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch usage');
@@ -120,7 +120,7 @@ const Account = () => {
     setIsLoadingPortal(true);
 
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/subscription/create-portal-session`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/subscription/create-portal-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

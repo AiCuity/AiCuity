@@ -48,7 +48,7 @@ export default function SubscribeButton({
 
     try {
       // Create checkout session for the tiered product
-      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/subscription/create-checkout-session`, {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/subscription/create-checkout-session`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

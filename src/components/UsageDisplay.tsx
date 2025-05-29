@@ -4,9 +4,8 @@ import { useAuth } from "@/context/AuthContext";
 import { useSubscription } from "@/hooks/useSubscription";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Crown, TrendingUp, AlertCircle } from "lucide-react";
-import SubscribeButton from "./SubscribeButton";
-import { getCurrentTier, getNextTier, calculateExpectedCost } from "@/lib/stripe";
+import { Crown, TrendingUp, CheckCircle } from "lucide-react";
+import { getCurrentTier, calculateExpectedCost, pricingTiers } from "@/lib/stripe";
 
 export default function UsageDisplay() {
   const [usage, setUsage] = useState<number>(0);
@@ -20,7 +19,7 @@ export default function UsageDisplay() {
     const fetchUsage = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/v1/subscription/usage/${user.id}`);
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/subscription/usage/${user.id}`);
         
         if (!response.ok) {
           throw new Error('Failed to fetch usage');
@@ -38,16 +37,75 @@ export default function UsageDisplay() {
     fetchUsage();
   }, [user]);
 
+  // Helper function to get tier info from database subscription (same as Account page)
+  const getCurrentTierFromSubscription = () => {
+    if (!subscription) {
+      // Default to free tier if no subscription
+      return pricingTiers.find(tier => tier.price === 0) || pricingTiers[0];
+    }
+
+    // Cast to any to handle backend tier values that aren't in the strict enum type
+    const rawTier = subscription.tier as any;
+    const tierName = String(rawTier?.toLowerCase() || 'free');
+    
+    // Handle special cases for backend tier values not in the enum
+    if (['usage_based', 'unlimited', 'basic', 'advanced', 'starter', 'professional', 'premium', 'enterprise'].includes(tierName)) {
+      // For these special tiers, find tier based on name mapping or fallback
+      if (tierName === 'unlimited') {
+        return pricingTiers.find(tier => tier.name === 'Unlimited') || pricingTiers[pricingTiers.length - 1];
+      }
+      if (tierName === 'basic') {
+        return pricingTiers.find(tier => tier.name === 'Basic') || pricingTiers[1];
+      }
+      if (tierName === 'advanced') {
+        return pricingTiers.find(tier => tier.name === 'Advanced') || pricingTiers[3];
+      }
+      if (tierName === 'starter') {
+        return pricingTiers.find(tier => tier.name === 'Starter') || pricingTiers[0];
+      }
+      if (tierName === 'professional') {
+        return pricingTiers.find(tier => tier.name === 'Professional') || pricingTiers[2];
+      }
+      if (tierName === 'premium') {
+        return pricingTiers.find(tier => tier.name === 'Premium') || pricingTiers[4];
+      }
+      if (tierName === 'enterprise') {
+        return pricingTiers.find(tier => tier.name === 'Enterprise') || pricingTiers[5];
+      }
+      // For usage_based, find tier based on actual usage
+      return getCurrentTier(usage);
+    }
+
+    // Find matching tier by name
+    const matchingTier = pricingTiers.find(tier => 
+      tier.name.toLowerCase() === tierName || 
+      (tierName === 'free' && tier.price === 0)
+    );
+
+    // Fallback to free tier if no match found
+    return matchingTier || pricingTiers.find(tier => tier.price === 0) || pricingTiers[0];
+  };
+
   if (!user) return null;
 
   const usageCount = usage ?? 0;
-  const currentTier = getCurrentTier(usageCount);
-  const nextTier = getNextTier(usageCount);
-  const currentCost = calculateExpectedCost(usageCount);
-  const isSubscribed = subscription?.status === 'active';
   
-  // For free tier, show limit as the free tier max
-  const displayLimit = currentTier.max === Infinity ? currentTier.min + 50 : currentTier.max;
+  // Get current tier from subscription database, not from usage calculation
+  const currentTier = getCurrentTierFromSubscription();
+  
+  // Calculate cost based on actual subscription tier and usage
+  const currentCost = (subscription?.tier as any) === 'usage_based' 
+    ? calculateExpectedCost(usageCount)
+    : currentTier.price;
+  
+  // A user is truly subscribed only if they have both subscription status active AND Stripe IDs
+  const isSubscribed = subscription?.status === 'active' && 
+                      subscription?.stripe_customer_id && 
+                      subscription?.stripe_subscription_id;
+  
+  // Use the actual books limit from subscription or tier
+  const booksLimit = subscription?.books_limit || currentTier.max;
+  const displayLimit = booksLimit === 999999 ? (currentTier.min + 50) : booksLimit;
   const usagePercentage = Math.min((usageCount / displayLimit) * 100, 100);
 
   return (
@@ -57,7 +115,7 @@ export default function UsageDisplay() {
           <div>
             <h3 className="text-sm font-medium text-blue-800 dark:text-blue-200 flex items-center gap-2">
               <TrendingUp className="h-4 w-4" />
-              Monthly Usage & Pricing
+              Monthly Usage & Subscription
             </h3>
             <div className="mt-1">
               <span className="text-lg font-bold text-purple-600">
@@ -74,69 +132,65 @@ export default function UsageDisplay() {
               ${currentCost.toFixed(2)}
             </div>
             <div className="text-xs text-muted-foreground">
-              {isSubscribed ? 'Current month' : 'Estimated cost'}
+              {isSubscribed ? 'Monthly cost' : 'Free tier'}
             </div>
           </div>
         </div>
 
-        {/* Progress bar for current tier */}
+        {/* Progress bar for current subscription tier */}
         <div className="space-y-2">
           <div className="flex justify-between text-xs text-muted-foreground">
             <span>{currentTier.name} tier</span>
             <span>
-              {currentTier.max === Infinity 
-                ? `${currentTier.min}+ books` 
-                : `${currentTier.min}-${currentTier.max} books`}
+              {booksLimit === 999999 
+                ? 'Unlimited books' 
+                : `${usageCount}/${booksLimit} books`}
             </span>
           </div>
           <Progress value={usagePercentage} className="h-2" />
+          
+          {/* Show limit warning */}
+          {booksLimit !== 999999 && usageCount > booksLimit * 0.8 && (
+            <p className="text-xs text-orange-600">
+              ⚠️ You're approaching your {booksLimit} book limit
+            </p>
+          )}
         </div>
 
-        {/* Subscription status and actions */}
+        {/* Subscription status indicator */}
         <div className="space-y-3">
-          {!isSubscribed && usageCount > 5 && (
-            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
+          {isSubscribed ? (
+            <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+              <div className="flex items-center gap-2">
+                <CheckCircle className="h-4 w-4 text-green-600" />
                 <div className="flex-1">
-                  <p className="text-sm text-yellow-800 dark:text-yellow-200">
-                    You're using the pay-as-you-go pricing. 
-                    Subscribe now to activate usage-based billing.
+                  <p className="text-sm text-green-800 dark:text-green-200">
+                    <span className="font-medium">Active Subscription:</span> {currentTier.name} tier
                   </p>
-                  <div className="mt-2">
-                    <SubscribeButton 
-                      className="text-xs px-3 py-1 h-7 bg-purple-600 hover:bg-purple-700"
-                    >
-                      <Crown className="mr-1 h-3 w-3" />
-                      Subscribe Now
-                    </SubscribeButton>
-                  </div>
+                  <p className="text-xs text-green-600 dark:text-green-300">
+                    {booksLimit === 999999 
+                      ? 'Unlimited books per month'
+                      : `Up to ${booksLimit} books per month`
+                    } • ${currentCost.toFixed(2)}/month
+                  </p>
                 </div>
               </div>
             </div>
-          )}
-
-          {nextTier && usageCount > currentTier.max * 0.8 && (
-            <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
-              <div className="text-sm text-blue-800 dark:text-blue-200">
-                <p className="font-medium">Next tier: {nextTier.name}</p>
-                <p>
-                  {nextTier.max === Infinity 
-                    ? `${nextTier.min}+ books for $${nextTier.price}/month`
-                    : `${nextTier.min}-${nextTier.max} books for $${nextTier.price}/month`
-                  }
-                </p>
-              </div>
-            </div>
-          )}
-
-          {usageCount <= 5 && !isSubscribed && (
-            <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-lg">
+          ) : (
+            <div className="p-3 bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-700 rounded-lg">
               <div className="flex items-center gap-2">
-                <Crown className="h-4 w-4 text-green-600" />
-                <span className="text-sm text-green-800 dark:text-green-200">
-                  You're on the free tier! Enjoying up to 5 books per month.
-                </span>
+                <Crown className="h-4 w-4 text-gray-600" />
+                <div className="flex-1">
+                  <p className="text-sm text-gray-800 dark:text-gray-200">
+                    <span className="font-medium">Free Tier:</span> {currentTier.name}
+                  </p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
+                    {booksLimit === 999999 
+                      ? 'Basic features available'
+                      : `Up to ${booksLimit} books per month`
+                    }
+                  </p>
+                </div>
               </div>
             </div>
           )}

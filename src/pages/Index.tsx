@@ -22,11 +22,18 @@ import { useAuth } from "@/context/AuthContext";
 import CalibrationButton from "@/components/CalibrationButton";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import UsageDisplay from "@/components/UsageDisplay";
+import { useSubscription } from "@/hooks/useSubscription";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<string>("website");
   const [isCalibrationOpen, setIsCalibrationOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { subscription } = useSubscription();
+  
+  // Check if user is truly subscribed
+  const isSubscribed = subscription?.status === 'active' && 
+                      subscription?.stripe_customer_id && 
+                      subscription?.stripe_subscription_id;
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
@@ -94,8 +101,8 @@ const Index = () => {
           </div>
         )}
 
-        {/* Subscription CTA for logged-in users */}
-        {user && (
+        {/* Subscription CTA for logged-in users who are NOT subscribed */}
+        {user && !isSubscribed && (
           <Card className="w-full max-w-3xl mx-auto mt-8 p-6 bg-gradient-to-r from-purple-50 to-blue-50 dark:from-purple-900/20 dark:to-blue-900/20 border-purple-200 dark:border-purple-700">
             <div className="flex items-center gap-4">
               <Crown className="h-8 w-8 text-purple-600" />
@@ -104,7 +111,7 @@ const Index = () => {
                   Unlock Premium Features
                 </h3>
                 <p className="text-sm text-purple-600 dark:text-purple-300">
-                  Subscribe to upload unlimited documents and access advanced reading features
+                  Subscribe to unlock more books and access advanced reading features
                 </p>
               </div>
               <SubscribeButton 
