@@ -23,17 +23,10 @@ import CalibrationButton from "@/components/CalibrationButton";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import UsageDisplay from "@/components/UsageDisplay";
 
-const PRICE_ID = import.meta.env.VITE_STRIPE_PRICE_ID;
-
 const Index = () => {
   const [activeTab, setActiveTab] = useState<string>("website");
   const [isCalibrationOpen, setIsCalibrationOpen] = useState(false);
   const { user, signOut } = useAuth();
-
-  // Check URL parameters for success/cancel messages
-  const urlParams = new URLSearchParams(window.location.search);
-  const success = urlParams.get('success');
-  const canceled = urlParams.get('canceled');
   
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
@@ -61,6 +54,12 @@ const Index = () => {
                 </DialogContent>
               </Dialog>
               
+              <Link to="/account">
+                <Button variant="outline" size="sm">
+                  Your Account
+                </Button>
+              </Link>
+              
               <ThemeToggle />
               
               <Button variant="ghost" size="sm" onClick={() => signOut()}>
@@ -86,25 +85,6 @@ const Index = () => {
           )}
         </div>
 
-        {/* Success/Cancel messages */}
-        {success && (
-          <Alert className="mb-6 border-green-500 bg-green-50 dark:bg-green-900/20">
-            <CheckCircle className="h-4 w-4 text-green-600" />
-            <AlertDescription className="text-green-800 dark:text-green-200">
-              Subscription successful! Welcome to premium features.
-            </AlertDescription>
-          </Alert>
-        )}
-        
-        {canceled && (
-          <Alert className="mb-6 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20">
-            <XCircle className="h-4 w-4 text-yellow-600" />
-            <AlertDescription className="text-yellow-800 dark:text-yellow-200">
-              Subscription was canceled. You can try again anytime.
-            </AlertDescription>
-          </Alert>
-        )}
-        
         <Hero />
 
         {/* Usage display for logged-in users */}
@@ -128,8 +108,8 @@ const Index = () => {
                 </p>
               </div>
               <SubscribeButton 
-                priceId={PRICE_ID || "price_1RSniSE3adEW3BI1vC9XUd4D"}
                 className="bg-purple-600 hover:bg-purple-700"
+                tier="starter"
               >
                 <Crown className="mr-2 h-4 w-4" />
                 Subscribe Now
