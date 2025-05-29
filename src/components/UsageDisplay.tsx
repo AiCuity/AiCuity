@@ -1,41 +1,14 @@
-import { useState, useEffect } from "react";
-import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
-import { useSubscription } from "@/hooks/useSubscription";
+import { useSubscriptionQuery, useUsageQuery } from "@/hooks/useSubscriptionQuery";
 import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { Crown, TrendingUp, CheckCircle } from "lucide-react";
+import { Crown, TrendingUp, CheckCircle, Loader2 } from "lucide-react";
 import { getCurrentTier, calculateExpectedCost, pricingTiers } from "@/lib/stripe";
 
 export default function UsageDisplay() {
-  const [usage, setUsage] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
-  const { subscription } = useSubscription();
-
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchUsage = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/subscription/usage/${user.id}`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch usage');
-        }
-
-        const data = await response.json();
-        setUsage(data.count || 0);
-      } catch (error) {
-        console.error('Error fetching usage:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUsage();
-  }, [user]);
+  const { subscription, isLoading: subscriptionLoading } = useSubscriptionQuery();
+  const { usage, isLoading: usageLoading } = useUsageQuery();
 
   // Helper function to get tier info from database subscription (same as Account page)
   const getCurrentTierFromSubscription = () => {
@@ -73,7 +46,7 @@ export default function UsageDisplay() {
         return pricingTiers.find(tier => tier.name === 'Enterprise') || pricingTiers[5];
       }
       // For usage_based, find tier based on actual usage
-      return getCurrentTier(usage);
+      return getCurrentTier(usage?.count || 0);
     }
 
     // Find matching tier by name
@@ -88,7 +61,8 @@ export default function UsageDisplay() {
 
   if (!user) return null;
 
-  const usageCount = usage ?? 0;
+  const isLoading = subscriptionLoading || usageLoading;
+  const usageCount = usage?.count ?? 0;
   
   // Get current tier from subscription database, not from usage calculation
   const currentTier = getCurrentTierFromSubscription();
@@ -108,6 +82,18 @@ export default function UsageDisplay() {
   const displayLimit = booksLimit === 999999 ? (currentTier.min + 50) : booksLimit;
   const usagePercentage = Math.min((usageCount / displayLimit) * 100, 100);
 
+  // Show loading state
+  if (isLoading) {
+    return (
+      <Card className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-200 dark:border-purple-700">
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-purple-600" />
+          <span className="ml-2 text-sm text-muted-foreground">Loading usage data...</span>
+        </div>
+      </Card>
+    );
+  }
+
   return (
     <Card className="p-4 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 border-blue-200 dark:border-purple-700">
       <div className="space-y-4">
@@ -119,7 +105,7 @@ export default function UsageDisplay() {
             </h3>
             <div className="mt-1">
               <span className="text-lg font-bold text-purple-600">
-                {isLoading ? "..." : usageCount} books
+                {usageCount} books
               </span>
               <span className="text-sm text-muted-foreground ml-2">
                 Current tier: <span className="font-medium">{currentTier.name}</span>

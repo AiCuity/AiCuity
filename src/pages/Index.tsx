@@ -22,13 +22,13 @@ import { useAuth } from "@/context/AuthContext";
 import CalibrationButton from "@/components/CalibrationButton";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import UsageDisplay from "@/components/UsageDisplay";
-import { useSubscription } from "@/hooks/useSubscription";
+import { useSubscriptionQuery } from "@/hooks/useSubscriptionQuery";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<string>("website");
   const [isCalibrationOpen, setIsCalibrationOpen] = useState(false);
   const { user, signOut } = useAuth();
-  const { subscription } = useSubscription();
+  const { subscription } = useSubscriptionQuery();
   
   // Check if user is truly subscribed
   const isSubscribed = subscription?.status === 'active' && 

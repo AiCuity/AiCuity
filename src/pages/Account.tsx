@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -19,44 +19,19 @@ import {
   DollarSign
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
-import { useSubscription } from "@/hooks/useSubscription";
+import { useSubscriptionQuery, useUsageQuery } from "@/hooks/useSubscriptionQuery";
 import { getCurrentTier, getNextTier, calculateExpectedCost, pricingTiers, getAvailableTierChanges, isUpgrade, getPriceIdForTier } from "@/lib/stripe";
 import SubscribeButton from "@/components/SubscribeButton";
 import SubscriptionUpgrade from "@/components/SubscriptionUpgrade";
 import { supabase } from "@/integrations/supabase/client";
 
 const Account = () => {
-  const [usage, setUsage] = useState<number>(0);
-  const [isLoadingUsage, setIsLoadingUsage] = useState(false);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
   const { user, signOut } = useAuth();
-  const { subscription, isLoading } = useSubscription();
+  const { subscription, isLoading: subscriptionLoading } = useSubscriptionQuery();
+  const { usage, isLoading: usageLoading } = useUsageQuery();
   const { toast } = useToast();
   const navigate = useNavigate();
-
-  useEffect(() => {
-    if (!user) return;
-
-    const fetchUsage = async () => {
-      setIsLoadingUsage(true);
-      try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL}/subscription/usage/${user.id}`);
-        
-        if (!response.ok) {
-          throw new Error('Failed to fetch usage');
-        }
-
-        const data = await response.json();
-        setUsage(data.count || 0);
-      } catch (error) {
-        console.error('Error fetching usage:', error);
-      } finally {
-        setIsLoadingUsage(false);
-      }
-    };
-
-    fetchUsage();
-  }, [user]);
 
   // Helper function to get tier info from database subscription
   const getCurrentTierFromSubscription = () => {
@@ -94,7 +69,7 @@ const Account = () => {
         return pricingTiers.find(tier => tier.name === 'Enterprise') || pricingTiers[5];
       }
       // For usage_based, find tier based on actual usage
-      return getCurrentTier(usage);
+      return getCurrentTier(usage?.count || 0);
     }
 
     // Find matching tier by name
@@ -219,7 +194,8 @@ const Account = () => {
     );
   }
 
-  const usageCount = usage ?? 0;
+  const usageCount = usage?.count ?? 0;
+  const isLoading = subscriptionLoading || usageLoading;
   
   // Get current tier from subscription database, not from usage calculation
   const currentTier = getCurrentTierFromSubscription();
@@ -277,6 +253,7 @@ const Account = () => {
             {isLoading ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-6 w-6 animate-spin" />
+                <span className="ml-2 text-sm text-muted-foreground">Loading subscription data...</span>
               </div>
             ) : subscription ? (
               <div className="space-y-4">
@@ -367,57 +344,64 @@ const Account = () => {
               <h2 className="text-xl font-semibold">Current Usage & Cost</h2>
             </div>
             
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {isLoadingUsage ? '...' : usageCount}
-                  </div>
-                  <div className="text-sm text-muted-foreground">Books This Month</div>
-                </div>
-                <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                  <div className="text-2xl font-bold text-purple-600">
-                    ${currentCost.toFixed(2)}
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {isSubscribed ? 'Monthly Cost' : 'Would Cost'}
-                  </div>
-                </div>
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin" />
+                <span className="ml-2 text-sm text-muted-foreground">Loading usage data...</span>
               </div>
-
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Current tier: {currentTier.name}</span>
-                  <span>
-                    {booksLimit === 999999 
-                      ? 'Unlimited books' 
-                      : `${usageCount}/${booksLimit} books`}
-                  </span>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                    <div className="text-2xl font-bold text-blue-600">
+                      {usageCount}
+                    </div>
+                    <div className="text-sm text-muted-foreground">Books This Month</div>
+                  </div>
+                  <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                    <div className="text-2xl font-bold text-purple-600">
+                      ${currentCost.toFixed(2)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {isSubscribed ? 'Monthly Cost' : 'Would Cost'}
+                    </div>
+                  </div>
                 </div>
-                <Progress value={usagePercentage} className="h-2" />
-                
-                {/* Show limit warning */}
-                {booksLimit !== 999999 && usageCount > booksLimit * 0.8 && (
-                  <p className="text-sm text-orange-600">
-                    ⚠️ You're approaching your {booksLimit} book limit for this tier
-                  </p>
+
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span>Current tier: {currentTier.name}</span>
+                    <span>
+                      {booksLimit === 999999 
+                        ? 'Unlimited books' 
+                        : `${usageCount}/${booksLimit} books`}
+                    </span>
+                  </div>
+                  <Progress value={usagePercentage} className="h-2" />
+                  
+                  {/* Show limit warning */}
+                  {booksLimit !== 999999 && usageCount > booksLimit * 0.8 && (
+                    <p className="text-sm text-orange-600">
+                      ⚠️ You're approaching your {booksLimit} book limit for this tier
+                    </p>
+                  )}
+                </div>
+
+                {/* Show tier upgrade suggestion based on current subscription */}
+                {isSubscribed && currentTier.name !== 'Unlimited' && usageCount > booksLimit * 0.8 && (
+                  <div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
+                    <p className="text-sm text-orange-800 dark:text-orange-200">
+                      📈 Consider upgrading for more books or unlimited access!
+                    </p>
+                  </div>
                 )}
               </div>
-
-              {/* Show tier upgrade suggestion based on current subscription */}
-              {isSubscribed && currentTier.name !== 'Unlimited' && usageCount > booksLimit * 0.8 && (
-                <div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
-                  <p className="text-sm text-orange-800 dark:text-orange-200">
-                    📈 Consider upgrading for more books or unlimited access!
-                  </p>
-                </div>
-              )}
-            </div>
+            )}
           </Card>
         </div>
 
         {/* Subscription Management for Active Subscribers */}
-        {isSubscribed && (
+        {isSubscribed && !isLoading && (
           <Card className="mt-6 p-6 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20">
             <div className="flex items-center gap-2 mb-4">
               <Settings className="h-5 w-5 text-green-600" />
