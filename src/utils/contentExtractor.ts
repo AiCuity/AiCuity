@@ -1,11 +1,14 @@
 const API_BASE = import.meta.env.VITE_API_URL;
 
 const simplifyContent = (content: string) => {
-  // Remove excessive whitespace and newlines
-  let simplified = content.replace(/\s+/g, ' ').trim();
+  // Remove excessive whitespace but preserve paragraph breaks
+  let simplified = content.replace(/[ \t]+/g, ' '); // Replace multiple spaces/tabs with single space
+  simplified = simplified.replace(/\n{3,}/g, '\n\n'); // Limit consecutive newlines to 2
+  simplified = simplified.trim();
   
-  // Remove common boilerplate text patterns
+  // Remove common boilerplate text patterns (be more specific to avoid removing actual content)
   simplified = simplified.replace(/^(please enable javascript to view the comments powered by disqus\.)/i, '');
+  simplified = simplified.replace(/\b(advertisement|sponsored content|click here to subscribe)\b/gi, '');
   
   return simplified;
 };
