@@ -71,7 +71,8 @@ export const useReadingSession = () => {
       
       try {
         // Try to fetch the content from the source URL
-        const result = await fetchActualContent(item.source);
+        // Note: incrementUsage is false because this is continuing existing content
+        const result = await fetchActualContent(item.source, undefined, false);
         
         if (result && result.content) {
           // Store the fetched content
@@ -124,7 +125,8 @@ export const useReadingSession = () => {
       try {
         // Try to fetch the file content from Supabase storage
         console.log("DEBUG: Calling fetchFileContentFromStorage with path:", item.source);
-        const result = await fetchFileContentFromStorage(item.source);
+        // Note: incrementUsage is false because this is continuing existing content
+        const result = await fetchFileContentFromStorage(item.source, undefined, false);
         
         if (result && result.content) {
           console.log("DEBUG: Successfully retrieved file content, length:", result.content.length);

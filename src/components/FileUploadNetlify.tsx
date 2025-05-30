@@ -16,6 +16,8 @@ import SubscribeButton from "./SubscribeButton";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/api';
 
 const FileUploadNetlify = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -42,6 +44,7 @@ const FileUploadNetlify = () => {
     tierName,
     isSubscribed 
   } = useUsageLimit();
+  const queryClient = useQueryClient();
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -110,23 +113,17 @@ const FileUploadNetlify = () => {
     try {
       const contentId = await processFile(file);
       
-      // Record Stripe usage after successful processing
-      try {
-        const { error: fnErr } = await supabase.functions.invoke('record-upload', {
-          body: { uid: user.id }
-        });
-        
-        if (fnErr) {
-          console.error('Error recording usage:', fnErr);
-          // Don't fail the whole process for this
-        }
-      } catch (usageError) {
-        console.error('Error calling record-upload function:', usageError);
-        // Continue without failing
-      }
+      // Note: Usage is now tracked in the backend API during file processing, so we don't need to record it here
       
       // Navigate to the reader page after successful processing
       navigate(`/reader/${contentId}`);
+      
+      // Invalidate queries after successful file upload to refresh usage count
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.usage(user.id) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.subscription(user.id) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.subscriptionWithUsage(user.id) });
+      }
       
     } catch (error) {
       // Error handling is already done in processFile

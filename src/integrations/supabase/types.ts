@@ -65,100 +65,210 @@ export type Database = {
       }
       reading_history: {
         Row: {
-          bytes: number | null
+          calibrated: boolean | null
           content_id: string
           created_at: string
           current_position: number | null
           id: string
-          is_completed: boolean | null
+          parsed_text: string | null
           source: string | null
+          source_input: string | null
+          source_type: string | null
           summary: string | null
           title: string
           updated_at: string
           user_id: string
-          wpm: number
+          wpm: number | null
         }
         Insert: {
-          bytes?: number | null
+          calibrated?: boolean | null
           content_id: string
           created_at?: string
           current_position?: number | null
           id?: string
-          is_completed?: boolean | null
+          parsed_text?: string | null
           source?: string | null
+          source_input?: string | null
+          source_type?: string | null
           summary?: string | null
           title: string
           updated_at?: string
           user_id: string
-          wpm: number
+          wpm?: number | null
         }
         Update: {
-          bytes?: number | null
+          calibrated?: boolean | null
           content_id?: string
           created_at?: string
           current_position?: number | null
           id?: string
-          is_completed?: boolean | null
+          parsed_text?: string | null
           source?: string | null
+          source_input?: string | null
+          source_type?: string | null
           summary?: string | null
           title?: string
           updated_at?: string
           user_id?: string
-          wpm?: number
+          wpm?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "reading_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       subscriptions: {
         Row: {
-          id: string
-          user_id: string
-          stripe_customer_id: string | null
-          stripe_subscription_id: string | null
-          stripe_price_id: string | null
-          status: 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'trialing' | 'unpaid' | 'inactive'
-          tier: 'free' | 'starter' | 'professional' | 'premium' | 'enterprise'
-          books_limit: number
-          current_period_start: string | null
-          current_period_end: string | null
+          books_limit: number | null
           created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          status: string | null
+          stripe_customer_id: string | null
+          stripe_price_id: string | null
+          stripe_subscription_id: string | null
+          tier: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          books_limit?: number | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          books_limit?: number | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_price_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usage_tracking: {
+        Row: {
+          count: number
+          created_at: string
+          id: string
+          month_year: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          created_at?: string
+          id?: string
+          month_year: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          created_at?: string
+          id?: string
+          month_year?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_tracking_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          display_name: string | null
+          id: string
+          preferred_wpm: number | null
           updated_at: string
         }
         Insert: {
-          id?: string
-          user_id: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          stripe_price_id?: string | null
-          status?: 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'trialing' | 'unpaid' | 'inactive'
-          tier?: 'free' | 'starter' | 'professional' | 'premium' | 'enterprise'
-          books_limit?: number
-          current_period_start?: string | null
-          current_period_end?: string | null
+          avatar_url?: string | null
           created_at?: string
+          display_name?: string | null
+          id: string
+          preferred_wpm?: number | null
           updated_at?: string
         }
         Update: {
-          id?: string
-          user_id?: string
-          stripe_customer_id?: string | null
-          stripe_subscription_id?: string | null
-          stripe_price_id?: string | null
-          status?: 'active' | 'canceled' | 'incomplete' | 'incomplete_expired' | 'past_due' | 'trialing' | 'unpaid' | 'inactive'
-          tier?: 'free' | 'starter' | 'professional' | 'premium' | 'enterprise'
-          books_limit?: number
-          current_period_start?: string | null
-          current_period_end?: string | null
+          avatar_url?: string | null
           created_at?: string
+          display_name?: string | null
+          id?: string
+          preferred_wpm?: number | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_profiles_id_fkey"
+            columns: ["id"]
+            isOneToOne: true
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_current_usage: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: number
+      }
+      increment_user_usage: {
+        Args: {
+          p_user_id: string
+        }
+        Returns: undefined
+      }
+      reset_user_usage: {
+        Args: {
+          p_user_id: string
+          p_month_year?: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

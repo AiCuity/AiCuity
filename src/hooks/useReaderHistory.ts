@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useReadingHistory } from "./useReadingHistory";
 import { useAuth } from "@/context/AuthContext";
+import { apiService } from "@/lib/api";
 
 export function useReaderHistory(contentId: string | undefined, title: string, source: string | undefined, content: string) {
   const { saveHistoryEntry, history, fetchHistory, findExistingEntryBySource } = useReadingHistory();
@@ -8,6 +9,7 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
   const [historySaved, setHistorySaved] = useState(false);
   const [initialPosition, setInitialPosition] = useState(0);
   const [savedWpm, setSavedWpm] = useState<number | undefined>(undefined); // Changed to undefined initially
+  const [usageIncremented, setUsageIncremented] = useState(false);
 
   // Refresh history when component loads
   useEffect(() => {
@@ -90,6 +92,19 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
     };
   }, []);
 
+  // Increment usage when new content is processed
+  const incrementUsageForNewContent = async (userId: string) => {
+    if (usageIncremented) {
+      console.log("Usage already incremented for this session");
+      return;
+    }
+
+    // Note: Usage is now incremented in the backend APIs (web scrape and file upload)
+    // This function is kept for potential future use but currently does nothing
+    console.log("Usage increment handled by backend APIs, marking as incremented to prevent duplicates");
+    setUsageIncremented(true);
+  };
+
   // Save reading session to history
   useEffect(() => {
     const saveToHistory = async () => {
@@ -132,6 +147,9 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
             content_id: existingEntry.content_id // Keep the same content ID
           });
           setHistorySaved(true);
+          
+          // For existing entries, don't increment usage again
+          setUsageIncremented(true);
         } catch (error) {
           console.error("Error updating existing history entry:", error);
         }
@@ -140,6 +158,11 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
       
       // Don't attempt to save if no user is logged in and we aren't ready to save to localStorage
       if (!user && !content) return;
+      
+      // For new entries, increment usage
+      if (user) {
+        await incrementUsageForNewContent(user.id);
+      }
       
       // Determine source type based on contentId
       let sourceType = 'url';
@@ -200,7 +223,7 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
     };
     
     saveToHistory();
-  }, [content, title, contentId, user, historySaved, history, source, findExistingEntryBySource, saveHistoryEntry, savedWpm]);
+  }, [content, title, contentId, user, historySaved, history, source, findExistingEntryBySource, saveHistoryEntry, savedWpm, usageIncremented]);
 
   // Update history with summary when generated
   const updateHistoryWithSummary = async (summary: string) => {

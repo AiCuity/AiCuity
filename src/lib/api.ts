@@ -5,8 +5,11 @@ type Subscription = Database['public']['Tables']['subscriptions']['Row'];
 
 export interface UsageData {
   count: number;
-  month: string;
-  year: number;
+  month_year: string;
+  period: {
+    start: string;
+    end: string;
+  };
 }
 
 export interface SubscriptionWithUsage extends Subscription {
@@ -15,7 +18,7 @@ export interface SubscriptionWithUsage extends Subscription {
 
 // API service functions
 export const apiService = {
-  // Fetch user usage data
+  // Fetch user usage data from the new usage tracking system
   async fetchUsage(userId: string): Promise<UsageData> {
     const response = await fetch(`${import.meta.env.VITE_API_URL}/subscription/usage/${userId}`);
     
@@ -24,6 +27,45 @@ export const apiService = {
     }
     
     return response.json();
+  },
+
+  // Increment usage for a user (called when they upload/read content)
+  async incrementUsage(userId: string): Promise<void> {
+    const response = await fetch(`${import.meta.env.VITE_API_URL}/subscription/increment-usage`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ userId }),
+    });
+    
+    if (!response.ok) {
+      throw new Error(`Failed to increment usage: ${response.status} ${response.statusText}`);
+    }
+  },
+
+  // Alternative method using Supabase function (if API is not available)
+  async incrementUsageViaSupabase(userId: string): Promise<void> {
+    const { error } = await supabase.rpc('increment_user_usage', {
+      p_user_id: userId
+    });
+
+    if (error) {
+      throw new Error(`Failed to increment usage: ${error.message}`);
+    }
+  },
+
+  // Get current usage using Supabase function (fallback method)
+  async getCurrentUsageViaSupabase(userId: string): Promise<number> {
+    const { data, error } = await supabase.rpc('get_current_usage', {
+      p_user_id: userId
+    });
+
+    if (error) {
+      throw new Error(`Failed to get current usage: ${error.message}`);
+    }
+
+    return data || 0;
   },
 
   // Fetch subscription from Supabase
@@ -82,7 +124,14 @@ export const apiService = {
     try {
       const [subscription, usage] = await Promise.all([
         this.fetchSubscription(userId),
-        this.fetchUsage(userId).catch(() => ({ count: 0, month: new Date().toISOString().slice(0, 7), year: new Date().getFullYear() }))
+        this.fetchUsage(userId).catch(() => ({ 
+          count: 0, 
+          month_year: new Date().toISOString().slice(0, 7),
+          period: {
+            start: new Date().toISOString(),
+            end: new Date().toISOString()
+          }
+        }))
       ]);
 
       if (!subscription) {

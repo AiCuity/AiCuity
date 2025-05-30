@@ -26,7 +26,7 @@ export const useFileProcessor = () => {
 
       // 1️⃣ Process the file for text extraction
       console.log(`Processing file: ${selectedFile.name}`);
-      const processedData = await processFileLocally(selectedFile);
+      const processedData = await processFileLocally(selectedFile, user.id, true);
 
       // 2️⃣ Upload to Supabase Storage
       console.log('Uploading file to Supabase storage...');

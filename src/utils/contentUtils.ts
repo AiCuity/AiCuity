@@ -1,4 +1,3 @@
-
 import { fetchActualContent } from "./contentSource";
 import { ReadingHistoryEntry } from "@/hooks/useReadingHistory";
 
@@ -14,7 +13,7 @@ export async function retrieveContentForHistoryItem(
   }
   
   try {
-    const result = await fetchActualContent(historyItem.source);
+    const result = await fetchActualContent(historyItem.source, undefined, false);
     
     if (result && result.content) {
       return {
