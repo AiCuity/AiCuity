@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useReadingHistory } from "./useReadingHistory";
 import { useAuth } from "@/context/AuthContext";
 import { apiService } from "@/lib/api";
+import { calculateTotalWords } from "@/hooks/readingHistory/utils/progressUtils";
 
 export function useReaderHistory(contentId: string | undefined, title: string, source: string | undefined, content: string) {
   const { saveHistoryEntry, history, fetchHistory, findExistingEntryBySource } = useReadingHistory();
@@ -38,102 +39,76 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
       // Do not remove these from sessionStorage yet, let the reader component use them first
       return;
     }
-    
-    // If not found in session storage, check reading history
+
+    // If no position in session storage, check if this content exists in history
     if (contentId && history.length > 0) {
-      // Try to find by content ID first
-      const existingEntry = history.find(entry => 
-        entry.content_id === contentId && 
-        entry.current_position !== null && 
-        entry.current_position > 0
-      );
-      
+      const existingEntry = history.find(entry => entry.content_id === contentId);
       if (existingEntry) {
-        if (existingEntry.current_position) {
-          console.log("Found existing position by content ID:", existingEntry.current_position);
-          setInitialPosition(existingEntry.current_position);
-        }
-        
-        if (existingEntry.wpm) {
-          console.log("Found existing WPM by content ID:", existingEntry.wpm);
-          setSavedWpm(existingEntry.wpm);
-        }
-        return;
-      }
-      
-      // If not found by content ID, try to find by source URL
-      if (source && source.startsWith('http')) {
-        const sourceMatch = history.find(entry => 
-          entry.source === source &&
-          entry.current_position !== null && 
-          entry.current_position > 0
-        );
-        
-        if (sourceMatch) {
-          if (sourceMatch.current_position) {
-            console.log("Found existing position by source URL:", sourceMatch.current_position);
-            setInitialPosition(sourceMatch.current_position);
-          }
-          
-          if (sourceMatch.wpm) {
-            console.log("Found existing WPM by source URL:", sourceMatch.wpm);
-            setSavedWpm(sourceMatch.wpm);
-          }
-        }
+        console.log("Found existing entry in history:", existingEntry);
+        setInitialPosition(existingEntry.current_position || 0);
+        setSavedWpm(existingEntry.wpm);
       }
     }
-  }, [contentId, history, source, content]);
+  }, [contentId, history]);
 
-  // Clear session storage when component unmounts
-  useEffect(() => {
-    return () => {
-      // Only clear if we've already processed them
-      console.log("Cleaning up session storage - useReaderHistory unmounting");
-    };
-  }, []);
-
-  // Increment usage when new content is processed
   const incrementUsageForNewContent = async (userId: string) => {
     if (usageIncremented) {
-      console.log("Usage already incremented for this session");
+      console.log("Usage already incremented for this session, skipping");
       return;
     }
 
-    // Note: Usage is now incremented in the backend APIs (web scrape and file upload)
-    // This function is kept for potential future use but currently does nothing
-    console.log("Usage increment handled by backend APIs, marking as incremented to prevent duplicates");
-    setUsageIncremented(true);
+    try {
+      console.log("Incrementing usage for new content...");
+      await apiService.incrementUsage(userId);
+      setUsageIncremented(true);
+      console.log("Usage incremented successfully");
+    } catch (error) {
+      console.error('Error incrementing usage:', error);
+      // Continue with save even if usage increment fails
+    }
   };
 
-  // Save reading session to history
   useEffect(() => {
+    // Only try to save if we have content, title, and contentId
+    if (!content || !title || !contentId || historySaved) return;
+    
+    console.log("useReaderHistory: Attempting to save history entry");
+    console.log("Content ID:", contentId);
+    console.log("Title:", title);
+    console.log("Source:", source);
+    console.log("Content length:", content.length);
+    console.log("History length:", history.length);
+
     const saveToHistory = async () => {
-      console.log("DEBUG useReaderHistory: saveToHistory called");
-      console.log("DEBUG useReaderHistory: content length:", content?.length || 0);
-      console.log("DEBUG useReaderHistory: title:", title);
-      console.log("DEBUG useReaderHistory: contentId:", contentId);
-      console.log("DEBUG useReaderHistory: historySaved:", historySaved);
-      console.log("DEBUG useReaderHistory: sessionStorage fileStoragePath:", sessionStorage.getItem('fileStoragePath'));
+      // Check if this is a "continue reading" scenario by checking session storage
+      const storedContentId = sessionStorage.getItem('currentContentId');
+      const isExistingContent = sessionStorage.getItem('isExistingContent') === 'true';
+      const contentIdMatches = storedContentId === contentId;
       
-      // Only save if we have content, title, contentId, and haven't saved yet
-      if (!content || !title || !contentId || historySaved) {
-        console.log("DEBUG useReaderHistory: Skipping save - missing requirements or already saved");
+      console.log("Is existing content (continue reading):", isExistingContent);
+      console.log("Stored content ID:", storedContentId);
+      console.log("Current content ID:", contentId);
+      console.log("Content ID matches:", contentIdMatches);
+      
+      // If this is existing content (continue reading), don't create a new entry
+      if (isExistingContent && contentIdMatches) {
+        console.log("This is existing content from 'Continue Reading' - skipping new entry creation");
+        setHistorySaved(true);
+        setUsageIncremented(true); // Don't increment usage for existing content
+        
+        // Clear the flag to prevent interference with future sessions
+        sessionStorage.removeItem('isExistingContent');
         return;
       }
       
-      console.log("Attempting to save history for:", contentId);
+      // Check if entry already exists by content_id
+      const existingEntryById = history.find(entry => entry.content_id === contentId);
       
-      // Check if this entry already exists in history by content ID or source URL
-      let existingEntry = history.find(entry => entry.content_id === contentId);
+      // Also check by source URL for web content
+      const existingEntryBySource = source ? findExistingEntryBySource(source) : null;
       
-      // If not found by content ID, check by source URL
-      if (!existingEntry && source && source.startsWith('http')) {
-        existingEntry = findExistingEntryBySource(source);
-        
-        if (existingEntry) {
-          console.log("Found existing entry by source URL:", source);
-        }
-      }
+      // Use whichever existing entry we found
+      const existingEntry = existingEntryById || existingEntryBySource;
       
       // If it already exists, update it rather than creating a duplicate
       if (existingEntry) {
@@ -159,9 +134,21 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
       // Don't attempt to save if no user is logged in and we aren't ready to save to localStorage
       if (!user && !content) return;
       
-      // For new entries, increment usage
-      if (user) {
+      // For new entries, increment usage only if this is truly new content
+      if (user && !isExistingContent) {
         await incrementUsageForNewContent(user.id);
+      }
+      
+      // Get total words from sessionStorage if available (do this before clearing)
+      const totalWordsStr = sessionStorage.getItem('contentTotalWords');
+      const totalWords = totalWordsStr ? parseInt(totalWordsStr, 10) : null;
+      console.log("DEBUG useReaderHistory: totalWords from session =", totalWords);
+      
+      // If totalWords is null, try to calculate it from the content as fallback
+      let finalTotalWords = totalWords;
+      if (!finalTotalWords && content) {
+        finalTotalWords = calculateTotalWords(content);
+        console.log("DEBUG useReaderHistory: calculated totalWords from content =", finalTotalWords);
       }
       
       // Determine source type based on contentId
@@ -172,34 +159,37 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
       console.log("DEBUG useReaderHistory: contentId =", contentId);
       console.log("DEBUG useReaderHistory: original source =", source);
       
-      if (contentId?.startsWith('file-')) {
-        sourceType = 'upload';
+      // Check if this is from file upload based on contentId pattern
+      if (contentId?.startsWith('file_')) {
+        sourceType = 'file';
         
-        // Check if source already contains storage path (new format: storage://path)
-        if (source && source.startsWith('storage://')) {
-          actualSource = source.replace('storage://', ''); // Extract path from encoded source
-          sourceInput = `File: ${title}`; // Use friendly display name
-          console.log("DEBUG useReaderHistory: Using encoded storage path from source:", actualSource);
+        // Get the file storage path from session storage if available
+        const fileStoragePath = sessionStorage.getItem('fileStoragePath');
+        console.log("DEBUG useReaderHistory: fileStoragePath from session =", fileStoragePath);
+        
+        if (fileStoragePath) {
+          // Use the storage path as the source for file retrieval
+          actualSource = fileStoragePath;
+          sourceInput = `File: ${title}`; // Keep a friendly display name
+          console.log("DEBUG useReaderHistory: Using file storage path as source =", actualSource);
+        } else if (source && source.startsWith('storage://')) {
+          // Extract path from encoded source
+          actualSource = source.replace('storage://', '');
+          sourceInput = `File: ${title}`;
+          console.log("DEBUG useReaderHistory: Extracted path from encoded source =", actualSource);
         } else {
-          // Fallback: try to get from sessionStorage (legacy)
-          const fileStoragePath = sessionStorage.getItem('fileStoragePath');
-          console.log("DEBUG useReaderHistory: fileStoragePath from sessionStorage =", fileStoragePath);
-          if (fileStoragePath) {
-            actualSource = fileStoragePath; // Use storage path as source for retrieval
-            sourceInput = `File: ${title}`; // Use friendly display name
-            console.log("DEBUG useReaderHistory: Using file storage path from sessionStorage:", fileStoragePath);
-          } else {
-            console.log("DEBUG useReaderHistory: No storage path found, using original source");
-            sourceInput = `File: ${title}`; // Still use friendly name for files
-          }
+          // Fallback: generate a descriptive source
+          actualSource = `File: ${title}`;
+          sourceInput = actualSource;
+          console.log("DEBUG useReaderHistory: Using fallback file source =", actualSource);
         }
-      } else if (contentId?.includes('search-')) {
-        sourceType = 'search';
       }
       
-      console.log("DEBUG useReaderHistory: Final actualSource =", actualSource);
-      console.log("DEBUG useReaderHistory: sourceInput =", sourceInput);
-      console.log("DEBUG useReaderHistory: sourceType =", sourceType);
+      console.log("DEBUG useReaderHistory: Final source details:");
+      console.log("  - sourceType:", sourceType);
+      console.log("  - actualSource:", actualSource);
+      console.log("  - sourceInput:", sourceInput);
+      console.log("  - totalWords:", finalTotalWords);
       
       try {
         await saveHistoryEntry({
@@ -210,19 +200,30 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
           content_id: contentId,
           wpm: savedWpm, // Use saved WPM if available
           current_position: 0,
+          total_words: finalTotalWords, // Include total words for progress calculation
           calibrated: false,
           summary: null,
           parsed_text: content,
         });
         
         setHistorySaved(true);
-        console.log("New history entry saved for:", contentId);
+        console.log("New history entry saved for:", contentId, "with total_words:", finalTotalWords);
+        
+        // Only clear the total words from sessionStorage after successful save
+        // and only if this is the initial save (not from continue reading)
+        if (!isExistingContent) {
+          sessionStorage.removeItem('contentTotalWords');
+          console.log("Cleared contentTotalWords from sessionStorage after successful save");
+        }
       } catch (error) {
         console.error("Error saving history:", error);
       }
     };
     
-    saveToHistory();
+    // Only run if we haven't already saved
+    if (!historySaved) {
+      saveToHistory();
+    }
   }, [content, title, contentId, user, historySaved, history, source, findExistingEntryBySource, saveHistoryEntry, savedWpm, usageIncremented]);
 
   // Update history with summary when generated

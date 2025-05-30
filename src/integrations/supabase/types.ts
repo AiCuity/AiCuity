@@ -76,6 +76,7 @@ export type Database = {
           source_type: string | null
           summary: string | null
           title: string
+          total_words: number | null
           updated_at: string
           user_id: string
           wpm: number | null
@@ -92,6 +93,7 @@ export type Database = {
           source_type?: string | null
           summary?: string | null
           title: string
+          total_words?: number | null
           updated_at?: string
           user_id: string
           wpm?: number | null
@@ -108,6 +110,7 @@ export type Database = {
           source_type?: string | null
           summary?: string | null
           title?: string
+          total_words?: number | null
           updated_at?: string
           user_id?: string
           wpm?: number | null

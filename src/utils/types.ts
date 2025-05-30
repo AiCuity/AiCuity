@@ -1,4 +1,3 @@
-
 export interface ExtractedContent {
   content: string;
   title: string;
@@ -27,6 +26,7 @@ export interface ReadingHistoryItem {
   parsed_text?: string | null;
   wpm: number;
   current_position: number | null;
+  total_words?: number | null;
   calibrated?: boolean | null;
   created_at: string;
   updated_at: string;

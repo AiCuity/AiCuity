@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useMemo } from "react";
 import { useReadingHistory } from "@/hooks/useReadingHistory";
 import ReadingHistoryTable from "./ReadingHistory/ReadingHistoryTable";
@@ -6,7 +5,7 @@ import DeleteConfirmationDialog from "./ReadingHistory/DeleteConfirmationDialog"
 import EmptyState from "./ReadingHistory/EmptyState";
 import LoadingState from "./ReadingHistory/LoadingState";
 import CleanupButton from "./ReadingHistory/CleanupButton";
-import { calculateProgress } from "./ReadingHistory/utils";
+import { calculateProgress } from "@/hooks/readingHistory/utils/progressUtils";
 import { Button } from "./ui/button";
 
 const ITEMS_PER_PAGE = 10;
@@ -47,7 +46,7 @@ const ReadingHistory = () => {
     await refreshHistory();
   };
 
-  // Precompute progress for displayed items only
+  // Precompute progress for displayed items only using the new progress calculation
   const progressValues = useMemo(() => {
     const values: Record<string, number> = {};
     paginatedHistory.forEach(entry => {

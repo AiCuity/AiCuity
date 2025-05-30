@@ -17,6 +17,7 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/api';
+import { calculateTotalWords } from "@/hooks/readingHistory/utils/progressUtils";
 
 const WebsiteForm = () => {
   const [url, setUrl] = useState("");
@@ -86,19 +87,24 @@ const WebsiteForm = () => {
                                extractedContent.content.includes('⚠️ NOTE:');
       setIsSimulatedContent(contentIsSimulated);
       
+      // Calculate total words from the extracted content
+      const totalWords = calculateTotalWords(extractedContent.content);
+      console.log(`Calculated total words: ${totalWords} for content length: ${extractedContent.content.length}`);
+      
       // Show complete preview of extracted content
       setPreviewContent(extractedContent.content);
       
-      // Store the extracted content in sessionStorage
+      // Store the extracted content and metadata in sessionStorage
       sessionStorage.setItem('readerContent', extractedContent.content);
       sessionStorage.setItem('contentTitle', extractedContent.title || 'Website content');
       sessionStorage.setItem('contentSource', extractedContent.sourceUrl || processedUrl);
+      sessionStorage.setItem('contentTotalWords', totalWords.toString()); // Store total words
       
       // Note: Usage is now tracked in the backend API, so we don't need to record it here
       
       const toastMessage = contentIsSimulated 
         ? "Using simulated content because the extraction API couldn't access the website."
-        : `Successfully extracted ${extractedContent.content.length} characters of content.`;
+        : `Successfully extracted ${extractedContent.content.length} characters of content (${totalWords} words).`;
       
       toast({
         title: contentIsSimulated ? "Using simulated content" : "Content extracted",

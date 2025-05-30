@@ -1,4 +1,3 @@
-
 import { supabase } from '@/integrations/supabase/client';
 import { ReadingHistoryEntry } from '../types';
 import { removeDuplicateEntries } from '../utils/duplicateUtils';
@@ -16,12 +15,23 @@ export const saveToSupabase = async (
   toast: ReturnType<typeof useToast>['toast']
 ) => {
   try {
+    // Prevent saving of meaningless generic sessions
+    if (entry.title === "Reading Session" && !entry.summary && (!entry.parsed_text || entry.parsed_text.length < 100)) {
+      console.log("Skipping creation of generic reading session with insufficient content");
+      return null;
+    }
+
+    // Make sure wpm is a valid number
+    if (!entry.wpm || typeof entry.wpm !== 'number') {
+      entry.wpm = 300; // Default to 300 WPM if missing or invalid
+    }
+
     // First check for existing entry with the same content_id
     let existingEntry = findExistingEntry(history, entry.content_id);
     
     // If no entry with matching content_id was found and we have a source URL,
-    // check for an entry with the same source URL
-    if (!existingEntry && entry.source) {
+    // check for an entry with the same source URL (for web content)
+    if (!existingEntry && entry.source && entry.source.startsWith('http')) {
       const sourceMatch = findExistingEntryBySource(history, entry.source);
       if (sourceMatch) {
         console.log(`Found existing entry with matching source URL: ${entry.source}`);
@@ -31,11 +41,6 @@ export const saveToSupabase = async (
       }
     }
     
-    // Make sure wpm is a valid number
-    if (!entry.wpm || typeof entry.wpm !== 'number') {
-      entry.wpm = 300; // Default to 300 WPM if missing or invalid
-    }
-    
     if (existingEntry) {
       // Update existing entry
       const { data, error } = await supabase
@@ -43,6 +48,7 @@ export const saveToSupabase = async (
         .update({
           current_position: entry.current_position,
           wpm: entry.wpm,
+          total_words: entry.total_words,
           summary: entry.summary || existingEntry.summary,
           updated_at: new Date().toISOString()
         })
@@ -63,6 +69,7 @@ export const saveToSupabase = async (
                 ...item, 
                 current_position: entry.current_position, 
                 wpm: entry.wpm, 
+                total_words: entry.total_words || item.total_words,
                 summary: entry.summary || item.summary, 
                 updated_at: new Date().toISOString() 
               }
@@ -74,13 +81,28 @@ export const saveToSupabase = async (
 
       return data;
     } else {
-      // Don't create new entries without summaries and with generic titles
-      if (entry.title === "Reading Session" && !entry.summary) {
-        console.log("Skipping creation of generic reading session with no summary");
+      // Don't create new entries without meaningful content
+      if (entry.title === "Reading Session" && !entry.summary && (!entry.parsed_text || entry.parsed_text.length < 200)) {
+        console.log("Skipping creation of generic reading session with no summary and insufficient content");
         return null;
       }
 
-      console.log('Creating new entry in Supabase......................................................');
+      // Additional check: Don't create entries for very short content without titles
+      if (!entry.title || entry.title.trim() === "" || (entry.title === "Reading Session" && (!entry.parsed_text || entry.parsed_text.length < 500))) {
+        console.log("Skipping creation of entry with insufficient title or content");
+        return null;
+      }
+
+      console.log('Creating new entry in Supabase for content_id:', entry.content_id);
+      
+      console.log('Creating new entry in Supabase for total_words:', entry.total_words);
+      console.log('Entry object being saved:', {
+        title: entry.title,
+        content_id: entry.content_id,
+        total_words: entry.total_words,
+        wpm: entry.wpm,
+        current_position: entry.current_position
+      });
       
       // Create new entry
       const { data, error } = await supabase
@@ -91,6 +113,7 @@ export const saveToSupabase = async (
           content_id: entry.content_id,
           wpm: entry.wpm,
           current_position: entry.current_position,
+          total_words: entry.total_words,
           summary: entry.summary,
           user_id: user.id // Ensure the user_id is set to the current user
         })
@@ -137,6 +160,12 @@ export const saveToLocalStorage = (
   try {
     const localHistory: ReadingHistoryEntry[] = JSON.parse(localStorage.getItem('readingHistory') || '[]');
     
+    // Prevent saving of meaningless generic sessions
+    if (entry.title === "Reading Session" && !entry.summary && (!entry.parsed_text || entry.parsed_text.length < 100)) {
+      console.log("Skipping local creation of generic reading session with insufficient content");
+      return null;
+    }
+
     // Make sure wpm is a valid number
     if (!entry.wpm || typeof entry.wpm !== 'number') {
       entry.wpm = 300; // Default to 300 WPM if missing or invalid
@@ -153,6 +182,7 @@ export const saveToLocalStorage = (
               ...item, 
               current_position: entry.current_position, 
               wpm: entry.wpm, 
+              total_words: entry.total_words || item.total_words, // Preserve existing total_words if not provided
               summary: entry.summary || item.summary,
               updated_at: new Date().toISOString()
             }
@@ -167,9 +197,15 @@ export const saveToLocalStorage = (
       
       return existingEntry;
     } else {
-      // Don't create new entries without summaries and with generic titles
-      if (entry.title === "Reading Session" && !entry.summary) {
-        console.log("Skipping local creation of generic reading session with no summary");
+      // Don't create new entries without meaningful content
+      if (entry.title === "Reading Session" && !entry.summary && (!entry.parsed_text || entry.parsed_text.length < 200)) {
+        console.log("Skipping local creation of generic reading session with no summary and insufficient content");
+        return null;
+      }
+
+      // Additional check: Don't create entries for very short content without titles
+      if (!entry.title || entry.title.trim() === "" || (entry.title === "Reading Session" && (!entry.parsed_text || entry.parsed_text.length < 500))) {
+        console.log("Skipping local creation of entry with insufficient title or content");
         return null;
       }
       

@@ -23,6 +23,7 @@ export const useReadingSession = () => {
     sessionStorage.removeItem('currentContentId');
     sessionStorage.removeItem('initialPosition');
     sessionStorage.removeItem('savedWpm'); // Make sure to clear previous WPM
+    sessionStorage.removeItem('fileStoragePath'); // Clear file storage path
     
     // Track the reading position
     const readingPosition = item.current_position || 0;
@@ -32,6 +33,15 @@ export const useReadingSession = () => {
     const wpm = item.wpm || 300;
     console.log("Setting savedWpm in sessionStorage:", wpm);
     sessionStorage.setItem('savedWpm', wpm.toString());
+    
+    // IMPORTANT: Mark this as existing content to prevent duplicate creation
+    sessionStorage.setItem('currentContentId', item.content_id);
+    sessionStorage.setItem('isExistingContent', 'true');
+    
+    // Also store the current position
+    if (readingPosition > 0) {
+      sessionStorage.setItem('initialPosition', readingPosition.toString());
+    }
     
     // If we have parsed text, use it
     if (item.parsed_text) {
@@ -45,20 +55,12 @@ export const useReadingSession = () => {
         sessionStorage.setItem('contentSource', item.source_input || item.source);
       }
       
-      // Store the content ID for the reader to identify which content this is
-      sessionStorage.setItem('currentContentId', item.content_id);
-      
-      // Also store the current position
-      if (readingPosition > 0) {
-        sessionStorage.setItem('initialPosition', readingPosition.toString());
-      }
-      
       console.log("Content ID, position, and WPM stored:", item.content_id, readingPosition, wpm);
       
       // Navigate to the reader page with the content ID
       // NOTE: This is reopening existing content, so we do NOT call record-upload
       navigate(`/reader/${item.content_id}`);
-    } 
+    }
     // If the item has a source URL, try to fetch the content again
     else if (item.source && item.source.startsWith('http')) {
       console.log("DEBUG: Using HTTP URL path");
@@ -79,7 +81,6 @@ export const useReadingSession = () => {
           sessionStorage.setItem('readerContent', result.content);
           sessionStorage.setItem('contentTitle', item.title || result.title);
           sessionStorage.setItem('contentSource', item.source);
-          sessionStorage.setItem('currentContentId', item.content_id);
           
           // Store the reading position
           if (readingPosition > 0) {
@@ -134,7 +135,6 @@ export const useReadingSession = () => {
           sessionStorage.setItem('readerContent', result.content);
           sessionStorage.setItem('contentTitle', item.title || result.title);
           sessionStorage.setItem('contentSource', item.source_input || `File: ${item.title}`);
-          sessionStorage.setItem('currentContentId', item.content_id);
           
           // Store the reading position
           if (readingPosition > 0) {
