@@ -5,18 +5,6 @@ import path from "path";
 
 // https://vitejs.dev/config/
 export default defineConfig(async ({ mode }) => {
-  // Dynamically import lovable-tagger only in development mode
-  let componentTagger;
-  if (mode === 'development') {
-    try {
-      const { componentTagger: tagger } = await import("lovable-tagger");
-      componentTagger = tagger;
-    } catch (error) {
-      console.warn("Failed to load lovable-tagger:", error);
-      componentTagger = null;
-    }
-  }
-
   return {
     server: {
       host: "::",
@@ -31,8 +19,7 @@ export default defineConfig(async ({ mode }) => {
     },
     plugins: [
       react(),
-      componentTagger && componentTagger(),
-    ].filter(Boolean),
+    ],
     resolve: {
       alias: {
         "@": path.resolve(__dirname, "./src"),
