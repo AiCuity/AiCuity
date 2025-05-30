@@ -33,49 +33,31 @@ export const useFileProcessor = () => {
       const uploadData = await uploadToSupabaseStorage(selectedFile, user.id);
       console.log('File uploaded to Supabase storage successfully');
 
-      // 3️⃣ Record in reading history
+      // 3️⃣ Generate content ID for this upload session and encode storage path
       const contentId = `file_${Date.now()}_${user.id}`;
       
-      const { error: historyErr } = await supabase
-        .from('reading_history')
-        .insert({
-          user_id: user.id,
-          content_id: contentId,
-          title: processedData.originalFilename || selectedFile.name,
-          source: `File: ${processedData.originalFilename || selectedFile.name}`, // More descriptive source
-          wpm: 300, // Default WPM
-          current_position: 0,
-          bytes: selectedFile.size
-        });
-
-      if (historyErr) {
-        console.error('Error saving to reading history:', historyErr);
-        // Don't fail the whole process for this
-      }
-
-      // 4️⃣ Increment Stripe usage
-      try {
-        const { error: fnErr } = await supabase.functions.invoke('record-upload', {
-          body: { uid: user.id }
-        });
-        
-        if (fnErr) {
-          console.error('Error recording usage:', fnErr);
-          // Don't fail the whole process for this
-        }
-      } catch (usageError) {
-        console.error('Error calling record-upload function:', usageError);
-        // Continue without failing
-      }
+      // Encode the storage path in the contentSource so we can retrieve it later
+      const encodedSource = `storage://${uploadData.path}`;
+      
+      // Note: We don't save to reading_history here to avoid duplicates
+      // The reader page will handle saving through the proper reading history system
 
       // Show success and preview
       setPreviewContent(processedData.text);
       
-      // Store the extracted content in sessionStorage with contentId
+      // Store the extracted content and metadata in sessionStorage
       sessionStorage.setItem('readerContent', processedData.text);
       sessionStorage.setItem('contentTitle', processedData.originalFilename || selectedFile.name);
-      sessionStorage.setItem('contentSource', `File: ${processedData.originalFilename || selectedFile.name}`);
+      sessionStorage.setItem('contentSource', encodedSource); // Store encoded source with storage path
       sessionStorage.setItem('currentContentId', contentId);
+      sessionStorage.setItem('fileStoragePath', uploadData.path); // Store storage path for future retrieval
+      
+      console.log("DEBUG useFileProcessor: Stored in sessionStorage:");
+      console.log("  - readerContent length:", processedData.text.length);
+      console.log("  - contentTitle:", processedData.originalFilename || selectedFile.name);
+      console.log("  - contentSource:", encodedSource);
+      console.log("  - currentContentId:", contentId);
+      console.log("  - fileStoragePath:", uploadData.path);
       
       toast({
         title: "File uploaded successfully",

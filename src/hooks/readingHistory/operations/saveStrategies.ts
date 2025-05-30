@@ -79,6 +79,8 @@ export const saveToSupabase = async (
         console.log("Skipping creation of generic reading session with no summary");
         return null;
       }
+
+      console.log('Creating new entry in Supabase......................................................');
       
       // Create new entry
       const { data, error } = await supabase
