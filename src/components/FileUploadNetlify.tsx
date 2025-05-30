@@ -199,6 +199,7 @@ const FileUploadNetlify = () => {
           <p>• Text files (.txt) are processed directly in your browser</p>
           <p>• PDF and EPUB files require server-side processing (coming soon)</p>
           <p>• Files are uploaded to secure Supabase storage</p>
+          <p>• Max size limit to 5MB</p>
           {user && (
             <p className="font-medium">
               • Usage: {currentUsage}/{usageLimit === 999999 ? '∞' : usageLimit} books used this month ({tierName} tier)
