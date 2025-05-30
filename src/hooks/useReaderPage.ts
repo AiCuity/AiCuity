@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useContentLoader } from "@/hooks/useContentLoader";
@@ -23,6 +22,14 @@ export function useReaderPage() {
   const [useFullText, setUseFullText] = useState(true);
   const [apiKey, setApiKey] = useState<string>("");
   const [useOpenAI, setUseOpenAI] = useState<boolean>(false);
+  const [selectedWordPosition, setSelectedWordPosition] = useState<number>(0);
+
+  // Initialize selected word position from initial position
+  useEffect(() => {
+    if (initialPosition > 0) {
+      setSelectedWordPosition(initialPosition);
+    }
+  }, [initialPosition]);
 
   // Load API key and preferences from localStorage
   useEffect(() => {
@@ -43,12 +50,12 @@ export function useReaderPage() {
   // Clear session storage after reader loads to prevent stale data
   useEffect(() => {
     if (showReader) {
-      // Set a timeout to clear session storage after component mounts and initializes
+      // Set a longer timeout to clear session storage after component mounts and initializes
       const timer = setTimeout(() => {
         console.log("Reader component mounted, clearing session storage");
         sessionStorage.removeItem('initialPosition');
         sessionStorage.removeItem('savedWpm');
-      }, 1000);
+      }, 3000); // Increased from 1000ms to 3000ms to give more time
       
       return () => clearTimeout(timer);
     }
@@ -57,6 +64,29 @@ export function useReaderPage() {
   const handleStartReading = (useFull: boolean) => {
     setUseFullText(useFull);
     setShowReader(true);
+  };
+
+  const handleStartReadingFromPosition = (useFull: boolean, position?: number) => {
+    const startPosition = position !== undefined ? position : selectedWordPosition;
+    console.log("handleStartReadingFromPosition called with:");
+    console.log("  - useFull:", useFull);
+    console.log("  - position parameter:", position);
+    console.log("  - selectedWordPosition:", selectedWordPosition);
+    console.log("  - final startPosition:", startPosition);
+    
+    // Store the selected position in session storage for the reader to use
+    sessionStorage.setItem('initialPosition', startPosition.toString());
+    console.log("Stored in sessionStorage - initialPosition:", startPosition);
+    
+    setUseFullText(useFull);
+    setShowReader(true);
+  };
+
+  const handleWordClick = (wordIndex: number) => {
+    console.log("handleWordClick called with wordIndex:", wordIndex);
+    console.log("Previous selectedWordPosition:", selectedWordPosition);
+    setSelectedWordPosition(wordIndex);
+    console.log("Set selectedWordPosition to:", wordIndex);
   };
 
   const handleRetrySummarization = () => {
@@ -82,7 +112,10 @@ export function useReaderPage() {
     useFullText,
     apiKey,
     useOpenAI,
+    selectedWordPosition,
     handleStartReading,
+    handleStartReadingFromPosition,
+    handleWordClick,
     handleSummarize,
     handleRetrySummarization,
     setApiKey,

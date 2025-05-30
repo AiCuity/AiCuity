@@ -1,5 +1,4 @@
-
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import RSVPReader from "@/components/RSVPReader";
 
 interface RSVPReaderContainerProps {
@@ -23,11 +22,30 @@ const RSVPReaderContainer = ({
   initialPosition,
   initialWpm // Add this to the parameter list
 }: RSVPReaderContainerProps) => {
+  const [currentPosition, setCurrentPosition] = useState(initialPosition);
+
+  // Check for updated position from session storage (set by word clicking)
+  useEffect(() => {
+    console.log(`RSVPReaderContainer - Initial position prop: ${initialPosition}`);
+    
+    const sessionPosition = sessionStorage.getItem('initialPosition');
+    console.log(`RSVPReaderContainer - Session storage position: ${sessionPosition}`);
+    
+    if (sessionPosition) {
+      const position = parseInt(sessionPosition, 10);
+      console.log(`RSVPReaderContainer - Using session position: ${position}`);
+      setCurrentPosition(position);
+    } else {
+      console.log(`RSVPReaderContainer - Using initial position prop: ${initialPosition}`);
+      setCurrentPosition(initialPosition);
+    }
+  }, [initialPosition]);
+
   // Log initial position and WPM for debugging
   useEffect(() => {
-    console.log(`RSVPReaderContainer initializing with position: ${initialPosition}`);
-    console.log(`RSVPReaderContainer initializing with WPM: ${initialWpm}`);
-  }, [initialPosition, initialWpm]);
+    console.log(`RSVPReaderContainer - Final position being passed to RSVPReader: ${currentPosition}`);
+    console.log(`RSVPReaderContainer - WPM being passed to RSVPReader: ${initialWpm}`);
+  }, [currentPosition, initialWpm]);
 
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
@@ -36,7 +54,7 @@ const RSVPReaderContainer = ({
         contentId={contentId || ""} 
         title={title}
         source={source}
-        initialPosition={initialPosition}
+        initialPosition={currentPosition}
         initialWpm={initialWpm} // Pass the initialWpm to the RSVPReader
       />
     </div>

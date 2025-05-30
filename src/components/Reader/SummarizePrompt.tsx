@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2, Text, AlertCircle } from "lucide-react";
@@ -17,6 +16,12 @@ const SummarizePrompt = ({
   isSummarizing, 
   summarizationError 
 }: SummarizePromptProps) => {
+  const handleReadFullText = () => {
+    // Clear any position from session storage when starting fresh reading
+    sessionStorage.removeItem('initialPosition');
+    onReadFullText();
+  };
+
   return (
     <div className="bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-800 p-6">
       <div className="flex flex-col items-center justify-center gap-4">
@@ -66,7 +71,7 @@ const SummarizePrompt = ({
         
         <Button 
           variant="outline" 
-          onClick={onReadFullText}
+          onClick={handleReadFullText}
         >
           Skip and Read Full Text
         </Button>
