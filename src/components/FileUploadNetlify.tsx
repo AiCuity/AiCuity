@@ -15,6 +15,7 @@ import { Crown, AlertTriangle, TrendingUp } from "lucide-react";
 import SubscribeButton from "./SubscribeButton";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { supabase } from '@/integrations/supabase/client';
 
 const FileUploadNetlify = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -108,6 +109,21 @@ const FileUploadNetlify = () => {
 
     try {
       const contentId = await processFile(file);
+      
+      // Record Stripe usage after successful processing
+      try {
+        const { error: fnErr } = await supabase.functions.invoke('record-upload', {
+          body: { uid: user.id }
+        });
+        
+        if (fnErr) {
+          console.error('Error recording usage:', fnErr);
+          // Don't fail the whole process for this
+        }
+      } catch (usageError) {
+        console.error('Error calling record-upload function:', usageError);
+        // Continue without failing
+      }
       
       // Navigate to the reader page after successful processing
       navigate(`/reader/${contentId}`);

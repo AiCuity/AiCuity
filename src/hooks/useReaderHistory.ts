@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useReadingHistory } from "./useReadingHistory";
 import { useAuth } from "@/context/AuthContext";
@@ -94,8 +93,16 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
   // Save reading session to history
   useEffect(() => {
     const saveToHistory = async () => {
+      console.log("DEBUG useReaderHistory: saveToHistory called");
+      console.log("DEBUG useReaderHistory: content length:", content?.length || 0);
+      console.log("DEBUG useReaderHistory: title:", title);
+      console.log("DEBUG useReaderHistory: contentId:", contentId);
+      console.log("DEBUG useReaderHistory: historySaved:", historySaved);
+      console.log("DEBUG useReaderHistory: sessionStorage fileStoragePath:", sessionStorage.getItem('fileStoragePath'));
+      
       // Only save if we have content, title, contentId, and haven't saved yet
       if (!content || !title || !contentId || historySaved) {
+        console.log("DEBUG useReaderHistory: Skipping save - missing requirements or already saved");
         return;
       }
       
@@ -136,18 +143,47 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
       
       // Determine source type based on contentId
       let sourceType = 'url';
+      let actualSource = source;
+      let sourceInput = source || title; // For display purposes
+      
+      console.log("DEBUG useReaderHistory: contentId =", contentId);
+      console.log("DEBUG useReaderHistory: original source =", source);
+      
       if (contentId?.startsWith('file-')) {
         sourceType = 'upload';
+        
+        // Check if source already contains storage path (new format: storage://path)
+        if (source && source.startsWith('storage://')) {
+          actualSource = source.replace('storage://', ''); // Extract path from encoded source
+          sourceInput = `File: ${title}`; // Use friendly display name
+          console.log("DEBUG useReaderHistory: Using encoded storage path from source:", actualSource);
+        } else {
+          // Fallback: try to get from sessionStorage (legacy)
+          const fileStoragePath = sessionStorage.getItem('fileStoragePath');
+          console.log("DEBUG useReaderHistory: fileStoragePath from sessionStorage =", fileStoragePath);
+          if (fileStoragePath) {
+            actualSource = fileStoragePath; // Use storage path as source for retrieval
+            sourceInput = `File: ${title}`; // Use friendly display name
+            console.log("DEBUG useReaderHistory: Using file storage path from sessionStorage:", fileStoragePath);
+          } else {
+            console.log("DEBUG useReaderHistory: No storage path found, using original source");
+            sourceInput = `File: ${title}`; // Still use friendly name for files
+          }
+        }
       } else if (contentId?.includes('search-')) {
         sourceType = 'search';
       }
       
+      console.log("DEBUG useReaderHistory: Final actualSource =", actualSource);
+      console.log("DEBUG useReaderHistory: sourceInput =", sourceInput);
+      console.log("DEBUG useReaderHistory: sourceType =", sourceType);
+      
       try {
         await saveHistoryEntry({
           title,
-          source,
+          source: actualSource, // Use the storage path for files, URL for web content
           source_type: sourceType,
-          source_input: source || title,
+          source_input: sourceInput, // Keep original source for display
           content_id: contentId,
           wpm: savedWpm, // Use saved WPM if available
           current_position: 0,

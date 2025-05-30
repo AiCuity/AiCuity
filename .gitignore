@@ -27,3 +27,10 @@ dist-ssr
 .netlify
 
 .env
+.env.local
+.env.development
+.env.production
+.env.test
+.env.staging
+.env.production
+
