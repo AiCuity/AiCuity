@@ -21,28 +21,11 @@ export const processFileLocally = async (file: File, userId?: string, incrementU
   const fileExtension = file.name.split('.').pop()?.toLowerCase();
   
   if (fileExtension === 'txt') {
-    // For text files, we still process locally since it's simple and fast
-    // But we manually increment usage if needed
+    // For text files, process locally since it's simple and fast
+    // Note: Usage tracking for text files should be handled by the backend API if needed
     const text = await file.text();
     
-    // Increment usage for text files if user is authenticated and incrementUsage is true
-    if (userId && incrementUsage) {
-      try {
-        console.log(`Incrementing usage for text file processing, user: ${userId}`);
-        // Use the backend API to increment usage
-        await fetch(`${import.meta.env.VITE_API_URL}/subscription/increment-usage`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ userId }),
-        });
-        console.log('Successfully incremented usage for text file');
-      } catch (usageError) {
-        console.error('Error incrementing usage for text file:', usageError);
-        // Don't fail the file processing if usage tracking fails
-      }
-    }
+    console.log(`Processed text file locally: ${file.name}, length: ${text.length}`);
     
     return {
       text: text.trim(),

@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useReadingHistory } from "./useReadingHistory";
 import { useAuth } from "@/context/AuthContext";
-import { apiService } from "@/lib/api";
 import { calculateTotalWords } from "@/hooks/readingHistory/utils/progressUtils";
 
 export function useReaderHistory(contentId: string | undefined, title: string, source: string | undefined, content: string) {
@@ -10,7 +9,6 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
   const [historySaved, setHistorySaved] = useState(false);
   const [initialPosition, setInitialPosition] = useState(0);
   const [savedWpm, setSavedWpm] = useState<number | undefined>(undefined); // Changed to undefined initially
-  const [usageIncremented, setUsageIncremented] = useState(false);
 
   // Refresh history when component loads
   useEffect(() => {
@@ -51,23 +49,6 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
     }
   }, [contentId, history]);
 
-  const incrementUsageForNewContent = async (userId: string) => {
-    if (usageIncremented) {
-      console.log("Usage already incremented for this session, skipping");
-      return;
-    }
-
-    try {
-      console.log("Incrementing usage for new content...");
-      await apiService.incrementUsage(userId);
-      setUsageIncremented(true);
-      console.log("Usage incremented successfully");
-    } catch (error) {
-      console.error('Error incrementing usage:', error);
-      // Continue with save even if usage increment fails
-    }
-  };
-
   useEffect(() => {
     // Only try to save if we have content, title, and contentId
     if (!content || !title || !contentId || historySaved) return;
@@ -94,7 +75,6 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
       if (isExistingContent && contentIdMatches) {
         console.log("This is existing content from 'Continue Reading' - skipping new entry creation");
         setHistorySaved(true);
-        setUsageIncremented(true); // Don't increment usage for existing content
         
         // Clear the flag to prevent interference with future sessions
         sessionStorage.removeItem('isExistingContent');
@@ -122,9 +102,6 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
             content_id: existingEntry.content_id // Keep the same content ID
           });
           setHistorySaved(true);
-          
-          // For existing entries, don't increment usage again
-          setUsageIncremented(true);
         } catch (error) {
           console.error("Error updating existing history entry:", error);
         }
@@ -133,11 +110,6 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
       
       // Don't attempt to save if no user is logged in and we aren't ready to save to localStorage
       if (!user && !content) return;
-      
-      // For new entries, increment usage only if this is truly new content
-      if (user && !isExistingContent) {
-        await incrementUsageForNewContent(user.id);
-      }
       
       // Get total words from sessionStorage if available (do this before clearing)
       const totalWordsStr = sessionStorage.getItem('contentTotalWords');
@@ -224,7 +196,7 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
     if (!historySaved) {
       saveToHistory();
     }
-  }, [content, title, contentId, user, historySaved, history, source, findExistingEntryBySource, saveHistoryEntry, savedWpm, usageIncremented]);
+  }, [content, title, contentId, user, historySaved, history, source, findExistingEntryBySource, saveHistoryEntry, savedWpm]);
 
   // Update history with summary when generated
   const updateHistoryWithSummary = async (summary: string) => {

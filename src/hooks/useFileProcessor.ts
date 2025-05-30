@@ -34,7 +34,27 @@ export const useFileProcessor = () => {
       const uploadData = await uploadToSupabaseStorage(selectedFile, user.id);
       console.log('File uploaded to Supabase storage successfully');
 
-      // 3️⃣ Generate content ID for this upload session and encode storage path
+      // 3️⃣ For text files, increment usage since they're processed locally
+      const fileExtension = selectedFile.name.split('.').pop()?.toLowerCase();
+      if (fileExtension === 'txt') {
+        try {
+          console.log(`Incrementing usage for text file: ${selectedFile.name}, user: ${user.id}`);
+          await fetch(`${import.meta.env.VITE_API_URL}/subscription/increment-usage`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId: user.id }),
+          });
+          console.log('Successfully incremented usage for text file');
+        } catch (usageError) {
+          console.error('Error incrementing usage for text file:', usageError);
+          // Don't fail the file processing if usage tracking fails
+        }
+      }
+      // Note: For PDF/EPUB files, usage is already tracked by the backend API
+
+      // 4️⃣ Generate content ID for this upload session and encode storage path
       const contentId = `file_${Date.now()}_${user.id}`;
       
       // Encode the storage path in the contentSource so we can retrieve it later
