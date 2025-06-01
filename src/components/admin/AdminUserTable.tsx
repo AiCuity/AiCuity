@@ -64,34 +64,20 @@ export default function AdminUserTable({ users, isLoading }: AdminUserTableProps
     if (!editingUser) return;
 
     try {
-      // Run all updates in parallel
-      await Promise.all([
-        // Update subscription
-        new Promise<void>((resolve, reject) => {
-          updateUserSubscription(editingUser.id, {
-            tier: newTier as any,
-            books_limit: newBooksLimit,
-            status: 'active'
-          });
-          // Since we're using mutations, they handle success/error internally
-          // For this use case, we'll assume success and let error handling be done by mutations
-          resolve();
-        }),
-        
-        // Update role
-        new Promise<void>((resolve, reject) => {
-          updateUserRole(editingUser.id, newRole as any);
-          resolve();
-        }),
-        
-        // Update usage
-        new Promise<void>((resolve, reject) => {
-          adjustUserUsage(editingUser.id, usageAdjustment);
-          resolve();
-        })
-      ]);
+      // Update subscription
+      updateUserSubscription(editingUser.id, {
+        tier: newTier as any,
+        books_limit: newBooksLimit,
+        status: 'active'
+      });
 
-      // Close modal after successful updates
+      // Update role
+      updateUserRole(editingUser.id, newRole as any);
+
+      // Update usage
+      adjustUserUsage(editingUser.id, usageAdjustment);
+
+      // Close modal immediately since mutations handle their own success/error states
       setIsEditModalOpen(false);
       setEditingUser(null);
     } catch (error) {

@@ -1,4 +1,5 @@
 import { supabase } from '@/integrations/supabase/client';
+import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/integrations/supabase/types';
 
 type Subscription = Database['public']['Tables']['subscriptions']['Row'];
@@ -18,6 +19,23 @@ export interface SubscriptionWithUsage extends Subscription {
 
 // Add admin types
 export type AdminUserOverview = Database['public']['Views']['admin_user_overview']['Row'];
+
+// Create service role client for admin operations
+const getServiceRoleClient = () => {
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const serviceRoleKey = import.meta.env.VITE_SUPABASE_SERVICE_ROLE_KEY;
+  
+  if (!serviceRoleKey) {
+    throw new Error('Service role key not configured. Please add VITE_SUPABASE_SERVICE_ROLE_KEY to your environment variables.');
+  }
+  
+  return createClient<Database>(supabaseUrl, serviceRoleKey, {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false
+    }
+  });
+};
 
 // API service functions
 export const apiService = {
@@ -156,9 +174,11 @@ export const apiService = {
     }
   },
 
-  // Admin-specific functions
+  // Admin-specific functions using service role
   async fetchAllUsers(): Promise<AdminUserOverview[]> {
-    const { data, error } = await supabase
+    const serviceClient = getServiceRoleClient();
+    
+    const { data, error } = await serviceClient
       .from('admin_user_overview')
       .select('*')
       .order('profile_created_at', { ascending: false });
@@ -171,7 +191,9 @@ export const apiService = {
   },
 
   async updateUserSubscription(userId: string, updates: Partial<Subscription>): Promise<void> {
-    const { error } = await supabase
+    const serviceClient = getServiceRoleClient();
+    
+    const { error } = await serviceClient
       .from('subscriptions')
       .update(updates)
       .eq('user_id', userId);
@@ -182,7 +204,9 @@ export const apiService = {
   },
 
   async updateUserRole(userId: string, role: 'user' | 'admin' | 'super_admin'): Promise<void> {
-    const { error } = await supabase
+    const serviceClient = getServiceRoleClient();
+    
+    const { error } = await serviceClient
       .from('profiles')
       .update({ role })
       .eq('id', userId);
@@ -193,9 +217,10 @@ export const apiService = {
   },
 
   async adjustUserUsage(userId: string, newCount: number): Promise<void> {
+    const serviceClient = getServiceRoleClient();
     const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
 
-    const { error } = await supabase
+    const { error } = await serviceClient
       .from('usage_tracking')
       .upsert({
         user_id: userId,
@@ -211,7 +236,9 @@ export const apiService = {
   },
 
   async inviteAdmin(email: string): Promise<void> {
-    const { error } = await supabase.auth.admin.inviteUserByEmail(email, {
+    const serviceClient = getServiceRoleClient();
+    
+    const { error } = await serviceClient.auth.admin.inviteUserByEmail(email, {
       data: {
         role: 'admin'
       }
