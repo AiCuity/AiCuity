@@ -157,9 +157,9 @@ export default function AdminDashboard() {
         </div>
 
         {/* Admin Invite Form */}
-        <div className="mb-8">
+        {/* <div className="mb-8">
           <AdminInviteForm />
-        </div>
+        </div> */}
 
         {/* Users Table */}
         <Card>
