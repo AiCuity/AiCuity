@@ -12,7 +12,7 @@ import {
   DialogTrigger
 } from "@/components/ui/dialog";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Crown, CheckCircle, XCircle } from "lucide-react";
+import { Crown, CheckCircle, XCircle, Shield } from "lucide-react";
 import Hero from "@/components/Hero";
 import WebsiteForm from "@/components/WebsiteForm";
 import FileUploadNetlify from "@/components/FileUploadNetlify";
@@ -23,12 +23,14 @@ import CalibrationButton from "@/components/CalibrationButton";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import UsageDisplay from "@/components/UsageDisplay";
 import { useSubscriptionQuery } from "@/hooks/useSubscriptionQuery";
+import { useProfile } from "@/hooks/useProfile";
 
 const Index = () => {
   const [activeTab, setActiveTab] = useState<string>("website");
   const [isCalibrationOpen, setIsCalibrationOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { subscription } = useSubscriptionQuery();
+  const { isAdmin } = useProfile();
   
   // Check if user is truly subscribed
   const isSubscribed = subscription?.status === 'active' && 
@@ -41,6 +43,16 @@ const Index = () => {
         <div className="flex justify-end mb-4">
           {user ? (
             <div className="flex items-center gap-4">
+              {/* Admin Dashboard link for admin users */}
+              {isAdmin() && (
+                <Link to="/admin">
+                  <Button variant="outline" size="sm" className="text-amber-600 border-amber-300 hover:bg-amber-50 dark:hover:bg-amber-950">
+                    <Shield className="mr-2 h-4 w-4" />
+                    Admin Dashboard
+                  </Button>
+                </Link>
+              )}
+              
               {/* Calibration button with Dialog */}
               <Dialog open={isCalibrationOpen} onOpenChange={setIsCalibrationOpen}>
                 <DialogTrigger asChild>

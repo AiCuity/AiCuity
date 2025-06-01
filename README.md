@@ -387,3 +387,163 @@ All Supabase e-mail links use **Auth → Settings → URL Configuration → Site
 Set it to the production domain (`https://aicuity.app`)
 and add `http://localhost:8080` 'http://localhost:5050` in "Additional Redirect URLs" for local dev.
 ---
+
+## Admin Dashboard
+
+AiCuity includes a comprehensive admin dashboard for managing users, subscriptions, and system administration.
+
+### Admin Role System
+
+The application supports three user roles:
+
+1. **User**: Standard user with normal application access
+2. **Admin**: Can view and manage all users, subscriptions, and usage limits
+3. **Super Admin**: All admin privileges plus ability to invite/promote other admins
+
+### Admin Features
+
+#### User Management
+- View all registered users in a comprehensive table
+- See user details including email, registration date, last sign-in
+- Manage user roles (promote to admin, demote from admin)
+- View and edit user subscription tiers
+- Adjust user usage limits and book quotas
+
+#### Subscription Management  
+- View all user subscriptions and their status
+- Change subscription tiers for any user
+- Adjust books limits manually
+- Monitor subscription statuses (active, canceled, trial, etc.)
+
+#### Usage Tracking
+- View current month usage for all users
+- Increment/decrement usage counts manually
+- Monitor total platform usage statistics
+
+#### Admin Invitations
+- Super admins can invite new users directly as admins
+- Send invitation emails via Supabase Auth
+- Automatic role assignment for invited admins
+
+### Setup Instructions
+
+#### 1. Run Database Migration
+
+First, apply the admin roles migration:
+
+```bash
+# Apply the migration to add admin roles
+supabase db push
+```
+
+This will add:
+- `role` column to the profiles table
+- Admin-specific RLS policies
+- Helper functions for admin operations
+- Admin user overview view
+
+#### 2. Create First Super Admin
+
+After deploying, create your first super admin user:
+
+```bash
+# 1. Sign up normally through the app UI first
+# 2. Then run the setup script with your email:
+node scripts/create-super-admin.js your-email@example.com
+```
+
+Alternatively, you can promote a user manually via SQL:
+
+```sql
+UPDATE profiles 
+SET role = 'super_admin' 
+WHERE email = 'your-email@example.com';
+```
+
+#### 3. Environment Variables
+
+Add the service role key to your environment:
+
+```env
+# Required for admin setup script
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key_here
+```
+
+### Accessing the Admin Dashboard
+
+Once you have admin privileges:
+
+1. Sign in to your account
+2. The "Admin Dashboard" button will appear in the top navigation
+3. Navigate to `/admin` or click the button
+4. Access all admin features from the dashboard
+
+### Security Features
+
+#### Row Level Security (RLS)
+- All admin operations are protected by RLS policies
+- Only users with admin/super_admin roles can access admin data
+- Automatic permission checking on all database operations
+
+#### Role-Based Access Control
+- Admin functions are only visible to admin users
+- Super admin functions require super_admin role
+- Automatic role verification for all admin operations
+
+#### Audit Trail
+- All admin actions are logged with timestamps
+- User modification history is tracked
+- Subscription changes are recorded
+
+### Admin API Functions
+
+The admin system includes several SQL functions:
+
+- `is_admin()`: Check if current user is admin
+- `promote_to_admin(user_id)`: Promote user to admin (super_admin only)
+- Admin user overview view for efficient querying
+
+### Admin Dashboard Components
+
+#### AdminUserTable
+- Displays all users with pagination
+- Inline editing of user properties
+- Quick actions for common admin tasks
+- Real-time usage adjustment controls
+
+#### AdminInviteForm  
+- Send admin invitations by email
+- Validation and error handling
+- Success confirmations
+
+#### Statistics Dashboard
+- Total users, active subscriptions, admin count
+- Current month usage statistics
+- Visual charts and metrics
+
+### Best Practices
+
+1. **Always have at least one super admin** to prevent lockout
+2. **Use admin invitations** rather than manual role changes when possible
+3. **Monitor usage patterns** to identify potential abuse
+4. **Regularly review admin user list** and remove inactive admins
+5. **Test admin functions** in development before production changes
+
+### Troubleshooting
+
+#### Cannot Access Admin Dashboard
+- Verify your user role in the database: `SELECT role FROM profiles WHERE email = 'your-email';`
+- Check if RLS policies are properly applied
+- Ensure you're signed in and have refreshed the page
+
+#### Admin Functions Not Working
+- Verify environment variables are set correctly
+- Check Supabase logs for RLS policy violations
+- Ensure service role key has proper permissions
+
+#### Users Not Appearing in Admin View
+- Check if admin_user_overview view exists and has proper permissions
+- Verify RLS policies allow admin access to all tables
+- Confirm user profiles were created properly during signup
+
+---

@@ -16,6 +16,9 @@ export interface SubscriptionWithUsage extends Subscription {
   usage?: UsageData;
 }
 
+// Add admin types
+export type AdminUserOverview = Database['public']['Views']['admin_user_overview']['Row'];
+
 // API service functions
 export const apiService = {
   // Fetch user usage data from the new usage tracking system
@@ -151,6 +154,87 @@ export const apiService = {
       console.error('Error fetching subscription with usage:', error);
       throw error;
     }
+  },
+
+  // Admin-specific functions
+  async fetchAllUsers(): Promise<AdminUserOverview[]> {
+    const { data, error } = await supabase
+      .from('admin_user_overview')
+      .select('*')
+      .order('profile_created_at', { ascending: false });
+
+    if (error) {
+      throw new Error(`Failed to fetch users: ${error.message}`);
+    }
+
+    return data || [];
+  },
+
+  async updateUserSubscription(userId: string, updates: Partial<Subscription>): Promise<void> {
+    const { error } = await supabase
+      .from('subscriptions')
+      .update(updates)
+      .eq('user_id', userId);
+
+    if (error) {
+      throw new Error(`Failed to update user subscription: ${error.message}`);
+    }
+  },
+
+  async updateUserRole(userId: string, role: 'user' | 'admin' | 'super_admin'): Promise<void> {
+    const { error } = await supabase
+      .from('profiles')
+      .update({ role })
+      .eq('id', userId);
+
+    if (error) {
+      throw new Error(`Failed to update user role: ${error.message}`);
+    }
+  },
+
+  async adjustUserUsage(userId: string, newCount: number): Promise<void> {
+    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+
+    const { error } = await supabase
+      .from('usage_tracking')
+      .upsert({
+        user_id: userId,
+        month_year: currentMonth,
+        count: newCount
+      }, {
+        onConflict: 'user_id,month_year'
+      });
+
+    if (error) {
+      throw new Error(`Failed to adjust user usage: ${error.message}`);
+    }
+  },
+
+  async inviteAdmin(email: string): Promise<void> {
+    const { error } = await supabase.auth.admin.inviteUserByEmail(email, {
+      data: {
+        role: 'admin'
+      }
+    });
+
+    if (error) {
+      throw new Error(`Failed to send admin invitation: ${error.message}`);
+    }
+  },
+
+  async checkAdminStatus(userId: string): Promise<{ isAdmin: boolean; role: string }> {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('role')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      throw new Error(`Failed to check admin status: ${error.message}`);
+    }
+
+    const isAdmin = data?.role === 'admin' || data?.role === 'super_admin';
+    return { isAdmin, role: data?.role || 'user' };
   }
 };
 
@@ -159,4 +243,7 @@ export const queryKeys = {
   subscription: (userId: string) => ['subscription', userId] as const,
   usage: (userId: string) => ['usage', userId] as const,
   subscriptionWithUsage: (userId: string) => ['subscription-with-usage', userId] as const,
+  // Admin query keys
+  adminUsers: () => ['admin', 'users'] as const,
+  adminStatus: (userId: string) => ['admin', 'status', userId] as const,
 }; 

@@ -52,20 +52,52 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Automatic user record creation
   const createUserRecord = async (user: User) => {
     try {
-      const { error } = await supabase
+      // First, check if user already exists
+      const { data: existingProfile, error: fetchError } = await supabase
         .from('profiles')
-        .upsert({
-          id: user.id,
-          email: user.email,
-          full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
-          avatar_url: user.user_metadata?.avatar_url || null,
-          updated_at: new Date().toISOString(),
-        }, {
-          onConflict: 'id'
-        });
+        .select('id, role')
+        .eq('id', user.id)
+        .single();
 
-      if (error && error.code !== '23505') { // Ignore unique constraint violations
-        console.error('Error creating user record:', error);
+      if (fetchError && fetchError.code !== 'PGRST116') {
+        // PGRST116 is "not found" error, which is expected for new users
+        console.error('Error checking existing profile:', fetchError);
+        return;
+      }
+
+      if (existingProfile) {
+        // User exists - only update non-role fields to preserve existing role
+        const { error } = await supabase
+          .from('profiles')
+          .update({
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+            avatar_url: user.user_metadata?.avatar_url || null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', user.id);
+
+        if (error) {
+          console.error('Error updating existing user record:', error);
+        }
+      } else {
+        // New user - create with role from metadata or default to 'user'
+        const role = user.user_metadata?.role || 'user';
+          
+        const { error } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            email: user.email,
+            full_name: user.user_metadata?.full_name || user.user_metadata?.name || null,
+            avatar_url: user.user_metadata?.avatar_url || null,
+            role: role,
+            updated_at: new Date().toISOString(),
+          });
+
+        if (error && error.code !== '23505') { // Ignore unique constraint violations
+          console.error('Error creating user record:', error);
+        }
       }
     } catch (error) {
       console.error('Error in createUserRecord:', error);

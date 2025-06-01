@@ -12,6 +12,7 @@ import CalibratePage from './pages/Calibrate';
 import Account from './pages/Account';
 import NotFound from './pages/NotFound';
 import OAuthCallback from './pages/OAuthCallback';
+import AdminDashboard from './pages/AdminDashboard';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster } from 'sonner';
 import { ThemeProvider } from '@/components/providers/theme-provider';
@@ -56,6 +57,7 @@ const App = () => {
               <Route path="/speed-calibration" element={<SpeedCalibration />} />
               <Route path="/calibrate" element={<CalibratePage />} />
               <Route path="/account" element={<Account />} />
+              <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/oauth/callback" element={<OAuthCallback />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

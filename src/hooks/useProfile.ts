@@ -1,13 +1,15 @@
-
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
 import { useToast } from '@/hooks/use-toast';
+import { useQuery } from '@tanstack/react-query';
+import { apiService, queryKeys } from '@/lib/api';
 
 type Profile = {
   id: string;
   preferred_wpm: number;
   calibration_status: string;
+  role: string;
 };
 
 type CalibrationResult = {
@@ -25,6 +27,15 @@ export function useProfile() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [calibrationResults, setCalibrationResults] = useState<CalibrationResult[]>([]);
+
+  // Check admin status with React Query
+  const adminStatusQuery = useQuery({
+    queryKey: queryKeys.adminStatus(user?.id || ''),
+    queryFn: () => apiService.checkAdminStatus(user!.id),
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    gcTime: 10 * 60 * 1000, // 10 minutes
+  });
 
   useEffect(() => {
     if (!user) {
@@ -167,12 +178,19 @@ export function useProfile() {
     }
   };
 
+  const isAdmin = () => adminStatusQuery.data?.isAdmin || false;
+  const userRole = adminStatusQuery.data?.role || 'user';
+
   return {
     profile,
     isLoading,
     calibrationResults,
     updatePreferredWpm,
     updateCalibrationStatus,
-    saveCalibrationResult
+    saveCalibrationResult,
+    isAdmin,
+    userRole,
+    refetch: adminStatusQuery.refetch,
+    error: adminStatusQuery.error,
   };
 }

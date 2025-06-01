@@ -45,6 +45,7 @@ export type Database = {
           created_at: string
           id: string
           preferred_wpm: number | null
+          role: string
           updated_at: string
         }
         Insert: {
@@ -52,6 +53,7 @@ export type Database = {
           created_at?: string
           id: string
           preferred_wpm?: number | null
+          role?: string
           updated_at?: string
         }
         Update: {
@@ -59,6 +61,7 @@ export type Database = {
           created_at?: string
           id?: string
           preferred_wpm?: number | null
+          role?: string
           updated_at?: string
         }
         Relationships: []
@@ -250,7 +253,32 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      admin_user_overview: {
+        Row: {
+          id: string
+          role: string
+          profile_created_at: string
+          profile_updated_at: string
+          email: string
+          auth_created_at: string
+          email_confirmed_at: string | null
+          last_sign_in_at: string | null
+          tier: string | null
+          subscription_status: string | null
+          books_limit: number | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          current_month_usage: number | null
+          usage_month: string | null
+        }
+        Insert: {
+          [_ in never]: never
+        }
+        Update: {
+          [_ in never]: never
+        }
+        Relationships: []
+      }
     }
     Functions: {
       get_current_usage: {
