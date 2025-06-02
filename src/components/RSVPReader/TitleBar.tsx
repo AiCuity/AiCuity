@@ -1,4 +1,3 @@
-
 import { Button } from "@/components/ui/button";
 import { BookOpen, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
@@ -8,9 +7,10 @@ interface TitleBarProps {
   title: string;
   wordCount: number;
   isFullscreen: boolean;
+  isGlassesMode?: boolean;
 }
 
-const TitleBar = ({ title, wordCount, isFullscreen }: TitleBarProps) => {
+const TitleBar = ({ title, wordCount, isFullscreen, isGlassesMode = false }: TitleBarProps) => {
   const navigate = useNavigate();
 
   if (isFullscreen) {
@@ -19,11 +19,17 @@ const TitleBar = ({ title, wordCount, isFullscreen }: TitleBarProps) => {
   
   return (
     <div className="flex items-center justify-between p-4">
-      <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
-        <ArrowLeft className="h-4 w-4 mr-2" />
-        Back
-      </Button>
-      <h2 className="text-lg font-medium truncate max-w-[50%]">{title}</h2>
+      {!isGlassesMode && (
+        <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
+      )}
+      
+      <h2 className={`text-lg font-medium truncate ${
+        isGlassesMode ? "max-w-[70%]" : "max-w-[50%]"
+      }`}>{title}</h2>
+      
       <div className="flex items-center gap-3">
         <ThemeToggle />
         <div className="flex items-center gap-2">

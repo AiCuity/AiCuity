@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import { useParams, useSearchParams } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertTriangle, Loader } from "lucide-react";
+import { AlertTriangle, Loader, Glasses } from "lucide-react";
+import RSVPReader from "@/components/RSVPReader";
 
 interface ContentData {
   title: string;
@@ -18,8 +19,6 @@ const GlassesReader = () => {
   const [content, setContent] = useState<ContentData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [fontSize, setFontSize] = useState(24); // Default large font for glasses
-  const [showSummary, setShowSummary] = useState(false);
 
   useEffect(() => {
     const fetchContent = async () => {
@@ -52,28 +51,38 @@ const GlassesReader = () => {
     fetchContent();
   }, [contentId, token]);
 
-  // Loading state
+  // Loading state optimized for glasses
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
+      <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white flex items-center justify-center">
         <div className="text-center">
-          <Loader className="h-12 w-12 animate-spin mx-auto mb-4" />
-          <p className="text-xl">Loading content for glasses...</p>
+          <div className="flex items-center justify-center mb-4">
+            <Glasses className="h-8 w-8 mr-3" />
+            <Loader className="h-8 w-8 animate-spin" />
+          </div>
+          <p className="text-xl font-mono">Loading for AR Glasses...</p>
+          <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">AiCuity Speed Reading</p>
         </div>
       </div>
     );
   }
 
-  // Error state
+  // Error state optimized for glasses
   if (error) {
     return (
-      <div className="min-h-screen bg-black text-white p-8">
-        <Alert variant="destructive" className="bg-red-900 border-red-700 text-white">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription className="text-lg">
-            {error}
-          </AlertDescription>
-        </Alert>
+      <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white p-8 flex items-center justify-center">
+        <div className="text-center max-w-md">
+          <Glasses className="h-12 w-12 mx-auto mb-4 text-red-500" />
+          <Alert variant="destructive" className="bg-red-50 dark:bg-red-900 border-red-200 dark:border-red-700">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription className="text-lg">
+              <div className="space-y-2">
+                <p className="font-semibold">AR Glasses Access Error</p>
+                <p>{error}</p>
+              </div>
+            </AlertDescription>
+          </Alert>
+        </div>
       </div>
     );
   }
@@ -81,72 +90,35 @@ const GlassesReader = () => {
   // No content
   if (!content) {
     return (
-      <div className="min-h-screen bg-black text-white flex items-center justify-center">
-        <p className="text-xl">No content available</p>
+      <div className="min-h-screen bg-white dark:bg-gray-900 text-gray-900 dark:text-white flex items-center justify-center">
+        <div className="text-center">
+          <Glasses className="h-12 w-12 mx-auto mb-4 text-gray-400" />
+          <p className="text-xl">No content available for glasses</p>
+        </div>
       </div>
     );
   }
 
-  const displayText = showSummary && content.summary ? content.summary : content.text;
-
+  // Render the full RSVP reader interface optimized for glasses
   return (
-    <div className="min-h-screen bg-black text-white p-4">
-      {/* Simple controls bar */}
-      <div className="flex justify-between items-center mb-6 text-sm">
-        <div className="flex gap-4">
-          <button
-            onClick={() => setFontSize(Math.max(16, fontSize - 2))}
-            className="bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded"
-          >
-            A-
-          </button>
-          <button
-            onClick={() => setFontSize(Math.min(48, fontSize + 2))}
-            className="bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded"
-          >
-            A+
-          </button>
-          {content.summary && (
-            <button
-              onClick={() => setShowSummary(!showSummary)}
-              className="bg-gray-800 hover:bg-gray-700 px-3 py-1 rounded"
-            >
-              {showSummary ? 'Full Text' : 'Summary'}
-            </button>
-          )}
-        </div>
-        <div className="text-gray-400">
-          Font: {fontSize}px
+    <div className="min-h-screen bg-white dark:bg-gray-900">
+      {/* Add a subtle indicator that this is glasses mode */}
+      <div className="absolute top-4 right-4 z-10 opacity-60">
+        <div className="flex items-center text-sm text-gray-500 dark:text-gray-400">
+          <Glasses className="h-4 w-4 mr-1" />
+          <span>AR Mode</span>
         </div>
       </div>
-
-      {/* Title */}
-      <h1 className="text-2xl font-bold mb-6 border-b border-gray-700 pb-2">
-        {content.title}
-      </h1>
-
-      {/* Source info */}
-      {content.source && (
-        <p className="text-gray-400 text-sm mb-6">
-          Source: {content.source}
-        </p>
-      )}
-
-      {/* Content display optimized for glasses */}
-      <div 
-        className="reading-content leading-relaxed max-w-none"
-        style={{ 
-          fontSize: `${fontSize}px`,
-          lineHeight: '1.6',
-          fontFamily: 'system-ui, -apple-system, sans-serif'
-        }}
-      >
-        {displayText.split('\n').map((paragraph, index) => (
-          <p key={index} className="mb-6">
-            {paragraph.trim()}
-          </p>
-        ))}
-      </div>
+      
+      <RSVPReader 
+        text={content.text}
+        contentId={`glasses_${contentId}`} // Prefix to avoid conflicts with normal reading
+        title={content.title}
+        source={content.source}
+        initialPosition={0}
+        initialWpm={250} // Slightly slower for glasses comfort
+        isGlassesMode={true} // Enable glasses mode for full word display
+      />
     </div>
   );
 };

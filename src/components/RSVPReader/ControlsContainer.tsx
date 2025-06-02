@@ -1,4 +1,3 @@
-
 import React from "react";
 import PlaybackControls from "./PlaybackControls";
 import SpeedControl from "./SpeedControl";
@@ -25,6 +24,7 @@ interface ControlsContainerProps {
   onSavePosition: () => Promise<boolean>;
   showNotifications: boolean;
   onToggleNotifications: () => void;
+  isGlassesMode?: boolean;
 }
 
 const ControlsContainer = ({
@@ -46,7 +46,8 @@ const ControlsContainer = ({
   onToggleFullscreen,
   onSavePosition,
   showNotifications,
-  onToggleNotifications
+  onToggleNotifications,
+  isGlassesMode = false
 }: ControlsContainerProps) => {
   return (
     <div className={`p-4 ${isFullscreen ? "absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm" : ""}`}>
@@ -68,7 +69,8 @@ const ControlsContainer = ({
       <div className="flex items-center justify-center gap-4 mb-4">
         <NotificationToggle 
           showNotifications={showNotifications} 
-          onToggle={onToggleNotifications} 
+          onToggle={onToggleNotifications}
+          isGlassesMode={isGlassesMode}
         />
       </div>
       

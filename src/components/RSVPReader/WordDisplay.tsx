@@ -1,16 +1,17 @@
-
 interface WordDisplayProps {
   before: string;
   highlight: string;
   after: string;
   isFullscreen: boolean;
+  isGlassesMode?: boolean;
 }
 
 const WordDisplay = ({ 
   before, 
   highlight, 
   after,
-  isFullscreen
+  isFullscreen,
+  isGlassesMode = false
 }: WordDisplayProps) => {
   return (
     <div className="text-center mb-8">
