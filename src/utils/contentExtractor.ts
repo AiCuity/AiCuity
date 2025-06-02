@@ -54,15 +54,30 @@ Once the technical issues are resolved, you'll be able to extract actual content
   };
 };
 
-export const extractContentFromUrl = async (url: string) => {
+/**
+ * Extract content from a URL using the backend API
+ * @param url - The URL to extract content from
+ * @param userId - The user ID (optional) for usage tracking
+ * @param incrementUsage - Whether to increment usage count (default: true)
+ *   - true: When user clicks "Extract URL" button (new content)
+ *   - false: When continuing reading from history or refetching existing content
+ */
+export const extractContentFromUrl = async (url: string, userId?: string, incrementUsage: boolean = true) => {
   try {
     console.log(`[contentExtractor] Attempting to extract content from: ${url}`);
     console.log(`[contentExtractor] Using API_BASE: ${API_BASE}`);
     console.log(`[contentExtractor] Full endpoint URL: ${API_BASE}/scrape`);
+    console.log(`[contentExtractor] UserId: ${userId}, incrementUsage: ${incrementUsage}`);
     
     // Add timeout and better error handling
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+    
+    const requestBody: any = { url };
+    if (userId) {
+      requestBody.userId = userId;
+      requestBody.incrementUsage = incrementUsage;
+    }
     
     const response = await fetch(`${API_BASE}/scrape`, {
       method: 'POST',
@@ -70,7 +85,7 @@ export const extractContentFromUrl = async (url: string) => {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
       },
-      body: JSON.stringify({ url }),
+      body: JSON.stringify(requestBody),
       signal: controller.signal,
     });
 

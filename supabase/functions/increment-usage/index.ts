@@ -30,22 +30,17 @@ serve(async (req) => {
       )
     }
 
-    console.log(`Getting current month usage for user: ${uid}`)
+    console.log(`Incrementing usage for user: ${uid}`)
 
-    // Get current month usage from the new usage_tracking table
-    const currentMonthYear = new Date().toISOString().slice(0, 7) // Format: "2024-01"
-    
-    const { data, error } = await supabase
-      .from('usage_tracking')
-      .select('count')
-      .eq('user_id', uid)
-      .eq('month_year', currentMonthYear)
-      .maybeSingle()
+    // Call the increment_user_usage function
+    const { error } = await supabase.rpc('increment_user_usage', {
+      p_user_id: uid
+    })
 
     if (error) {
-      console.error('Error getting usage:', error)
+      console.error('Error incrementing usage:', error)
       return new Response(
-        JSON.stringify({ error: 'Failed to get usage count' }),
+        JSON.stringify({ error: 'Failed to increment usage' }),
         { 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
           status: 500 
@@ -53,13 +48,12 @@ serve(async (req) => {
       )
     }
 
-    const count = data?.count || 0
-    console.log(`Current month usage count: ${count}`)
+    console.log(`Successfully incremented usage for user: ${uid}`)
 
     return new Response(
       JSON.stringify({ 
-        count,
-        month_year: currentMonthYear 
+        success: true,
+        message: 'Usage incremented successfully'
       }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -67,7 +61,7 @@ serve(async (req) => {
       }
     )
   } catch (error) {
-    console.error('Error in current-usage function:', error)
+    console.error('Error in increment-usage function:', error)
     return new Response(
       JSON.stringify({ error: 'Internal server error' }),
       { 
@@ -76,4 +70,4 @@ serve(async (req) => {
       }
     )
   }
-})
+}) 

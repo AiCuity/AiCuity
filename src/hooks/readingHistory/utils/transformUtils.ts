@@ -1,4 +1,3 @@
-
 import { ReadingHistoryEntry } from '../types';
 
 /**
@@ -17,6 +16,7 @@ export const transformHistoryData = (
     parsed_text: item.parsed_text || null,
     wpm: item.wpm,
     current_position: item.current_position,
+    total_words: item.total_words || null,
     calibrated: source === 'local' ? 
       (item.calibrated !== null ? item.calibrated : false) : 
       false,

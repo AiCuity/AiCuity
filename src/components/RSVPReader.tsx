@@ -1,4 +1,3 @@
-
 import { useRef } from "react";
 import { useRSVPReader } from "@/hooks/useRSVPReader";
 import { useFullscreen } from "@/hooks/useFullscreen";
@@ -16,6 +15,7 @@ interface RSVPReaderProps {
   source?: string;
   initialPosition?: number;
   initialWpm?: number;
+  isGlassesMode?: boolean;
 }
 
 const RSVPReader = ({ 
@@ -24,7 +24,8 @@ const RSVPReader = ({
   title, 
   source, 
   initialPosition = 0,
-  initialWpm 
+  initialWpm,
+  isGlassesMode = false
 }: RSVPReaderProps) => {
   const readerRef = useRef<HTMLDivElement>(null);
   const { showNotifications, setShowNotifications, toggleNotifications } = useNotifications(false);
@@ -62,7 +63,7 @@ const RSVPReader = ({
     toggleNotifications();
     setShowToasts(!showNotifications);
   };
-  
+
   return (
     <div 
       ref={readerRef} 
@@ -82,6 +83,7 @@ const RSVPReader = ({
         title={title} 
         wordCount={words.length}
         isFullscreen={isFullscreen}
+        isGlassesMode={isGlassesMode}
       />
       
       <SourceLink source={source} isFullscreen={isFullscreen} />
@@ -91,6 +93,7 @@ const RSVPReader = ({
         formattedWord={formattedWord}
         progress={progress}
         currentComplexity={currentComplexity}
+        isGlassesMode={isGlassesMode}
       />
       
       <ControlsContainer
@@ -113,6 +116,7 @@ const RSVPReader = ({
         onSavePosition={savePosition}
         showNotifications={showNotifications}
         onToggleNotifications={handleToggleNotifications}
+        isGlassesMode={isGlassesMode}
       />
     </div>
   );

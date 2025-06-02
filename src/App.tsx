@@ -2,6 +2,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import Index from './pages/Index';
 import Reader from './pages/Reader';
+import GlassesReader from './pages/GlassesReader';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
@@ -12,6 +13,7 @@ import CalibratePage from './pages/Calibrate';
 import Account from './pages/Account';
 import NotFound from './pages/NotFound';
 import OAuthCallback from './pages/OAuthCallback';
+import AdminDashboard from './pages/AdminDashboard';
 import { Toaster } from '@/components/ui/toaster';
 import { Toaster as SonnerToaster } from 'sonner';
 import { ThemeProvider } from '@/components/providers/theme-provider';
@@ -48,6 +50,7 @@ const App = () => {
               <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={<Navigate to="/" replace />} />
               <Route path="/reader/:contentId?" element={<Reader />} />
+              <Route path="/reader/glasses/:contentId" element={<GlassesReader />} />
               <Route path="/login" element={<Login />} />
               <Route path="/register" element={<Register />} />
               <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -56,6 +59,7 @@ const App = () => {
               <Route path="/speed-calibration" element={<SpeedCalibration />} />
               <Route path="/calibrate" element={<CalibratePage />} />
               <Route path="/account" element={<Account />} />
+              <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/oauth/callback" element={<OAuthCallback />} />
               <Route path="*" element={<NotFound />} />
             </Routes>

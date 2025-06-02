@@ -1,4 +1,3 @@
-
 import { fetchActualContent } from "./contentSource";
 import { generateWikipediaArticle } from "./wikiContent";
 import { generateDomainSpecificContent } from "./domainContent";
@@ -7,7 +6,8 @@ import { ExtractedContent } from "./types";
 export async function generateFallbackContent(url: string): Promise<ExtractedContent> {
   // Try to fetch actual content directly from the source if possible
   try {
-    const actualContent = await fetchActualContent(url);
+    // Note: incrementUsage is false because this is fallback content, not a new user request
+    const actualContent = await fetchActualContent(url, undefined, false);
     if (actualContent) {
       return actualContent;
     }

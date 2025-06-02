@@ -15,6 +15,9 @@ import { Crown, AlertTriangle, TrendingUp } from "lucide-react";
 import SubscribeButton from "./SubscribeButton";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/api';
+import { calculateTotalWords } from "@/hooks/readingHistory/utils/progressUtils";
 
 const WebsiteForm = () => {
   const [url, setUrl] = useState("");
@@ -35,6 +38,7 @@ const WebsiteForm = () => {
     tierName,
     isSubscribed 
   } = useUsageLimit();
+  const queryClient = useQueryClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,7 +76,7 @@ const WebsiteForm = () => {
     try {
       console.log(`Extracting content from URL: ${processedUrl}`);
       
-      const extractedContent = await extractContentFromUrl(processedUrl);
+      const extractedContent = await extractContentFromUrl(processedUrl, user?.id, true);
       
       if (!extractedContent || !extractedContent.content || extractedContent.content.trim() === '') {
         throw new Error("Failed to extract any content from the website.");
@@ -83,30 +87,24 @@ const WebsiteForm = () => {
                                extractedContent.content.includes('⚠️ NOTE:');
       setIsSimulatedContent(contentIsSimulated);
       
+      // Calculate total words from the extracted content
+      const totalWords = calculateTotalWords(extractedContent.content);
+      console.log(`Calculated total words: ${totalWords} for content length: ${extractedContent.content.length}`);
+      
       // Show complete preview of extracted content
       setPreviewContent(extractedContent.content);
       
-      // Store the extracted content in sessionStorage
+      // Store the extracted content and metadata in sessionStorage
       sessionStorage.setItem('readerContent', extractedContent.content);
       sessionStorage.setItem('contentTitle', extractedContent.title || 'Website content');
       sessionStorage.setItem('contentSource', extractedContent.sourceUrl || processedUrl);
+      sessionStorage.setItem('contentTotalWords', totalWords.toString()); // Store total words
       
-      // Record usage for authenticated users (only on successful content extraction)
-      if (user) {
-        try {
-          await supabase.functions.invoke('record-upload', {
-            body: { uid: user.id }
-          });
-          console.log('Usage recorded for URL submission');
-        } catch (recordError) {
-          console.error('Error recording usage:', recordError);
-          // Don't fail the main flow if usage recording fails
-        }
-      }
+      // Note: Usage is now tracked in the backend API, so we don't need to record it here
       
       const toastMessage = contentIsSimulated 
         ? "Using simulated content because the extraction API couldn't access the website."
-        : `Successfully extracted ${extractedContent.content.length} characters of content.`;
+        : `Successfully extracted ${extractedContent.content.length} characters of content (${totalWords} words).`;
       
       toast({
         title: contentIsSimulated ? "Using simulated content" : "Content extracted",
@@ -119,6 +117,13 @@ const WebsiteForm = () => {
       navigate(`/reader/${contentId}`);
       
       setIsLoading(false);
+
+      // Invalidate queries after successful extraction to refresh usage count
+      if (user?.id) {
+        queryClient.invalidateQueries({ queryKey: queryKeys.usage(user.id) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.subscription(user.id) });
+        queryClient.invalidateQueries({ queryKey: queryKeys.subscriptionWithUsage(user.id) });
+      }
     } catch (error) {
       console.error('Error:', error);
       setIsLoading(false);

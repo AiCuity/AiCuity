@@ -4,17 +4,24 @@ import { processFileLocally } from '@/lib/fileProcessor';
 const API_BASE = import.meta.env.VITE_API_URL;
 
 // Utility function to extract content from a URL using the processing server
-export const fetchActualContent = async (sourceUrl: string) => {
+export const fetchActualContent = async (sourceUrl: string, userId?: string, incrementUsage: boolean = false) => {
   try {
     console.log(`[contentSource] Fetching actual content from: ${sourceUrl}`);
     console.log(`[contentSource] Using API endpoint: ${API_BASE}/scrape`);
+    console.log(`[contentSource] UserId: ${userId}, incrementUsage: ${incrementUsage}`);
+    
+    const requestBody: any = { url: sourceUrl };
+    if (userId) {
+      requestBody.userId = userId;
+      requestBody.incrementUsage = incrementUsage;
+    }
     
     const response = await fetch(`${API_BASE}/scrape`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ url: sourceUrl }),
+      body: JSON.stringify(requestBody),
     });
 
     console.log(`[contentSource] Response status: ${response.status}`);
@@ -51,9 +58,10 @@ export const fetchActualContent = async (sourceUrl: string) => {
 };
 
 // Utility function to retrieve file content from Supabase storage
-export const fetchFileContentFromStorage = async (storagePath: string) => {
+export const fetchFileContentFromStorage = async (storagePath: string, userId?: string, incrementUsage: boolean = false) => {
   try {
     console.log(`[contentSource] Fetching file content from storage: ${storagePath}`);
+    console.log(`[contentSource] UserId: ${userId}, incrementUsage: ${incrementUsage}`);
     
     // Strip the storage:// prefix if present
     const cleanPath = storagePath.startsWith('storage://') 
@@ -83,7 +91,8 @@ export const fetchFileContentFromStorage = async (storagePath: string) => {
     console.log(`[contentSource] Processing downloaded file: ${fileName}`);
     
     // Process the file to extract text content
-    const processedData = await processFileLocally(file);
+    // Note: We pass incrementUsage as false here because this is re-accessing existing content
+    const processedData = await processFileLocally(file, userId, incrementUsage);
     
     if (!processedData.text || processedData.text.trim() === '') {
       throw new Error('Failed to extract text content from the stored file');

@@ -1,4 +1,3 @@
-
 import WordDisplay from "./WordDisplay";
 import ProgressBar from "./ProgressBar";
 import { FormattedWord } from "@/utils/rsvp-types";
@@ -8,13 +7,15 @@ interface ReadingAreaProps {
   formattedWord: FormattedWord;
   progress: number;
   currentComplexity: number;
+  isGlassesMode?: boolean;
 }
 
 const ReadingArea = ({ 
   isFullscreen, 
   formattedWord,
   progress,
-  currentComplexity
+  currentComplexity,
+  isGlassesMode = false
 }: ReadingAreaProps) => {
   return (
     <div className={`flex flex-col items-center justify-center ${
@@ -25,6 +26,7 @@ const ReadingArea = ({
         highlight={formattedWord.highlight}
         after={formattedWord.after}
         isFullscreen={isFullscreen}
+        isGlassesMode={isGlassesMode}
       />
       
       <ProgressBar progress={progress} complexity={currentComplexity} />

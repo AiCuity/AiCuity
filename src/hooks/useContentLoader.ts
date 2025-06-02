@@ -70,7 +70,8 @@ export const useContentLoader = (contentId?: string) => {
           setIsRefetching(true);
           
           try {
-            const result = await fetchActualContent(historyEntryWithoutContent.source);
+            // Note: incrementUsage is false because this is refetching existing content
+            const result = await fetchActualContent(historyEntryWithoutContent.source, undefined, false);
             
             if (result && result.content) {
               console.log("Successfully refetched content from source");

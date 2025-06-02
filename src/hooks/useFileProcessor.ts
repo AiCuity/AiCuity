@@ -3,6 +3,7 @@ import { useToast } from "@/hooks/use-toast";
 import { processFileLocally, uploadToSupabaseStorage } from '@/lib/fileProcessor';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/context/AuthContext';
+import { calculateTotalWords } from "@/hooks/readingHistory/utils/progressUtils";
 
 export const useFileProcessor = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -26,18 +27,42 @@ export const useFileProcessor = () => {
 
       // 1️⃣ Process the file for text extraction
       console.log(`Processing file: ${selectedFile.name}`);
-      const processedData = await processFileLocally(selectedFile);
+      const processedData = await processFileLocally(selectedFile, user.id, true);
 
       // 2️⃣ Upload to Supabase Storage
       console.log('Uploading file to Supabase storage...');
       const uploadData = await uploadToSupabaseStorage(selectedFile, user.id);
       console.log('File uploaded to Supabase storage successfully');
 
-      // 3️⃣ Generate content ID for this upload session and encode storage path
+      // 3️⃣ For text files, increment usage since they're processed locally
+      const fileExtension = selectedFile.name.split('.').pop()?.toLowerCase();
+      if (fileExtension === 'txt') {
+        try {
+          console.log(`Incrementing usage for text file: ${selectedFile.name}, user: ${user.id}`);
+          await fetch(`${import.meta.env.VITE_API_URL}/subscription/increment-usage`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ userId: user.id }),
+          });
+          console.log('Successfully incremented usage for text file');
+        } catch (usageError) {
+          console.error('Error incrementing usage for text file:', usageError);
+          // Don't fail the file processing if usage tracking fails
+        }
+      }
+      // Note: For PDF/EPUB files, usage is already tracked by the backend API
+
+      // 4️⃣ Generate content ID for this upload session and encode storage path
       const contentId = `file_${Date.now()}_${user.id}`;
       
       // Encode the storage path in the contentSource so we can retrieve it later
       const encodedSource = `storage://${uploadData.path}`;
+      
+      // Calculate total words from the processed text
+      const totalWords = calculateTotalWords(processedData.text);
+      console.log(`Calculated total words: ${totalWords} for file: ${selectedFile.name}`);
       
       // Note: We don't save to reading_history here to avoid duplicates
       // The reader page will handle saving through the proper reading history system
@@ -51,6 +76,7 @@ export const useFileProcessor = () => {
       sessionStorage.setItem('contentSource', encodedSource); // Store encoded source with storage path
       sessionStorage.setItem('currentContentId', contentId);
       sessionStorage.setItem('fileStoragePath', uploadData.path); // Store storage path for future retrieval
+      sessionStorage.setItem('contentTotalWords', totalWords.toString()); // Store total words
       
       console.log("DEBUG useFileProcessor: Stored in sessionStorage:");
       console.log("  - readerContent length:", processedData.text.length);
@@ -58,10 +84,11 @@ export const useFileProcessor = () => {
       console.log("  - contentSource:", encodedSource);
       console.log("  - currentContentId:", contentId);
       console.log("  - fileStoragePath:", uploadData.path);
+      console.log("  - contentTotalWords:", totalWords);
       
       toast({
         title: "File uploaded successfully",
-        description: `Successfully processed and extracted ${processedData.text.length} characters of content.`,
+        description: `Successfully processed and extracted ${processedData.text.length} characters of content (${totalWords} words).`,
       });
       
       setMsg(`File uploaded and processed successfully!`);
