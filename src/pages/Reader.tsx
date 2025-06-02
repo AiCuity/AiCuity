@@ -1,4 +1,3 @@
-
 import LoadingState from "@/components/Reader/LoadingState";
 import NotFoundState from "@/components/Reader/NotFoundState";
 import ReaderAlerts from "@/components/Reader/ReaderAlerts";
@@ -66,7 +65,7 @@ const Reader = () => {
   return (
     <div className="min-h-screen bg-white dark:bg-gray-900">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <ContentHeader content={contentObject} />
+        <ContentHeader content={contentObject} contentId={contentId} />
 
         <ReaderAlerts 
           isSimulated={isSimulated} 

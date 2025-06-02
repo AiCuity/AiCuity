@@ -16,7 +16,6 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useAdmin } from '@/hooks/useAdmin';
 import AdminUserTable from '@/components/admin/AdminUserTable';
-import AdminInviteForm from '@/components/admin/AdminInviteForm';
 import ThemeToggle from '@/components/ui/theme-toggle';
 
 export default function AdminDashboard() {
