@@ -49,6 +49,9 @@ const ControlsContainer = ({
   onToggleNotifications,
   isGlassesMode = false
 }: ControlsContainerProps) => {
+  // In fullscreen glasses mode, show only simplified controls
+  const isGlassesFullscreen = isFullscreen && isGlassesMode;
+
   return (
     <div className={`p-4 ${isFullscreen ? "absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm" : ""}`}>
       <PlaybackControls 
@@ -64,23 +67,31 @@ const ControlsContainer = ({
         currentWordIndex={currentWordIndex}
         totalWords={totalWords}
         effectiveWpm={effectiveWpm}
-      />
-      
-      <div className="flex items-center justify-center gap-4 mb-4">
-        <NotificationToggle 
-          showNotifications={showNotifications} 
-          onToggle={onToggleNotifications}
-          isGlassesMode={isGlassesMode}
-        />
-      </div>
-      
-      <SpeedControl 
-        baseWpm={baseWpm}
-        onWpmChange={onWpmChange}
-        isFullscreen={isFullscreen}
+        isGlassesFullscreen={isGlassesFullscreen}
         onToggleFullscreen={onToggleFullscreen}
-        onSavePosition={onSavePosition}
       />
+      
+      {/* Hide notification toggle in glasses fullscreen mode */}
+      {!isGlassesFullscreen && (
+        <div className="flex items-center justify-center gap-4 mb-4">
+          <NotificationToggle 
+            showNotifications={showNotifications} 
+            onToggle={onToggleNotifications}
+            isGlassesMode={isGlassesMode}
+          />
+        </div>
+      )}
+      
+      {/* Hide speed controls in glasses fullscreen mode */}
+      {!isGlassesFullscreen && (
+        <SpeedControl 
+          baseWpm={baseWpm}
+          onWpmChange={onWpmChange}
+          isFullscreen={isFullscreen}
+          onToggleFullscreen={onToggleFullscreen}
+          onSavePosition={onSavePosition}
+        />
+      )}
     </div>
   );
 };

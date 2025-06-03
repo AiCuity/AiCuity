@@ -1,6 +1,5 @@
-
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Pause, Play, Gauge, RefreshCw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pause, Play, Gauge, RefreshCw, Minimize } from "lucide-react";
 import { 
   Tooltip,
   TooltipContent,
@@ -21,6 +20,8 @@ interface PlaybackControlsProps {
   currentWordIndex: number;
   totalWords: number;
   effectiveWpm: number;
+  isGlassesFullscreen?: boolean;
+  onToggleFullscreen?: () => void;
 }
 
 const PlaybackControls = ({
@@ -35,7 +36,9 @@ const PlaybackControls = ({
   onToggleSmartPacing,
   currentWordIndex,
   totalWords,
-  effectiveWpm
+  effectiveWpm,
+  isGlassesFullscreen = false,
+  onToggleFullscreen
 }: PlaybackControlsProps) => {
   // Fixed function to handle play/pause that prevents default behavior
   const handlePlayPause = (e: React.MouseEvent) => {
@@ -67,9 +70,83 @@ const PlaybackControls = ({
     onToggleSmartPacing();
   };
 
+  const handleToggleFullscreen = (e: React.MouseEvent) => {
+    e.preventDefault();
+    if (onToggleFullscreen) {
+      onToggleFullscreen();
+    }
+  };
+
   // Button variant to ensure all buttons have the same style
   const buttonVariant = "default";
 
+  // In glasses fullscreen mode, show only Play/Pause, Restart, and Exit Fullscreen
+  if (isGlassesFullscreen) {
+    return (
+      <div className="max-w-lg mx-auto">
+        <TooltipProvider>
+          <div className="flex items-center justify-center gap-4 mb-4">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant={buttonVariant}
+                  size="icon"
+                  onClick={handlePlayPause}
+                  type="button"
+                >
+                  {isPlaying ? (
+                    <Pause className="h-4 w-4" />
+                  ) : (
+                    <Play className="h-4 w-4" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Play/Pause (Space)</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant={buttonVariant} 
+                  size="icon"
+                  onClick={handleRestart}
+                  type="button"
+                >
+                  <RefreshCw className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Restart reading</p>
+              </TooltipContent>
+            </Tooltip>
+            
+            {/* Exit fullscreen button for glasses mode */}
+            {onToggleFullscreen && (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button 
+                    variant={buttonVariant} 
+                    size="icon"
+                    onClick={handleToggleFullscreen}
+                    type="button"
+                  >
+                    <Minimize className="h-4 w-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Exit fullscreen</p>
+                </TooltipContent>
+              </Tooltip>
+            )}
+          </div>
+        </TooltipProvider>
+      </div>
+    );
+  }
+
+  // Standard mode with all controls
   return (
     <div className="max-w-lg mx-auto">
       {/* Reading controls with tooltips */}
