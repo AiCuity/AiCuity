@@ -1,6 +1,5 @@
-
 import { Button } from "@/components/ui/button";
-import { TrashIcon, PlayCircle } from "lucide-react";
+import { TrashIcon, PlayCircle, Loader2 } from "lucide-react";
 import { ReadingHistoryEntry } from "@/hooks/useReadingHistory";
 
 interface TableEntryActionsProps {
@@ -23,19 +22,19 @@ const TableEntryActions = ({
         size="sm"
         onClick={() => onContinueReading(item)}
         disabled={loadingContentId === item.content_id}
+        className="min-w-[80px] h-8 text-xs sm:text-sm"
       >
         {loadingContentId === item.content_id ? (
           <span className="flex items-center">
-            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-            Loading
+            <Loader2 className="animate-spin h-3 w-3 mr-1 flex-shrink-0" />
+            <span className="hidden sm:inline">Loading</span>
+            <span className="sm:hidden">...</span>
           </span>
         ) : (
           <>
-            <PlayCircle className="h-4 w-4 mr-1" />
-            Continue
+            <PlayCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1 flex-shrink-0" />
+            <span className="hidden sm:inline">Continue</span>
+            <span className="sm:hidden">Read</span>
           </>
         )}
       </Button>
@@ -43,8 +42,11 @@ const TableEntryActions = ({
         variant="destructive"
         size="sm"
         onClick={() => onDeleteClick(item.id)}
+        className="h-8 w-8 p-0 sm:w-auto sm:px-3"
+        title="Delete entry"
       >
-        <TrashIcon className="h-4 w-4" />
+        <TrashIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+        <span className="sr-only">Delete</span>
       </Button>
     </div>
   );
