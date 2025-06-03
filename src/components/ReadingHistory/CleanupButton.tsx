@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Trash2, Loader2 } from 'lucide-react';
@@ -37,14 +36,19 @@ const CleanupButton = ({ onCleanupComplete }: CleanupButtonProps) => {
       size="sm"
       onClick={handleCleanup}
       disabled={isCleaningUp}
-      className="flex items-center gap-2"
+      className="flex items-center gap-2 text-xs sm:text-sm h-8 sm:h-9"
     >
       {isCleaningUp ? (
-        <Loader2 className="h-4 w-4 animate-spin" />
+        <Loader2 className="h-3 w-3 sm:h-4 sm:w-4 animate-spin flex-shrink-0" />
       ) : (
-        <Trash2 className="h-4 w-4" />
+        <Trash2 className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
       )}
-      {isCleaningUp ? 'Cleaning...' : 'Remove Duplicates'}
+      <span className="hidden sm:inline">
+        {isCleaningUp ? 'Cleaning...' : 'Remove Duplicates'}
+      </span>
+      <span className="sm:hidden">
+        {isCleaningUp ? 'Cleaning...' : 'Cleanup'}
+      </span>
     </Button>
   );
 };

@@ -66,8 +66,8 @@ const ReadingHistory = () => {
 
   return (
     <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Reading History</h2>
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center">
+        <h2 className="text-lg sm:text-xl font-semibold">Reading History</h2>
         <CleanupButton onCleanupComplete={handleCleanupComplete} />
       </div>
 
@@ -78,26 +78,30 @@ const ReadingHistory = () => {
       />
       
       {totalPages > 1 && (
-        <div className="flex justify-center gap-2 mt-4">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage(prev => Math.max(prev - 1, 1))}
-            disabled={page === 1}
-          >
-            Previous
-          </Button>
-          <span className="px-2 py-1">
+        <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center mt-4">
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(prev => Math.max(prev - 1, 1))}
+              disabled={page === 1}
+              className="min-w-[80px]"
+            >
+              Previous
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={page === totalPages}
+              className="min-w-[80px]"
+            >
+              Next
+            </Button>
+          </div>
+          <span className="text-sm text-gray-600 dark:text-gray-400">
             Page {page} of {totalPages}
           </span>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => setPage(prev => Math.min(prev + 1, totalPages))}
-            disabled={page === totalPages}
-          >
-            Next
-          </Button>
         </div>
       )}
 

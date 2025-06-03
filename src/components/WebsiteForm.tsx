@@ -138,7 +138,7 @@ const WebsiteForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
       <AlertMessages 
         apiError={apiError} 
         isSimulatedContent={isSimulatedContent}
@@ -147,33 +147,35 @@ const WebsiteForm = () => {
       {/* Usage limit warning */}
       {isAtLimit && (
         <Alert className="border-red-200 bg-red-50 dark:bg-red-900/20">
-          <AlertTriangle className="h-4 w-4 text-red-600" />
+          <AlertTriangle className="h-4 w-4 text-red-600 flex-shrink-0" />
           <AlertDescription className="text-red-800 dark:text-red-200">
             <div className="space-y-3">
-              <div>
+              <div className="text-sm sm:text-base">
                 <strong>Usage Limit Reached!</strong> You've used all {usageLimit} books in your {tierName} tier this month.
               </div>
-              <div className="flex flex-col sm:flex-row gap-2">
+              <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
                 {isSubscribed ? (
-                  <Link to="/account">
-                    <Button size="sm" className="bg-red-600 hover:bg-red-700">
-                      <Crown className="mr-1 h-3 w-3" />
-                      Upgrade Subscription
+                  <Link to="/account" className="w-full sm:w-auto">
+                    <Button size="sm" className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-sm">
+                      <Crown className="mr-1 h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">Upgrade Subscription</span>
                     </Button>
                   </Link>
                 ) : (
-                  <SubscribeButton 
-                    className="bg-red-600 hover:bg-red-700"
-                    tier="starter"
-                  >
-                    <Crown className="mr-1 h-3 w-3" />
-                    Subscribe Now
-                  </SubscribeButton>
+                  <div className="w-full sm:w-auto">
+                    <SubscribeButton 
+                      className="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-sm"
+                      tier="starter"
+                    >
+                      <Crown className="mr-1 h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">Subscribe Now</span>
+                    </SubscribeButton>
+                  </div>
                 )}
-                <Link to="/account">
-                  <Button variant="outline" size="sm">
-                    <TrendingUp className="mr-1 h-3 w-3" />
-                    View Usage Details
+                <Link to="/account" className="w-full sm:w-auto">
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto text-sm">
+                    <TrendingUp className="mr-1 h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">View Usage Details</span>
                   </Button>
                 </Link>
               </div>
@@ -185,18 +187,20 @@ const WebsiteForm = () => {
       {/* Usage near limit warning */}
       {isNearLimit && !isAtLimit && (
         <Alert className="border-orange-200 bg-orange-50 dark:bg-orange-900/20">
-          <AlertTriangle className="h-4 w-4 text-orange-600" />
+          <AlertTriangle className="h-4 w-4 text-orange-600 flex-shrink-0" />
           <AlertDescription className="text-orange-800 dark:text-orange-200">
-            <strong>Usage Warning:</strong> You've used {currentUsage} of {usageLimit} books in your {tierName} tier this month. 
-            Only {remainingUsage} books remaining.
+            <div className="text-sm sm:text-base">
+              <strong>Usage Warning:</strong> You've used {currentUsage} of {usageLimit} books in your {tierName} tier this month. 
+              Only {remainingUsage} books remaining.
+            </div>
             {!isSubscribed && (
-              <div className="mt-2">
+              <div className="mt-2 w-full sm:w-auto">
                 <SubscribeButton 
-                  className="bg-orange-600 hover:bg-orange-700"
+                  className="w-full sm:w-auto bg-orange-600 hover:bg-orange-700 text-sm"
                   tier="starter"
                 >
-                  <Crown className="mr-1 h-3 w-3" />
-                  Upgrade to Continue Reading
+                  <Crown className="mr-1 h-3 w-3 flex-shrink-0" />
+                  <span className="truncate">Upgrade to Continue Reading</span>
                 </SubscribeButton>
               </div>
             )}
@@ -206,34 +210,38 @@ const WebsiteForm = () => {
       
       <WebsiteInput url={url} setUrl={setUrl} />
       
-      <div className="flex justify-between items-center pt-2">
-        <p className="text-sm text-gray-500">
-          Enter the URL of the website you want to read
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center sm:gap-4 pt-2">
+        <div className="text-sm text-gray-500 min-w-0">
+          <p className="leading-relaxed">
+            Enter the URL of the website you want to read
+          </p>
           {user && (
-            <span className="ml-2 text-xs text-gray-400">
-              ({currentUsage}/{usageLimit === 999999 ? '∞' : usageLimit} books used this month)
-            </span>
+            <p className="text-xs text-gray-400 mt-1">
+              {currentUsage}/{usageLimit === 999999 ? '∞' : usageLimit} books used this month
+            </p>
           )}
-        </p>
+        </div>
         
-        {isAtLimit ? (
-          <Button 
-            disabled 
-            type="button"
-            className="opacity-50 cursor-not-allowed"
-            title={`Usage limit reached for ${tierName} tier`}
-          >
-            Extract Content
-          </Button>
-        ) : (
-          <SubmitButton 
-            isLoading={isLoading}
-          />
-        )}
+        <div className="flex-shrink-0 w-full sm:w-auto">
+          {isAtLimit ? (
+            <Button 
+              disabled 
+              type="button"
+              className="w-full sm:w-auto opacity-50 cursor-not-allowed"
+              title={`Usage limit reached for ${tierName} tier`}
+            >
+              Extract Content
+            </Button>
+          ) : (
+            <SubmitButton 
+              isLoading={isLoading}
+            />
+          )}
+        </div>
       </div>
       
       {previewContent && (
-        <div className="mt-6">
+        <div className="mt-4 sm:mt-6">
           <ContentPreview content={previewContent} />
         </div>
       )}

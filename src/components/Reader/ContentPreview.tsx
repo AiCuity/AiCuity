@@ -1,4 +1,3 @@
-
 import React from "react";
 import ReactMarkdown from "react-markdown";
 
@@ -71,11 +70,11 @@ const ContentPreview = ({ content }: ContentPreviewProps) => {
                             cleanContent.includes('Connection Issue');
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-800 p-6">
-      <h2 className="text-xl font-semibold mb-4">Content Preview</h2>
+    <div className="bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-800 p-3 sm:p-6">
+      <h2 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Content Preview</h2>
       
       {isSimulatedContent && (
-        <div className="mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 text-amber-800 dark:text-amber-200">
+        <div className="mb-3 sm:mb-4 p-3 bg-amber-50 dark:bg-amber-900/20 border-l-4 border-amber-500 text-amber-800 dark:text-amber-200">
           <p className="text-sm font-medium">
             ⚠️ This is simulated content. The actual website content could not be extracted.
           </p>
@@ -85,15 +84,15 @@ const ContentPreview = ({ content }: ContentPreviewProps) => {
         </div>
       )}
       
-      <div className="max-h-[calc(100vh-400px)] overflow-y-auto p-4 bg-gray-50 dark:bg-gray-800 rounded-md">
+      <div className="h-64 sm:h-80 md:max-h-[calc(100vh-400px)] overflow-y-auto p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-md">
         {(cleanContent.includes('##') || cleanContent.includes('#')) ? (
-          <div className="prose prose-sm dark:prose-invert max-w-none">
+          <div className="prose prose-sm sm:prose dark:prose-invert max-w-none">
             <ReactMarkdown>
               {formattedContent}
             </ReactMarkdown>
           </div>
         ) : (
-          <div className="whitespace-pre-wrap text-sm">
+          <div className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed">
             {cleanContent}
           </div>
         )}
