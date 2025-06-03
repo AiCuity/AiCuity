@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { processText } from "@/utils/rsvp-word-utils";
 import { RSVPReaderOptions } from "@/utils/rsvp-types";
@@ -12,10 +11,15 @@ export function useRSVPCore({
   initialPosition = 0
 }: RSVPReaderOptions) {
   const { profile } = useProfile();
+  
+  console.log(`useRSVPCore - Received initial position: ${initialPosition}`);
+  
   // Core state for the RSVP reader
   const [words, setWords] = useState<string[]>([]);
   const [currentWordIndex, setCurrentWordIndex] = useState(initialPosition);
   const [isPlaying, setIsPlaying] = useState(false);
+  
+  console.log(`useRSVPCore - Set currentWordIndex to: ${currentWordIndex}`);
   
   // Make sure initialWpm is a proper number
   const normalizedInitialWpm = typeof initialWpm === 'number' 
@@ -59,15 +63,17 @@ export function useRSVPCore({
     const processedWords = processText(text);
     setWords(processedWords);
     
-    // If we're setting the words for the first time and there's an initialPosition,
-    // make sure it's not out of bounds
-    if (processedWords.length > 0 && initialPosition > 0) {
-      setCurrentWordIndex(prev => 
-        Math.min(prev, processedWords.length - 1)
-      );
+    console.log(`useRSVPCore - Processing text, got ${processedWords.length} words`);
+    console.log(`useRSVPCore - Initial position: ${initialPosition}`);
+    
+    // Set the initial position when words are processed
+    if (processedWords.length > 0) {
+      const validPosition = Math.min(Math.max(0, initialPosition), processedWords.length - 1);
+      console.log(`useRSVPCore - Setting word index to validated position: ${validPosition}`);
+      setCurrentWordIndex(validPosition);
     }
   }, [text, initialPosition]);
-  
+
   return {
     // Core state
     words,

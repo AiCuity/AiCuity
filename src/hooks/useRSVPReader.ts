@@ -1,4 +1,3 @@
-
 import { useEffect, useCallback } from "react";
 import { useRSVPCore } from "./rsvp/useRSVPCore";
 import { usePlaybackControls } from "./rsvp/usePlaybackControls";
@@ -173,8 +172,9 @@ export function useRSVPReader({
   return {
     words,
     currentWordIndex,
+    setCurrentWordIndex,
     isPlaying,
-    setIsPlaying: togglePlay, // Use the enhanced toggle function
+    setIsPlaying,
     baseWpm,
     effectiveWpm,
     currentComplexity,
@@ -182,7 +182,7 @@ export function useRSVPReader({
     goToNextWord,
     goToPreviousWord,
     toggleSmartPacing,
-    handleWpmChange: handleWpmChangeWithSave, // Use enhanced version
+    handleWpmChange: handleWpmChangeWithSave,
     formattedWord,
     progress,
     restartReading,

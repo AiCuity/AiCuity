@@ -1,4 +1,3 @@
-
 /**
  * Types related to the RSVP (Rapid Serial Visual Presentation) reader
  */
@@ -33,6 +32,7 @@ export interface RSVPReaderState {
 
 export interface RSVPReaderControls {
   setIsPlaying: (isPlaying: boolean) => void;
+  setCurrentWordIndex: (index: number | ((prev: number) => number)) => void;
   goToNextWord: () => void;
   goToPreviousWord: () => void;
   toggleSmartPacing: () => void;

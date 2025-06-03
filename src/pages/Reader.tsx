@@ -24,7 +24,10 @@ const Reader = () => {
     useFullText,
     apiKey,
     useOpenAI,
+    selectedWordPosition,
     handleStartReading,
+    handleStartReadingFromPosition,
+    handleWordClick,
     handleSummarize,
     handleRetrySummarization,
     setApiKey,
@@ -85,8 +88,11 @@ const Reader = () => {
           isSummarizing={isSummarizing}
           summarizationProgress={summarizationProgress}
           summarizationError={summarizationError}
+          selectedWordPosition={selectedWordPosition}
           handleSummarize={() => handleSummarize(apiKey, useOpenAI)}
           handleStartReading={handleStartReading}
+          handleStartReadingFromPosition={handleStartReadingFromPosition}
+          handleWordClick={handleWordClick}
           handleRetrySummarization={handleRetrySummarization}
         />
       </div>

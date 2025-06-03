@@ -1,9 +1,9 @@
-
 import React from 'react';
 import ApiKeyConfig from "@/components/ApiKeyConfig";
 import SummaryPanel from "@/components/SummaryPanel";
 import SummarizePrompt from "@/components/Reader/SummarizePrompt";
 import ContentPreview from "@/components/Reader/ContentPreview";
+import InteractiveTextPreview from "@/components/Reader/InteractiveTextPreview";
 
 interface ReaderOptionsProps {
   apiKey: string;
@@ -17,8 +17,11 @@ interface ReaderOptionsProps {
   isSummarizing: boolean;
   summarizationProgress: number;
   summarizationError: string | null;
+  selectedWordPosition: number;
   handleSummarize: () => void;
   handleStartReading: (useFull: boolean) => void;
+  handleStartReadingFromPosition: (useFull: boolean, position?: number) => void;
+  handleWordClick: (wordIndex: number) => void;
   handleRetrySummarization: () => void;
 }
 
@@ -34,8 +37,11 @@ const ReaderOptions: React.FC<ReaderOptionsProps> = ({
   isSummarizing,
   summarizationProgress,
   summarizationError,
+  selectedWordPosition,
   handleSummarize,
   handleStartReading,
+  handleStartReadingFromPosition,
+  handleWordClick,
   handleRetrySummarization
 }) => {
   return (
@@ -46,6 +52,17 @@ const ReaderOptions: React.FC<ReaderOptionsProps> = ({
         onApiKeyChange={setApiKey}
         onUseOpenAIChange={setUseOpenAI}
       />
+      
+      {/* Show Interactive Text Preview first if there's a saved position */}
+      {selectedWordPosition > 0 && (
+        <InteractiveTextPreview
+          content={content}
+          currentPosition={selectedWordPosition}
+          onWordClick={handleWordClick}
+          onStartReading={() => handleStartReadingFromPosition(true, selectedWordPosition)}
+          title={title}
+        />
+      )}
       
       {summary ? (
         <SummaryPanel
@@ -64,6 +81,17 @@ const ReaderOptions: React.FC<ReaderOptionsProps> = ({
           onReadFullText={() => handleStartReading(true)}
           isSummarizing={isSummarizing}
           summarizationError={summarizationError}
+        />
+      )}
+      
+      {/* Show Interactive Text Preview below other options if no saved position */}
+      {selectedWordPosition === 0 && (
+        <InteractiveTextPreview
+          content={content}
+          currentPosition={selectedWordPosition}
+          onWordClick={handleWordClick}
+          onStartReading={() => handleStartReadingFromPosition(true, selectedWordPosition)}
+          title={title}
         />
       )}
       
