@@ -293,11 +293,11 @@ const Account = () => {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
-        <Card className="p-8 text-center">
-          <h1 className="text-2xl font-bold mb-4">Please Sign In</h1>
-          <p className="text-muted-foreground mb-4">You need to be signed in to view your account</p>
-          <Button asChild>
+      <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
+        <Card className="p-6 sm:p-8 text-center max-w-md w-full">
+          <h1 className="text-xl sm:text-2xl font-bold mb-4">Please Sign In</h1>
+          <p className="text-muted-foreground mb-4 text-sm sm:text-base">You need to be signed in to view your account</p>
+          <Button asChild className="w-full">
             <a href="/login">Sign In</a>
           </Button>
         </Card>
@@ -329,103 +329,132 @@ const Account = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate("/dashboard")}
-              className="flex items-center gap-2"
-            >
-              <ArrowLeft className="h-4 w-4" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-3xl font-bold">Your Account</h1>
-              <p className="text-muted-foreground">Manage your subscription and usage</p>
+      {/* Modern Professional Header */}
+      <div className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container mx-auto px-3 sm:px-4 lg:px-6">
+          <div className="flex h-16 items-center justify-between">
+            {/* Left side - Navigation and Title */}
+            <div className="flex items-center space-x-3 sm:space-x-4">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => navigate("/dashboard")}
+                className="px-2 sm:px-3"
+              >
+                <ArrowLeft className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="hidden sm:inline">Back</span>
+              </Button>
+              
+              <div className="hidden sm:block h-6 w-px bg-border"></div>
+              
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-purple-600">
+                  <User className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <h1 className="font-bold text-lg sm:text-xl bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+                    <span className="hidden sm:inline">Your Account</span>
+                    <span className="sm:hidden">Account</span>
+                  </h1>
+                  <p className="text-xs text-muted-foreground hidden sm:block">
+                    Subscription & Settings
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right side - Actions */}
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => signOut()}
+                className="px-2 sm:px-3 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-950"
+              >
+                <span className="hidden sm:inline">Sign Out</span>
+                <span className="sm:hidden">Exit</span>
+              </Button>
             </div>
           </div>
-          <div className="flex items-center gap-4">
-            <Button variant="outline" onClick={() => signOut()}>
-              Sign Out
-            </Button>
-          </div>
         </div>
+      </div>
 
+      <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-6 sm:py-8">
         <Tabs defaultValue="subscription" className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="subscription" className="flex items-center gap-2">
-              <Crown className="h-4 w-4" />
-              Subscription
+          <TabsList className="grid w-full grid-cols-2 mb-6">
+            <TabsTrigger value="subscription" className="flex items-center gap-2 text-xs sm:text-sm">
+              <Crown className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Subscription</span>
+              <span className="sm:hidden">Plans</span>
             </TabsTrigger>
-            {/* <TabsTrigger value="preferences" className="flex items-center gap-2">
-              <Heart className="h-4 w-4" />
-              Content Preferences
-            </TabsTrigger> */}
-            <TabsTrigger value="security" className="flex items-center gap-2">
-              <Key className="h-4 w-4" />
+            <TabsTrigger value="security" className="flex items-center gap-2 text-xs sm:text-sm">
+              <Key className="h-3 w-3 sm:h-4 sm:w-4" />
               Security
             </TabsTrigger>
           </TabsList>
 
           {/* Subscription Tab */}
-          <TabsContent value="subscription" className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2">
+          <TabsContent value="subscription" className="space-y-4 sm:space-y-6">
+            <div className="grid gap-4 sm:gap-6 lg:grid-cols-2">
               {/* Current Subscription */}
-              <Card className="p-6">
+              <Card className="p-4 sm:p-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <Crown className="h-5 w-5 text-purple-600" />
-                  <h2 className="text-xl font-semibold">Subscription Status</h2>
+                  <Crown className="h-4 w-4 sm:h-5 sm:w-5 text-purple-600" />
+                  <h2 className="text-lg sm:text-xl font-semibold">Subscription Status</h2>
                 </div>
                 
                 {isLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin" />
-                    <span className="ml-2 text-sm text-muted-foreground">Loading subscription data...</span>
+                    <span className="ml-2 text-xs sm:text-sm text-muted-foreground">Loading subscription data...</span>
                   </div>
                 ) : subscription ? (
                   <div className="space-y-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div>
-                        <h3 className="text-lg font-medium">
+                        <h3 className="text-base sm:text-lg font-medium">
                           {isSubscribed ? currentTier.name : 'Free Plan'}
                         </h3>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs sm:text-sm text-muted-foreground">
                           {isSubscribed 
                             ? `${currentTier.name} tier - ${booksLimit === 999999 ? 'Unlimited' : booksLimit} books/month`
                             : 'Free tier with basic features'}
                         </p>
                       </div>
+                      <div>
                       <Badge className={getStatusColor(subscription.status)}>
                         {subscription.status}
                       </Badge>
+                      </div>
                     </div>
 
                     {subscription.current_period_end && isSubscribed && (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <Calendar className="h-4 w-4" />
+                      <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground">
+                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                         <span>
-                          Next billing: {formatDate(subscription.current_period_end)}
+                          <span className="hidden sm:inline">Next billing: </span>
+                          <span className="sm:hidden">Billing: </span>
+                          {formatDate(subscription.current_period_end)}
                         </span>
                       </div>
                     )}
 
                     {/* Show different buttons based on subscription status */}
                     {!isSubscribed ? (
-                      <div className="space-y-2">
+                      <div className="space-y-3">
                         <SubscribeButton 
-                          className="w-full bg-purple-600 hover:bg-purple-700"
+                          className="w-full bg-purple-600 hover:bg-purple-700 text-sm sm:text-base"
                           tier="starter"
                         >
                           <Crown className="mr-2 h-4 w-4" />
-                          Subscribe to Usage-Based Billing
+                          <span className="hidden sm:inline">Subscribe to Usage-Based Billing</span>
+                          <span className="sm:hidden">Subscribe Now</span>
                         </SubscribeButton>
                         
                         {/* Show reset button if there's an invalid subscription state */}
                         {subscription?.status === 'active' && !subscription?.stripe_customer_id && (
                           <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded">
-                            <p className="text-sm text-red-800 dark:text-red-200 mb-2">
+                            <p className="text-xs sm:text-sm text-red-800 dark:text-red-200 mb-2">
                               ⚠️ Invalid subscription state detected. This subscription is marked as active but not connected to Stripe.
                             </p>
                             <Button 
@@ -443,7 +472,7 @@ const Account = () => {
                       <Button 
                         onClick={handleManageSubscription}
                         disabled={isLoadingPortal}
-                        className="w-full"
+                        className="w-full text-sm sm:text-base"
                         variant="outline"
                       >
                         {isLoadingPortal ? (
@@ -454,7 +483,8 @@ const Account = () => {
                         ) : (
                           <>
                             <Settings className="mr-2 h-4 w-4" />
-                            Manage Billing
+                            <span className="hidden sm:inline">Manage Billing</span>
+                            <span className="sm:hidden">Manage</span>
                             <ExternalLink className="ml-2 h-4 w-4" />
                           </>
                         )}
@@ -462,43 +492,49 @@ const Account = () => {
                     )}
                   </div>
                 ) : (
-                  <p className="text-muted-foreground">No subscription found</p>
+                  <p className="text-muted-foreground text-sm sm:text-base">No subscription found</p>
                 )}
               </Card>
 
               {/* Usage and Pricing */}
-              <Card className="p-6">
+              <Card className="p-4 sm:p-6">
                 <div className="flex items-center gap-2 mb-4">
-                  <TrendingUp className="h-5 w-5 text-blue-600" />
-                  <h2 className="text-xl font-semibold">Current Usage & Cost</h2>
+                  <TrendingUp className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                  <h2 className="text-lg sm:text-xl font-semibold">
+                    <span className="hidden sm:inline">Current Usage & Cost</span>
+                    <span className="sm:hidden">Usage & Cost</span>
+                  </h2>
                 </div>
                 
                 {isLoading ? (
                   <div className="flex items-center justify-center py-8">
                     <Loader2 className="h-6 w-6 animate-spin" />
-                    <span className="ml-2 text-sm text-muted-foreground">Loading usage data...</span>
+                    <span className="ml-2 text-xs sm:text-sm text-muted-foreground">Loading usage data...</span>
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="text-center p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                        <div className="text-2xl font-bold text-blue-600">
+                    <div className="grid grid-cols-2 gap-3 sm:gap-4">
+                      <div className="text-center p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                        <div className="text-xl sm:text-2xl font-bold text-blue-600">
                           {usageCount}
                         </div>
-                        <div className="text-sm text-muted-foreground">Books This Month</div>
+                        <div className="text-xs sm:text-sm text-muted-foreground">
+                          <span className="hidden sm:inline">Books This Month</span>
+                          <span className="sm:hidden">Books</span>
+                        </div>
                       </div>
-                      <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                        <div className="text-2xl font-bold text-purple-600">
+                      <div className="text-center p-3 sm:p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                        <div className="text-xl sm:text-2xl font-bold text-purple-600">
                           ${currentCost.toFixed(2)}
                         </div>
-                        <div className="text-sm text-muted-foreground">
+                        <div className="text-xs sm:text-sm text-muted-foreground">
                           {isSubscribed ? 'Monthly Cost' : 'Would Cost'}
                         </div>
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <div className="flex justify-between text-sm">
+                      <div className="flex justify-between text-xs sm:text-sm">
                         <span>Current tier: {currentTier.name}</span>
                         <span>
                           {booksLimit === 999999 
@@ -510,7 +546,7 @@ const Account = () => {
                       
                       {/* Show limit warning */}
                       {booksLimit !== 999999 && usageCount > booksLimit * 0.8 && (
-                        <p className="text-sm text-orange-600">
+                        <p className="text-xs sm:text-sm text-orange-600">
                           ⚠️ You're approaching your {booksLimit} book limit for this tier
                         </p>
                       )}
@@ -519,7 +555,7 @@ const Account = () => {
                     {/* Show tier upgrade suggestion based on current subscription */}
                     {isSubscribed && currentTier.name !== 'Unlimited' && usageCount > booksLimit * 0.8 && (
                       <div className="p-3 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700 rounded-lg">
-                        <p className="text-sm text-orange-800 dark:text-orange-200">
+                        <p className="text-xs sm:text-sm text-orange-800 dark:text-orange-200">
                           📈 Consider upgrading for more books or unlimited access!
                         </p>
                       </div>
@@ -531,17 +567,17 @@ const Account = () => {
 
             {/* Subscription Management for Active Subscribers */}
             {isSubscribed && !isLoading && (
-              <Card className="p-6 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20">
+              <Card className="p-4 sm:p-6 bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-900/20 dark:to-blue-900/20">
                 <div className="flex items-center gap-2 mb-4">
-                  <Settings className="h-5 w-5 text-green-600" />
-                  <h2 className="text-xl font-semibold">Subscription Management</h2>
+                  <Settings className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                  <h2 className="text-lg sm:text-xl font-semibold">Subscription Management</h2>
                 </div>
                 
-                <div className="grid gap-4 md:grid-cols-2">
+                <div className="grid gap-4 lg:grid-cols-2">
                   <div className="space-y-3">
-                    <h3 className="font-medium">Current Billing Information</h3>
-                    <div className="space-y-2 text-sm">
-                      <div className="flex justify-between">
+                    <h3 className="font-medium text-sm sm:text-base">Current Billing Information</h3>
+                    <div className="space-y-2 text-xs sm:text-sm">
+                      <div className="flex justify-between items-center">
                         <span>Status:</span>
                         <Badge className={getStatusColor(subscription.status)}>
                           {subscription.status}
@@ -575,12 +611,12 @@ const Account = () => {
                   </div>
                   
                   <div className="space-y-3">
-                    <h3 className="font-medium">Manage Your Subscription</h3>
+                    <h3 className="font-medium text-sm sm:text-base">Manage Your Subscription</h3>
                     <div className="space-y-2">
                       <Button 
                         onClick={handleManageSubscription}
                         disabled={isLoadingPortal || !subscription.stripe_customer_id}
-                        className="w-full"
+                        className="w-full text-xs sm:text-sm"
                         variant="outline"
                       >
                         {isLoadingPortal ? (
@@ -591,7 +627,8 @@ const Account = () => {
                         ) : (
                           <>
                             <Settings className="mr-2 h-4 w-4" />
-                            Update Payment Method
+                            <span className="hidden sm:inline">Update Payment Method</span>
+                            <span className="sm:hidden">Update Payment</span>
                             <ExternalLink className="ml-2 h-4 w-4" />
                           </>
                         )}
@@ -601,10 +638,11 @@ const Account = () => {
                         onClick={handleManageSubscription}
                         disabled={isLoadingPortal || !subscription.stripe_customer_id}
                         variant="outline"
-                        className="w-full"
+                        className="w-full text-xs sm:text-sm"
                       >
                         <Calendar className="mr-2 h-4 w-4" />
-                        View Billing History
+                        <span className="hidden sm:inline">View Billing History</span>
+                        <span className="sm:hidden">Billing History</span>
                       </Button>
                       
                       <div className="pt-2 text-xs text-muted-foreground">
@@ -617,28 +655,28 @@ const Account = () => {
             )}
 
             {/* Pricing Information */}
-            <Card className="p-6">
-              <div className="flex items-center gap-2 mb-6">
-                <DollarSign className="h-5 w-5 text-green-600" />
-                <h2 className="text-xl font-semibold">Pricing Tiers</h2>
+            <Card className="p-4 sm:p-6">
+              <div className="flex items-center gap-2 mb-4 sm:mb-6">
+                <DollarSign className="h-4 w-4 sm:h-5 sm:w-5 text-green-600" />
+                <h2 className="text-lg sm:text-xl font-semibold">Pricing Tiers</h2>
               </div>
               
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-3 sm:gap-4 sm:grid-cols-2 lg:grid-cols-4">
                 {pricingTiers.map((tier, index) => {
                   // Check if this is the user's current subscription tier
                   const isSubscribedToThisTier = isSubscribed && currentTier.name === tier.name;
                   const canChangeToThisTier = isSubscribed && !isSubscribedToThisTier && tier.price > 0;
                   
                   return (
-                    <Card key={index} className={`p-4 transition-colors ${
+                    <Card key={index} className={`p-3 sm:p-4 transition-colors ${
                       isSubscribedToThisTier ? 'border-2 border-purple-500 bg-purple-50 dark:bg-purple-900/20' : 'border hover:border-gray-300'
                     }`}>
                       <div className="space-y-3">
                         <div className="text-center">
-                          <h3 className="font-semibold">{tier.name}</h3>
-                          <div className="text-2xl font-bold text-purple-600">
+                          <h3 className="font-semibold text-sm sm:text-base">{tier.name}</h3>
+                          <div className="text-xl sm:text-2xl font-bold text-purple-600">
                             ${tier.price.toFixed(2)}
-                            <span className="text-sm text-muted-foreground">/mo</span>
+                            <span className="text-xs sm:text-sm text-muted-foreground">/mo</span>
                           </div>
                           <p className="text-xs text-muted-foreground">
                             {tier.max === Infinity 
@@ -651,11 +689,11 @@ const Account = () => {
                           {/* Show badges */}
                               
                           {isSubscribedToThisTier && (
-                            <Badge className="bg-purple-500">Your Current Tier</Badge>
+                            <Badge className="bg-purple-500 text-xs">Your Current Tier</Badge>
                           )}
                           
                           {tier.price === 0 && (
-                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
+                            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 text-xs">
                               Free Tier
                             </Badge>
                           )}
@@ -668,11 +706,12 @@ const Account = () => {
                               </div>
                             ) : !isSubscribed ? (
                               <SubscribeButton 
-                                className="w-full text-xs px-3 py-2 bg-purple-600 hover:bg-purple-700"
+                                className="w-full text-xs px-2 sm:px-3 py-2 bg-purple-600 hover:bg-purple-700"
                                 tier={tier.name.toLowerCase()}
                               >
                                 <Crown className="mr-1 h-3 w-3" />
-                                Subscribe Now
+                                <span className="hidden sm:inline">Subscribe Now</span>
+                                <span className="sm:hidden">Subscribe</span>
                               </SubscribeButton>
                             ) : isSubscribedToThisTier ? (
                               <div className="text-xs text-green-600 font-medium">
@@ -683,7 +722,7 @@ const Account = () => {
                                 currentTier={subscription.tier}
                                 targetTier={tier.name.toLowerCase()}
                                 targetTierPrice={tier.price}
-                                className="w-full text-xs px-3 py-2"
+                                className="w-full text-xs px-2 sm:px-3 py-2"
                               >
                                 {isUpgrade(subscription.tier, tier.name.toLowerCase()) ? (
                                   <>
@@ -710,24 +749,24 @@ const Account = () => {
                 })}
               </div>
 
-              <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
+              <div className="mt-4 sm:mt-6 p-3 sm:p-4 bg-gray-50 dark:bg-gray-900/50 rounded-lg">
                 <div className="text-center space-y-2">
-                  <h4 className="font-medium">💡 How Subscription Changes Work</h4>
-                  <div className="text-sm text-muted-foreground space-y-1">
+                  <h4 className="font-medium text-sm sm:text-base">💡 How Subscription Changes Work</h4>
+                  <div className="text-xs sm:text-sm text-muted-foreground space-y-1">
                     <p>
                       <strong>Upgrades:</strong> Take effect immediately with prorated billing - you'll be charged the difference right away.
                     </p>
                     <p>
                       <strong>Downgrades:</strong> Take effect at the end of your current billing period - you'll continue with current benefits until then.
                     </p>
-                    <p>
+                    <p className="hidden sm:block">
                       Each tier has a fixed monthly price and book limit. Choose the tier that best fits your reading habits.
                     </p>
                   </div>
                   
                   {isSubscribed ? (
                     <div className="mt-4 p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded">
-                      <p className="text-sm text-green-800 dark:text-green-200">
+                      <p className="text-xs sm:text-sm text-green-800 dark:text-green-200">
                         🎉 <strong>You're subscribed!</strong> Current tier: <strong>{currentTier.name}</strong>.
                         You're paying <strong>${currentCost.toFixed(2)}</strong>/month for up to <strong>{booksLimit === 999999 ? 'unlimited' : booksLimit}</strong> books.
                         You've used <strong>{usageCount}</strong> books this month.
@@ -738,7 +777,7 @@ const Account = () => {
                     </div>
                   ) : (
                     <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded">
-                      <p className="text-sm text-blue-800 dark:text-blue-200">
+                      <p className="text-xs sm:text-sm text-blue-800 dark:text-blue-200">
                         📚 <strong>Ready to read more?</strong> Subscribe to unlock more books with our tiered pricing plans.
                       </p>
                     </div>
@@ -749,10 +788,10 @@ const Account = () => {
               {!isSubscribed && (
                 <div className="mt-4 text-center">
                   <SubscribeButton 
-                    className="bg-purple-600 hover:bg-purple-700 px-8 py-3"
+                    className="bg-purple-600 hover:bg-purple-700 px-6 sm:px-8 py-2 sm:py-3 text-sm sm:text-base"
                     tier="starter"
                   >
-                    <Crown className="mr-2 h-5 w-5" />
+                    <Crown className="mr-2 h-4 sm:h-5 w-4 sm:w-5" />
                     Subscribe to Get Started
                   </SubscribeButton>
                 </div>
@@ -760,108 +799,24 @@ const Account = () => {
             </Card>
           </TabsContent>
 
-          {/* Content Preferences Tab */}
-          <TabsContent value="preferences" className="space-y-6">
-            <Card className="p-6">
-              <div className="flex items-center gap-2 mb-6">
-                <Heart className="h-5 w-5 text-red-500" />
-                <h2 className="text-xl font-semibold">Content Preferences</h2>
-              </div>
-              
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-medium mb-2">Your Interests</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Add topics you're interested in. We'll use AI to recommend relevant content based on your uploads and reading history.
-                  </p>
-                  
-                  {/* Interest Tags */}
-                  <div className="flex flex-wrap gap-2 mb-4">
-                    {interests.map((interest, index) => (
-                      <Badge 
-                        key={index} 
-                        variant="secondary" 
-                        className="flex items-center gap-2 px-3 py-1"
-                      >
-                        {interest}
-                        <button
-                          onClick={() => removeInterest(interest)}
-                          className="hover:text-red-500 transition-colors"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                  
-                  {/* Add New Interest */}
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Add new interest (e.g., AI, History, Cooking)"
-                      value={newInterest}
-                      onChange={(e) => setNewInterest(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      className="flex-1"
-                    />
-                    <Button 
-                      onClick={addInterest}
-                      disabled={!newInterest.trim() || interests.includes(newInterest.trim())}
-                    >
-                      <Plus className="h-4 w-4 mr-1" />
-                      Add
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-medium mb-2">AI Recommendations</h3>
-                  <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
-                    <p className="text-sm text-blue-800 dark:text-blue-200">
-                      🤖 <strong>Coming Soon:</strong> AI-powered content recommendations based on your interests and reading patterns.
-                      As you upload more content and add interests, our AI will learn your preferences and suggest relevant materials.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-medium mb-2">Reading Analytics</h3>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                      <div className="text-2xl font-bold text-green-600">{interests.length}</div>
-                      <div className="text-sm text-muted-foreground">Topics of Interest</div>
-                    </div>
-                    <div className="text-center p-4 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
-                      <div className="text-2xl font-bold text-purple-600">{usageCount}</div>
-                      <div className="text-sm text-muted-foreground">Books Read</div>
-                    </div>
-                    <div className="text-center p-4 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
-                      <div className="text-2xl font-bold text-orange-600">Coming Soon</div>
-                      <div className="text-sm text-muted-foreground">AI Insights</div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </Card>
-          </TabsContent>
-
           {/* Security Tab */}
-          <TabsContent value="security" className="space-y-6">
-            <Card className="p-6">
-              <div className="flex items-center gap-2 mb-6">
-                <Key className="h-5 w-5 text-blue-500" />
-                <h2 className="text-xl font-semibold">Security Settings</h2>
+          <TabsContent value="security" className="space-y-4 sm:space-y-6">
+            <Card className="p-4 sm:p-6">
+              <div className="flex items-center gap-2 mb-4 sm:mb-6">
+                <Key className="h-4 w-4 sm:h-5 sm:w-5 text-blue-500" />
+                <h2 className="text-lg sm:text-xl font-semibold">Security Settings</h2>
               </div>
               
-              <div className="space-y-6">
+              <div className="space-y-4 sm:space-y-6">
                 <div>
-                  <h3 className="text-lg font-medium mb-2">Change Password</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <h3 className="text-base sm:text-lg font-medium mb-2">Change Password</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-4">
                     Update your password to keep your account secure. Make sure to use a strong password.
                   </p>
                   
                   <form onSubmit={handlePasswordChange} className="space-y-4">
                     <div>
-                      <Label htmlFor="current-password">Current Password</Label>
+                      <Label htmlFor="current-password" className="text-xs sm:text-sm">Current Password</Label>
                       <div className="relative">
                         <Input
                           id="current-password"
@@ -869,7 +824,7 @@ const Account = () => {
                           value={passwordData.currentPassword}
                           onChange={(e) => setPasswordData({...passwordData, currentPassword: e.target.value})}
                           placeholder="Enter your current password"
-                          className="pr-10"
+                          className="pr-10 text-sm sm:text-base"
                         />
                         <button
                           type="button"
@@ -882,7 +837,7 @@ const Account = () => {
                     </div>
                     
                     <div>
-                      <Label htmlFor="new-password">New Password</Label>
+                      <Label htmlFor="new-password" className="text-xs sm:text-sm">New Password</Label>
                       <div className="relative">
                         <Input
                           id="new-password"
@@ -890,7 +845,7 @@ const Account = () => {
                           value={passwordData.newPassword}
                           onChange={(e) => setPasswordData({...passwordData, newPassword: e.target.value})}
                           placeholder="Enter your new password (min. 6 characters)"
-                          className="pr-10"
+                          className="pr-10 text-sm sm:text-base"
                         />
                         <button
                           type="button"
@@ -903,7 +858,7 @@ const Account = () => {
                     </div>
                     
                     <div>
-                      <Label htmlFor="confirm-password">Confirm New Password</Label>
+                      <Label htmlFor="confirm-password" className="text-xs sm:text-sm">Confirm New Password</Label>
                       <div className="relative">
                         <Input
                           id="confirm-password"
@@ -911,7 +866,7 @@ const Account = () => {
                           value={passwordData.confirmPassword}
                           onChange={(e) => setPasswordData({...passwordData, confirmPassword: e.target.value})}
                           placeholder="Confirm your new password"
-                          className="pr-10"
+                          className="pr-10 text-sm sm:text-base"
                         />
                         <button
                           type="button"
@@ -926,7 +881,7 @@ const Account = () => {
                     <Button 
                       type="submit"
                       disabled={isChangingPassword || !passwordData.currentPassword || !passwordData.newPassword || !passwordData.confirmPassword}
-                      className="w-full"
+                      className="w-full text-sm sm:text-base"
                     >
                       {isChangingPassword ? (
                         <>
@@ -943,10 +898,10 @@ const Account = () => {
                   </form>
                 </div>
 
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-medium mb-2 text-red-600">Danger Zone</h3>
-                  <div className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
-                    <p className="text-sm text-red-800 dark:text-red-200 mb-3">
+                <div className="border-t pt-4 sm:pt-6">
+                  <h3 className="text-base sm:text-lg font-medium mb-2 text-red-600">Danger Zone</h3>
+                  <div className="p-3 sm:p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded-lg">
+                    <p className="text-xs sm:text-sm text-red-800 dark:text-red-200 mb-3">
                       ⚠️ <strong>Account Deletion:</strong> This action cannot be undone. All your data, reading history, and subscription will be permanently deleted.
                     </p>
                     <Button 
@@ -956,6 +911,7 @@ const Account = () => {
                         title: "Feature Coming Soon",
                         description: "Account deletion will be available in a future update.",
                       })}
+                      className="w-full sm:w-auto"
                     >
                       Delete Account
                     </Button>
