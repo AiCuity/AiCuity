@@ -66,10 +66,12 @@ const Reader = () => {
   };
 
   return (
-    <div className="min-h-screen bg-white dark:bg-gray-900">
-      <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <ContentHeader content={contentObject} contentId={contentId} />
-
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      {/* Full-width sticky header */}
+      <ContentHeader content={contentObject} contentId={contentId} />
+      
+      {/* Main content container */}
+      <div className="container mx-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 lg:py-8 max-w-4xl">
         <ReaderAlerts 
           isSimulated={isSimulated} 
           initialPosition={initialPosition} 

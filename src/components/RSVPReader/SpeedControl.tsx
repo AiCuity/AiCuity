@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
@@ -95,20 +94,21 @@ const SpeedControl = ({
   };
 
   return (
-    <div className="max-w-lg mx-auto space-y-4">
-      <Separator className="my-4" />
+    <div className="max-w-xs sm:max-w-lg mx-auto space-y-3 sm:space-y-4">
+      <Separator className="my-3 sm:my-4" />
       
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-medium">Reading Speed: {localWpm} WPM</span>
+          <span className="text-xs sm:text-sm font-medium">Speed: {localWpm} WPM</span>
           {isSaving && (
             <span className="text-xs text-muted-foreground flex items-center gap-1">
               <Save className="h-3 w-3 animate-pulse" />
-              Auto-saving...
+              <span className="hidden sm:inline">Auto-saving...</span>
+              <span className="sm:hidden">Saving...</span>
             </span>
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 self-end sm:self-auto">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
@@ -117,8 +117,9 @@ const SpeedControl = ({
                   size="icon"
                   onClick={handleCalibrationClick}
                   type="button"
+                  className="h-9 w-9 sm:h-10 sm:w-10"
                 >
-                  <Gauge className="h-4 w-4" />
+                  <Gauge className="h-3 w-3 sm:h-4 sm:w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
@@ -135,11 +136,12 @@ const SpeedControl = ({
                   size="icon"
                   onClick={onToggleFullscreen}
                   type="button"
+                  className="h-9 w-9 sm:h-10 sm:w-10"
                 >
                   {isFullscreen ? (
-                    <Minimize className="h-4 w-4" />
+                    <Minimize className="h-3 w-3 sm:h-4 sm:w-4" />
                   ) : (
-                    <Maximize className="h-4 w-4" />
+                    <Maximize className="h-3 w-3 sm:h-4 sm:w-4" />
                   )}
                 </Button>
               </TooltipTrigger>
@@ -154,17 +156,17 @@ const SpeedControl = ({
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex items-center gap-4">
-              <span className="text-xs">100</span>
+            <div className="flex items-center gap-3 sm:gap-4 px-1">
+              <span className="text-xs font-mono">100</span>
               <Slider
                 value={[localWpm]} 
                 min={100}
                 max={1000}
                 step={10}
                 onValueChange={handleWpmChange}
-                className="flex-1"
+                className="flex-1 touch-manipulation"
               />
-              <span className="text-xs">1000</span>
+              <span className="text-xs font-mono">1K</span>
             </div>
           </TooltipTrigger>
           <TooltipContent>

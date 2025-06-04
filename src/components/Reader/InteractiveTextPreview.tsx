@@ -18,20 +18,25 @@ const InteractiveTextPreview = ({
   onStartReading,
   title 
 }: InteractiveTextPreviewProps) => {
-  const highlightedWordRef = useRef<HTMLSpanElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const highlightedWordRef = useRef<HTMLSpanElement>(null);
 
   // Process the content into words
   const words = processText(content);
 
-  // Scroll to highlighted word when position changes
+  // Scroll to highlighted word when position changes or component mounts
   useEffect(() => {
-    if (highlightedWordRef.current && containerRef.current) {
-      highlightedWordRef.current.scrollIntoView({
-        behavior: 'smooth',
-        block: 'center',
-        inline: 'center'
-      });
+    if (highlightedWordRef.current && containerRef.current && currentPosition > 0) {
+      // Small delay to ensure the component is fully rendered
+      const timer = setTimeout(() => {
+        highlightedWordRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'center',
+          inline: 'center'
+        });
+      }, 100);
+
+      return () => clearTimeout(timer);
     }
   }, [currentPosition]);
 
@@ -47,12 +52,13 @@ const InteractiveTextPreview = ({
   };
 
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-800 p-6">
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Interactive Text Preview</h2>
-        <Button onClick={handleStartReading} className="flex items-center gap-2">
+    <div className="bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-800 p-4 sm:p-6">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-4">
+        <h2 className="text-lg sm:text-xl font-semibold">Interactive Text Preview</h2>
+        <Button onClick={handleStartReading} className="flex items-center gap-2 w-full sm:w-auto text-sm sm:text-base">
           <Play className="h-4 w-4" />
-          Start Reading from Highlighted Word
+          <span className="hidden sm:inline">Start Reading from Highlighted Word</span>
+          <span className="sm:hidden">Start Reading</span>
         </Button>
       </div>
       
@@ -69,11 +75,11 @@ const InteractiveTextPreview = ({
       
       <div 
         ref={containerRef}
-        className="max-h-[calc(100vh-500px)] overflow-y-auto p-4 bg-gray-50 dark:bg-gray-800 rounded-md"
+        className="max-h-[400px] overflow-y-auto overflow-x-hidden p-4 bg-gray-50 dark:bg-gray-800 rounded-md"
       >
         <div className="prose prose-sm dark:prose-invert max-w-none">
-          <h3 className="mb-4 text-lg font-medium">{title}</h3>
-          <div className="leading-relaxed space-y-2">
+          <h3 className="mb-4 text-base sm:text-lg font-medium">{title}</h3>
+          <div className="leading-relaxed text-sm sm:text-base break-words">
             {words.map((word, index) => (
               <span
                 key={index}
@@ -82,8 +88,8 @@ const InteractiveTextPreview = ({
                 className={`
                   inline cursor-pointer px-1 py-0.5 rounded-sm mr-1 transition-all duration-200
                   ${index === currentPosition 
-                    ? 'bg-yellow-300 dark:bg-yellow-600 text-black dark:text-white font-semibold shadow-md scale-105 border-2 border-yellow-500' 
-                    : 'hover:bg-blue-100 dark:hover:bg-blue-800/50 hover:scale-105'
+                    ? 'bg-purple-200 dark:bg-purple-800 text-purple-900 dark:text-purple-100 font-semibold shadow-sm border border-purple-400 dark:border-purple-600' 
+                    : 'hover:bg-blue-100 dark:hover:bg-blue-800/50'
                   }
                   ${index < currentPosition 
                     ? 'text-gray-500 dark:text-gray-400' 
@@ -99,10 +105,10 @@ const InteractiveTextPreview = ({
         </div>
       </div>
       
-      <div className="mt-4 text-sm text-gray-600 dark:text-gray-400 text-center">
+      <div className="mt-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400 text-center">
         Click on any word to set your reading position • Total words: {words.length} • 
         {currentPosition > 0 && (
-          <span className="font-medium text-blue-600 dark:text-blue-400">
+          <span className="font-medium text-purple-600 dark:text-purple-400">
             {" "}Current position: {currentPosition + 1}
           </span>
         )}

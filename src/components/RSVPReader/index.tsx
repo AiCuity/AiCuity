@@ -1,4 +1,3 @@
-
 import { useRef, useState } from "react";
 import { useRSVPReader } from "@/hooks/useRSVPReader";
 import { useFullscreen } from "@/hooks/useFullscreen";
@@ -71,7 +70,7 @@ const RSVPReader = ({
       className={`relative transition-all ${
         isFullscreen 
           ? "bg-gray-900 text-white" 
-          : "bg-white dark:bg-gray-900 dark:text-white"
+          : "bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800"
       }`}
     >
       <KeyboardControls 
@@ -82,7 +81,7 @@ const RSVPReader = ({
       
       {/* Main reading area */}
       <div className={`flex flex-col items-center justify-center ${
-        isFullscreen ? "h-screen" : "h-[50vh] md:h-[60vh]"
+        isFullscreen ? "h-screen" : "h-[50vh] sm:h-[60vh] lg:h-[70vh]"
       }`}>
         <WordDisplay 
           before={formattedWord.before}
@@ -95,7 +94,7 @@ const RSVPReader = ({
       </div>
       
       {/* Controls */}
-      <div className={`p-4 ${isFullscreen ? "absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm" : ""}`}>
+      <div className={`p-3 sm:p-4 lg:p-6 ${isFullscreen ? "absolute bottom-0 left-0 right-0 bg-black/50 backdrop-blur-sm" : ""}`}>
         <PlaybackControls 
           isPlaying={isPlaying}
           onPlayPause={togglePlay}
@@ -111,22 +110,24 @@ const RSVPReader = ({
           effectiveWpm={effectiveWpm}
         />
         
-        <div className="flex items-center justify-center gap-4 mb-4">
+        <div className="flex items-center justify-center gap-2 sm:gap-4 mb-3 sm:mb-4">
           <Button 
             variant="outline" 
             size="sm" 
             onClick={toggleNotifications}
-            className="flex items-center gap-1"
+            className="flex items-center gap-1 text-xs sm:text-sm px-2 sm:px-3"
           >
             {showNotifications ? (
               <>
-                <Bell className="h-4 w-4" />
-                Notifications On
+                <Bell className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Notifications On</span>
+                <span className="sm:hidden">On</span>
               </>
             ) : (
               <>
-                <BellOff className="h-4 w-4" />
-                Notifications Off
+                <BellOff className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Notifications Off</span>
+                <span className="sm:hidden">Off</span>
               </>
             )}
           </Button>

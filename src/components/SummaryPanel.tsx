@@ -39,9 +39,9 @@ const SummaryPanel = ({
   };
   
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-800 p-4 mb-6">
+    <div className="bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-800 p-4 sm:p-6 mb-4 sm:mb-6">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-xl font-semibold">Summary</h3>
+        <h3 className="text-lg sm:text-xl font-semibold">Summary</h3>
         <Collapsible open={!isCollapsed} onOpenChange={(open) => setIsCollapsed(!open)}>
           <CollapsibleTrigger asChild>
             <Button variant="ghost" size="sm">
@@ -55,11 +55,11 @@ const SummaryPanel = ({
         <CollapsibleContent>
           {isLoading ? (
             <div className="space-y-4 py-4">
-              <p className="text-sm text-gray-500 dark:text-gray-400">
+              <p className="text-sm text-muted-foreground">
                 Generating summary... This might take a moment.
               </p>
               <Progress value={progress} className="w-full" />
-              <p className="text-xs text-gray-500 dark:text-gray-400 text-right">
+              <p className="text-xs text-muted-foreground text-right">
                 {Math.round(progress)}% complete
               </p>
             </div>
@@ -68,24 +68,28 @@ const SummaryPanel = ({
               <Textarea 
                 value={summary} 
                 readOnly 
-                className="w-full h-64 mb-4 resize-none"
+                className="w-full h-48 sm:h-64 mb-4 resize-none text-sm sm:text-base"
               />
               
-              <div className="flex flex-wrap justify-between items-center gap-2 mt-4">
-                <div className="flex items-center gap-2">
+              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-between sm:items-center sm:gap-2 mt-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
                   <Button 
                     variant="outline" 
                     onClick={() => onStartReading(false)}
+                    className="w-full sm:w-auto text-sm sm:text-base"
                   >
                     <Text className="h-4 w-4 mr-2" />
-                    Read Summary
+                    <span className="hidden sm:inline">Read Summary</span>
+                    <span className="sm:hidden">Summary</span>
                   </Button>
                   <Button 
                     variant="outline" 
                     onClick={() => onStartReading(true)}
+                    className="w-full sm:w-auto text-sm sm:text-base"
                   >
                     <FileText className="h-4 w-4 mr-2" />
-                    Read Full Text
+                    <span className="hidden sm:inline">Read Full Text</span>
+                    <span className="sm:hidden">Full Text</span>
                   </Button>
                 </div>
                 
@@ -94,18 +98,20 @@ const SummaryPanel = ({
                   size="sm" 
                   onClick={handleRetry}
                   disabled={isLoading}
+                  className="w-full sm:w-auto text-xs sm:text-sm"
                 >
                   <RefreshCw className="h-4 w-4 mr-1" />
-                  Regenerate
+                  <span className="hidden sm:inline">Regenerate</span>
+                  <span className="sm:hidden">Retry</span>
                 </Button>
               </div>
             </>
           ) : (
             <div className="text-center py-8">
-              <p className="text-gray-500 dark:text-gray-400">
+              <p className="text-muted-foreground text-sm sm:text-base mb-4">
                 Summary generation failed. Please try again.
               </p>
-              <Button onClick={handleRetry} className="mt-4">
+              <Button onClick={handleRetry} className="w-full sm:w-auto">
                 <RefreshCw className="h-4 w-4 mr-2" />
                 Retry Summarization
               </Button>
@@ -115,7 +121,7 @@ const SummaryPanel = ({
       </Collapsible>
       
       {isCollapsed && summary && (
-        <div className="text-sm text-gray-500 dark:text-gray-400 flex items-center gap-2">
+        <div className="text-sm text-muted-foreground flex items-center gap-2">
           <FileText className="h-4 w-4" />
           <span>Summary available</span>
         </div>

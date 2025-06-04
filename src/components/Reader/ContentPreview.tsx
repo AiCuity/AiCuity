@@ -84,15 +84,15 @@ const ContentPreview = ({ content }: ContentPreviewProps) => {
         </div>
       )}
       
-      <div className="h-64 sm:h-80 md:max-h-[calc(100vh-400px)] overflow-y-auto p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-md">
+      <div className="h-64 sm:h-80 md:h-96 lg:max-h-[calc(100vh-400px)] overflow-y-auto overflow-x-hidden p-3 sm:p-4 bg-gray-50 dark:bg-gray-800 rounded-md">
         {(cleanContent.includes('##') || cleanContent.includes('#')) ? (
-          <div className="prose prose-sm sm:prose dark:prose-invert max-w-none">
+          <div className="prose prose-sm sm:prose dark:prose-invert max-w-none break-words">
             <ReactMarkdown>
               {formattedContent}
             </ReactMarkdown>
           </div>
         ) : (
-          <div className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed">
+          <div className="whitespace-pre-wrap text-sm sm:text-base leading-relaxed break-words">
             {cleanContent}
           </div>
         )}
