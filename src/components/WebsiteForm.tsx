@@ -131,25 +131,32 @@ const WebsiteForm = () => {
         queryClient.invalidateQueries({ queryKey: queryKeys.subscriptionWithUsage(user.id) });
       }
     } catch (error) {
-      console.error('Error:', error);
+      console.error('Error in WebsiteForm handleSubmit:', error);
+      console.error('Error type:', error?.constructor?.name);
+      console.error('Error instanceof AntiScrapingError:', error instanceof AntiScrapingError);
+      console.error('Error name property:', (error as any)?.name);
+      console.error('Error has protectionType:', 'protectionType' in (error as any));
       setIsLoading(false);
 
       // Handle anti-scraping protection error specifically
-      if (error instanceof AntiScrapingError) {
+      // Use both instanceof check and name check for robustness
+      if (error instanceof AntiScrapingError || (error as any)?.name === 'AntiScrapingError') {
+        console.log('Handling AntiScrapingError in WebsiteForm');
         setAntiScrapingError({
-          message: error.message,
-          protectionType: error.protectionType,
-          requiredTier: error.requiredTier
+          message: (error as AntiScrapingError).message || 'Website is protected from scraping',
+          protectionType: (error as AntiScrapingError).protectionType || 'unknown',
+          requiredTier: (error as AntiScrapingError).requiredTier || 'BASIC'
         });
         
         toast({
           title: "Website Protected",
-          description: error.message,
+          description: (error as AntiScrapingError).message || 'This website is protected from scraping',
           variant: "default",
         });
         return; // Don't show fallback content or navigate
       }
       
+      console.log('Not an AntiScrapingError, treating as regular error');
       setApiError(error instanceof Error ? error.message : "Failed to extract content");
       
       toast({

@@ -148,30 +148,31 @@ export const extractContentFromUrl = async (url: string, userId?: string, increm
       }
     } else {
       // Handle specific error responses
+      let errorData = null;
       try {
         const errorText = await response.text();
         console.error(`[contentExtractor] Server error response (${response.status}): ${errorText}`);
         
         // Try to parse error response as JSON
         try {
-          const errorData = JSON.parse(errorText);
-          
-          // Check for anti-scraping protection error
-          if (errorData.error === 'anti_scraping_protection') {
-            console.log('[contentExtractor] Anti-scraping protection detected');
-            throw new AntiScrapingError(
-              errorData.message || 'This website is protected from scraping',
-              errorData.protectionType || 'unknown',
-              errorData.upgradeRequired || true,
-              errorData.requiredTier || 'BASIC'
-            );
-          }
+          errorData = JSON.parse(errorText);
+          console.log('[contentExtractor] Parsed error data:', errorData);
         } catch (parseError) {
-          // Not JSON, continue with fallback
-          console.log('[contentExtractor] Error response is not JSON, using fallback');
+          console.log('[contentExtractor] Error response is not JSON:', parseError);
         }
       } catch (e) {
-        console.error('[contentExtractor] Failed to read error response');
+        console.error('[contentExtractor] Failed to read error response:', e);
+      }
+      
+      // Check for anti-scraping protection error BEFORE fallback
+      if (errorData && errorData.error === 'anti_scraping_protection') {
+        console.log('[contentExtractor] Anti-scraping protection detected, throwing error');
+        throw new AntiScrapingError(
+          errorData.message || 'This website is protected from scraping',
+          errorData.protectionType || 'unknown',
+          errorData.upgradeRequired || true,
+          errorData.requiredTier || 'BASIC'
+        );
       }
       
       console.log(`[contentExtractor] Content extraction failed with status ${response.status}, using fallback`);
@@ -179,8 +180,13 @@ export const extractContentFromUrl = async (url: string, userId?: string, increm
     }
     
   } catch (error) {
+    console.error("[contentExtractor] Caught error:", error);
+    console.error("[contentExtractor] Error type:", error?.constructor?.name);
+    console.error("[contentExtractor] Error instanceof AntiScrapingError:", error instanceof AntiScrapingError);
+    
     // Re-throw AntiScrapingError so it can be caught by the calling code
     if (error instanceof AntiScrapingError) {
+      console.log("[contentExtractor] Re-throwing AntiScrapingError");
       throw error;
     }
     
