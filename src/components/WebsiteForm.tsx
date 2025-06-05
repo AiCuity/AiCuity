@@ -7,7 +7,6 @@ import WebsiteInput from "./Website/WebsiteInput";
 import ExamplesList from "./Website/ExamplesList";
 import AlertMessages from "./Website/AlertMessages";
 import SubmitButton from "./Website/SubmitButton";
-import AntiScrapingUpgrade from "./AntiScrapingUpgrade";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
@@ -26,8 +25,6 @@ const WebsiteForm = () => {
   const [apiError, setApiError] = useState<string | null>(null);
   const [previewContent, setPreviewContent] = useState<string>("");
   const [isSimulatedContent, setIsSimulatedContent] = useState(false);
-  const [showAntiScrapingUpgrade, setShowAntiScrapingUpgrade] = useState(false);
-  const [blockedUrl, setBlockedUrl] = useState<string>("");
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -48,8 +45,6 @@ const WebsiteForm = () => {
     setApiError(null);
     setPreviewContent("");
     setIsSimulatedContent(false);
-    setShowAntiScrapingUpgrade(false);
-    setBlockedUrl("");
     
     if (!url) {
       toast({
@@ -132,22 +127,6 @@ const WebsiteForm = () => {
     } catch (error) {
       console.error('Error:', error);
       setIsLoading(false);
-      
-      // Check if this is an anti-scraping error
-      if (error instanceof Error && error.message.includes('ANTI_SCRAPING_DETECTED')) {
-        console.log('Anti-scraping detected, showing upgrade prompt');
-        setShowAntiScrapingUpgrade(true);
-        setBlockedUrl(processedUrl);
-        setApiError(null); // Clear API error since we're showing upgrade prompt
-        
-        toast({
-          title: "Website Protected",
-          description: "This website is protected from scraping. Upgrade to BASIC plan to access protected content.",
-          variant: "default",
-        });
-        return; // Don't proceed with navigation or saving
-      }
-      
       setApiError(error instanceof Error ? error.message : "Failed to extract content");
       
       toast({
@@ -261,19 +240,6 @@ const WebsiteForm = () => {
         </div>
       </div>
       
-      {/* Anti-scraping upgrade prompt */}
-      {showAntiScrapingUpgrade && blockedUrl && (
-        <div className="mt-4 sm:mt-6">
-          <AntiScrapingUpgrade 
-            url={blockedUrl} 
-            onClose={() => {
-              setShowAntiScrapingUpgrade(false);
-              setBlockedUrl("");
-            }}
-          />
-        </div>
-      )}
-
       {previewContent && (
         <div className="mt-4 sm:mt-6">
           <ContentPreview content={previewContent} />
