@@ -55,6 +55,21 @@ Once the technical issues are resolved, you'll be able to extract actual content
 };
 
 /**
+ * Custom error class for anti-scraping protection
+ */
+export class AntiScrapingError extends Error {
+  constructor(
+    message: string, 
+    public readonly protectionType: string,
+    public readonly upgradeRequired: boolean = true,
+    public readonly requiredTier: string = 'BASIC'
+  ) {
+    super(message);
+    this.name = 'AntiScrapingError';
+  }
+}
+
+/**
  * Extract content from a URL using the backend API
  * @param url - The URL to extract content from
  * @param userId - The user ID (optional) for usage tracking
@@ -132,10 +147,29 @@ export const extractContentFromUrl = async (url: string, userId?: string, increm
         return await extractContentFallback(url);
       }
     } else {
-      // Log the error response for debugging
+      // Handle specific error responses
       try {
         const errorText = await response.text();
         console.error(`[contentExtractor] Server error response (${response.status}): ${errorText}`);
+        
+        // Try to parse error response as JSON
+        try {
+          const errorData = JSON.parse(errorText);
+          
+          // Check for anti-scraping protection error
+          if (errorData.error === 'anti_scraping_protection') {
+            console.log('[contentExtractor] Anti-scraping protection detected');
+            throw new AntiScrapingError(
+              errorData.message || 'This website is protected from scraping',
+              errorData.protectionType || 'unknown',
+              errorData.upgradeRequired || true,
+              errorData.requiredTier || 'BASIC'
+            );
+          }
+        } catch (parseError) {
+          // Not JSON, continue with fallback
+          console.log('[contentExtractor] Error response is not JSON, using fallback');
+        }
       } catch (e) {
         console.error('[contentExtractor] Failed to read error response');
       }
@@ -145,6 +179,11 @@ export const extractContentFromUrl = async (url: string, userId?: string, increm
     }
     
   } catch (error) {
+    // Re-throw AntiScrapingError so it can be caught by the calling code
+    if (error instanceof AntiScrapingError) {
+      throw error;
+    }
+    
     if (error.name === 'AbortError') {
       console.error("[contentExtractor] Request timeout, using fallback");
     } else {

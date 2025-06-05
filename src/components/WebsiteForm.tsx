@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { useNavigate } from "react-router-dom";
-import { extractContentFromUrl } from "../utils/contentExtractor";
+import { extractContentFromUrl, AntiScrapingError } from "../utils/contentExtractor";
 import ContentPreview from "@/components/Reader/ContentPreview";
 import WebsiteInput from "./Website/WebsiteInput";
 import ExamplesList from "./Website/ExamplesList";
@@ -11,7 +11,7 @@ import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useUsageLimit } from "@/hooks/useUsageLimit";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Crown, AlertTriangle, TrendingUp } from "lucide-react";
+import { Crown, AlertTriangle, TrendingUp, Shield, Lock } from "lucide-react";
 import SubscribeButton from "./SubscribeButton";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -25,6 +25,11 @@ const WebsiteForm = () => {
   const [apiError, setApiError] = useState<string | null>(null);
   const [previewContent, setPreviewContent] = useState<string>("");
   const [isSimulatedContent, setIsSimulatedContent] = useState(false);
+  const [antiScrapingError, setAntiScrapingError] = useState<{
+    message: string;
+    protectionType: string;
+    requiredTier: string;
+  } | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -45,6 +50,7 @@ const WebsiteForm = () => {
     setApiError(null);
     setPreviewContent("");
     setIsSimulatedContent(false);
+    setAntiScrapingError(null);
     
     if (!url) {
       toast({
@@ -127,6 +133,23 @@ const WebsiteForm = () => {
     } catch (error) {
       console.error('Error:', error);
       setIsLoading(false);
+
+      // Handle anti-scraping protection error specifically
+      if (error instanceof AntiScrapingError) {
+        setAntiScrapingError({
+          message: error.message,
+          protectionType: error.protectionType,
+          requiredTier: error.requiredTier
+        });
+        
+        toast({
+          title: "Website Protected",
+          description: error.message,
+          variant: "default",
+        });
+        return; // Don't show fallback content or navigate
+      }
+      
       setApiError(error instanceof Error ? error.message : "Failed to extract content");
       
       toast({
@@ -143,6 +166,42 @@ const WebsiteForm = () => {
         apiError={apiError} 
         isSimulatedContent={isSimulatedContent}
       />
+
+      {/* Anti-scraping protection alert */}
+      {antiScrapingError && (
+        <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
+          <Shield className="h-4 w-4 text-blue-600 flex-shrink-0" />
+          <AlertDescription className="text-blue-800 dark:text-blue-200">
+            <div className="space-y-3">
+              <div className="text-sm sm:text-base">
+                <strong>Website Protected:</strong> {antiScrapingError.message}
+              </div>
+              <div className="text-xs text-blue-600 dark:text-blue-300">
+                Protection type: {antiScrapingError.protectionType} • Upgrade to {antiScrapingError.requiredTier} plan required
+              </div>
+              <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
+                <div className="w-full sm:w-auto">
+                  <SubscribeButton 
+                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-sm"
+                    tier="basic"
+                  >
+                    <Lock className="mr-1 h-3 w-3 flex-shrink-0" />
+                    <span className="truncate">Upgrade to {antiScrapingError.requiredTier}</span>
+                  </SubscribeButton>
+                </div>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full sm:w-auto text-sm"
+                  onClick={() => setAntiScrapingError(null)}
+                >
+                  Try Another URL
+                </Button>
+              </div>
+            </div>
+          </AlertDescription>
+        </Alert>
+      )}
 
       {/* Usage limit warning */}
       {isAtLimit && (
