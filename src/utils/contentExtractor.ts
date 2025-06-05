@@ -136,7 +136,19 @@ export const extractContentFromUrl = async (url: string, userId?: string, increm
       try {
         const errorText = await response.text();
         console.error(`[contentExtractor] Server error response (${response.status}): ${errorText}`);
+        
+        // Check if this is an anti-scraping error
+        if (response.status === 403 && errorText.includes('ANTI_SCRAPING_DETECTED')) {
+          console.log('[contentExtractor] Anti-scraping detected, throwing error');
+          const errorData = JSON.parse(errorText);
+          throw new Error(errorData.error || 'ANTI_SCRAPING_DETECTED: This website is protected from scraping.');
+        }
       } catch (e) {
+        // If we couldn't parse the error response, check if it's 403 which might indicate anti-scraping
+        if (response.status === 403) {
+          console.log('[contentExtractor] 403 error detected, likely anti-scraping');
+          throw new Error('ANTI_SCRAPING_DETECTED: This website is protected from scraping. Upgrade to BASIC plan to access protected content.');
+        }
         console.error('[contentExtractor] Failed to read error response');
       }
       
@@ -147,6 +159,10 @@ export const extractContentFromUrl = async (url: string, userId?: string, increm
   } catch (error) {
     if (error.name === 'AbortError') {
       console.error("[contentExtractor] Request timeout, using fallback");
+    } else if (error instanceof Error && error.message.includes('ANTI_SCRAPING_DETECTED')) {
+      // Re-throw anti-scraping errors instead of falling back
+      console.log("[contentExtractor] Re-throwing anti-scraping error");
+      throw error;
     } else {
       console.error("[contentExtractor] Failed to extract content, using fallback:", error);
     }
