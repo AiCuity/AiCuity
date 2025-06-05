@@ -84,12 +84,14 @@ export const saveToSupabase = async (
       // Don't create new entries without meaningful content
       if (entry.title === "Reading Session" && !entry.summary && (!entry.parsed_text || entry.parsed_text.length < 200)) {
         console.log("Skipping creation of generic reading session with no summary and insufficient content");
+        console.log("DEBUG: title =", entry.title, "summary =", entry.summary, "parsed_text length =", entry.parsed_text?.length);
         return null;
       }
 
       // Additional check: Don't create entries for very short content without titles
       if (!entry.title || entry.title.trim() === "" || (entry.title === "Reading Session" && (!entry.parsed_text || entry.parsed_text.length < 500))) {
         console.log("Skipping creation of entry with insufficient title or content");
+        console.log("DEBUG: title =", `"${entry.title}"`, "title trimmed =", `"${entry.title?.trim()}"`, "parsed_text length =", entry.parsed_text?.length);
         return null;
       }
 
@@ -101,7 +103,10 @@ export const saveToSupabase = async (
         content_id: entry.content_id,
         total_words: entry.total_words,
         wpm: entry.wpm,
-        current_position: entry.current_position
+        current_position: entry.current_position,
+        source: entry.source,
+        source_type: entry.source_type,
+        parsed_text_length: entry.parsed_text?.length
       });
       
       // Create new entry
