@@ -176,20 +176,20 @@ const WebsiteForm = () => {
 
       {/* Anti-scraping protection alert */}
       {antiScrapingError && (
-        <Alert className="border-blue-200 bg-blue-50 dark:bg-blue-900/20">
-          <Shield className="h-4 w-4 text-blue-600 flex-shrink-0" />
-          <AlertDescription className="text-blue-800 dark:text-blue-200">
+        <Alert className="border-purple-200 bg-purple-50 dark:bg-purple-900/20">
+          <Shield className="h-4 w-4 text-purple-600 flex-shrink-0" />
+          <AlertDescription className="text-purple-800 dark:text-purple-200">
             <div className="space-y-3">
               <div className="text-sm sm:text-base">
                 <strong>Website Protected:</strong> {antiScrapingError.message}
               </div>
-              <div className="text-xs text-blue-600 dark:text-blue-300">
+              <div className="text-xs text-purple-600 dark:text-purple-300">
                 Protection type: {antiScrapingError.protectionType} • Upgrade to {antiScrapingError.requiredTier} plan required
               </div>
               <div className="flex flex-col gap-2 sm:flex-row sm:gap-3">
                 <div className="w-full sm:w-auto">
                   <SubscribeButton 
-                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-sm"
+                    className="w-full sm:w-auto bg-white hover:bg-gray-50 border border-purple-200 text-purple-700 hover:text-purple-800 text-sm"
                     tier="basic"
                   >
                     <Lock className="mr-1 h-3 w-3 flex-shrink-0" />
