@@ -20,7 +20,7 @@ const WebsiteInput = ({ url, setUrl }: WebsiteInputProps) => {
           </div>
           <Input
             id="website-url"
-            type="url"
+            type="text"
             placeholder="example.com/article"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
