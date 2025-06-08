@@ -20,8 +20,8 @@ const WebsiteInput = ({ url, setUrl }: WebsiteInputProps) => {
           </div>
           <Input
             id="website-url"
-            type="text"
-            placeholder="example.com/article"
+            type="url"
+            placeholder="https://example.com/article"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             required
@@ -34,7 +34,7 @@ const WebsiteInput = ({ url, setUrl }: WebsiteInputProps) => {
         </div>
       </div>
       <p className="text-xs sm:text-sm text-gray-500 leading-relaxed">
-        Enter the URL with or without http(s):// prefix
+        Enter the URL with http(s):// prefix
       </p>
     </div>
   );
