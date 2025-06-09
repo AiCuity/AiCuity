@@ -291,7 +291,7 @@ const LandingPage = () => {
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6 mb-8">
         {/* FRANK Book */}
         <Card 
-          className="flex flex-col items-center justify-center p-6 sm:p-8 text-center cursor-pointer hover:shadow-lg transition-all duration-200 bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700"
+          className="flex flex-col items-center justify-center p-6 sm:p-8 text-center cursor-pointer hover:shadow-lg transition-all duration-200 bg-gradient-to-br from-emerald-50 to-green-100 dark:from-emerald-900/30 dark:to-green-800/30 border-emerald-200 dark:border-emerald-700"
           onClick={() => handleExampleBook("FRANK")}
         >
           <div className="mb-4">
@@ -301,14 +301,14 @@ const LandingPage = () => {
               className="h-12 w-12 sm:h-16 sm:w-16 mx-auto transition-opacity duration-200" 
             />
           </div>
-          <p className="text-sm text-blue-600 dark:text-blue-300">
+          <p className="text-sm text-emerald-700 dark:text-emerald-300">
             Try Frankenstein
           </p>
         </Card>
 
         {/* GATSBY Book */}
         <Card 
-          className="flex flex-col items-center justify-center p-6 sm:p-8 text-center cursor-pointer hover:shadow-lg transition-all duration-200 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border-green-200 dark:border-green-700"
+          className="flex flex-col items-center justify-center p-6 sm:p-8 text-center cursor-pointer hover:shadow-lg transition-all duration-200 bg-gradient-to-br from-cyan-50 to-fuchsia-100 dark:from-cyan-900/30 dark:to-fuchsia-800/30 border-cyan-200 dark:border-cyan-700"
           onClick={() => handleExampleBook("GATSBY")}
         >
           <div className="mb-4">
@@ -318,13 +318,13 @@ const LandingPage = () => {
               className="h-12 w-12 sm:h-16 sm:w-16 mx-auto transition-opacity duration-200" 
             />
           </div>
-          <p className="text-sm text-green-600 dark:text-green-300">
+          <p className="text-sm text-cyan-700 dark:text-cyan-300">
             Try The Great Gatsby
           </p>
         </Card>
 
         {/* Upload */}
-        <Card className="flex flex-col items-center justify-center cursor-pointer p-6 sm:p-8 text-center hover:shadow-lg transition-all duration-200 bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-700" onClick={handleUploadClick}>
+        <Card className="flex flex-col items-center justify-center cursor-pointer p-6 sm:p-8 text-center hover:shadow-lg transition-all duration-200 bg-gradient-to-br from-blue-50 to-violet-100 dark:from-blue-900/30 dark:to-violet-800/30 border-blue-200 dark:border-blue-700" onClick={handleUploadClick}>
           <div className="mb-4">
           <img 
               src={uploadIcon} 
@@ -332,7 +332,7 @@ const LandingPage = () => {
               className="h-12 w-12 sm:h-16 sm:w-16 mx-auto transition-opacity duration-200" 
             />
           </div>
-          <p className="text-sm text-purple-600 dark:text-purple-300 mb-4">
+          <p className="text-sm text-blue-700 dark:text-blue-300 mb-4">
             Upload your files
           </p>
           
