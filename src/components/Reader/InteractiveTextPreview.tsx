@@ -78,21 +78,23 @@ const InteractiveTextPreview = ({
           </div>
           
           {/* Action row - Mobile */}
-          <div className="flex items-stretch gap-3 px-2">
+          <div className="flex items-stretch gap-3 px-4">
             <div className="flex-1">
-              {contentId && (
+              {contentId ? (
                 <GlassesQRGenerator 
                   contentId={contentId}
                   title={title}
-                  className="w-full min-h-[44px] h-full"
+                  className="w-full h-full min-h-[44px] text-sm flex items-center justify-center"
                 />
+              ) : (
+                <div className="w-full h-full min-h-[44px]"></div>
               )}
             </div>
             <div className="flex-1">
               <Button 
                 onClick={onSummarize} 
                 disabled={isSummarizing}
-                className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 w-full min-h-[44px] h-full font-medium text-white"
+                className="w-full h-full min-h-[44px] text-sm bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium flex items-center justify-center gap-2"
               >
                 {isSummarizing ? (
                   <>
@@ -102,7 +104,7 @@ const InteractiveTextPreview = ({
                 ) : (
                   <>
                     <FileText className="h-4 w-4" />
-                    <span>Summarize Text</span>
+                    <span>Summarize</span>
                   </>
                 )}
               </Button>
