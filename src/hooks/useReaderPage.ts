@@ -95,6 +95,16 @@ export function useReaderPage() {
     handleSummarize(apiKey, useOpenAI);
   };
 
+  const handleBackToText = () => {
+    // Clear the summary to return to the interactive text preview
+    setSummary("");
+  };
+
+  const handleCloseReader = () => {
+    // Close the RSVP reader and return to the reader selection page
+    setShowReader(false);
+  };
+
   return {
     contentId,
     content,
@@ -118,6 +128,8 @@ export function useReaderPage() {
     handleWordClick,
     handleSummarize,
     handleRetrySummarization,
+    handleBackToText,
+    handleCloseReader,
     setApiKey,
     setUseOpenAI
   };

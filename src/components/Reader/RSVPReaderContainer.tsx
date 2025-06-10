@@ -10,6 +10,7 @@ interface RSVPReaderContainerProps {
   source?: string;
   initialPosition: number;
   initialWpm?: number; // Add this prop to the interface
+  onCloseReader: () => void;
 }
 
 const RSVPReaderContainer = ({ 
@@ -20,7 +21,8 @@ const RSVPReaderContainer = ({
   title, 
   source, 
   initialPosition,
-  initialWpm // Add this to the parameter list
+  initialWpm, // Add this to the parameter list
+  onCloseReader
 }: RSVPReaderContainerProps) => {
   const [currentPosition, setCurrentPosition] = useState(initialPosition);
 
@@ -56,6 +58,7 @@ const RSVPReaderContainer = ({
         source={source}
         initialPosition={currentPosition}
         initialWpm={initialWpm} // Pass the initialWpm to the RSVPReader
+        onCloseReader={onCloseReader}
       />
     </div>
   );

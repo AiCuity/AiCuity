@@ -1,11 +1,7 @@
-import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
 import { Progress } from "@/components/ui/progress";
-import { FileText, ChevronDown, Text, RefreshCw } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { RefreshCw, Play, FileText } from "lucide-react";
+import GlassesQRGenerator from "@/components/GlassesQRGenerator";
 
 interface SummaryPanelProps {
   summary: string;
@@ -16,6 +12,8 @@ interface SummaryPanelProps {
   progress: number;
   onStartReading: (useFullText: boolean) => void;
   onRetry: () => void;
+  onBackToText: () => void;
+  contentId?: string;
 }
 
 const SummaryPanel = ({
@@ -26,10 +24,10 @@ const SummaryPanel = ({
   isLoading,
   progress,
   onStartReading,
-  onRetry
+  onRetry,
+  onBackToText,
+  contentId
 }: SummaryPanelProps) => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const navigate = useNavigate();
   
   const handleRetry = () => {
     // Call parent's retry function
@@ -39,91 +37,129 @@ const SummaryPanel = ({
   };
   
   return (
-    <div className="bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-800 p-4 sm:p-6 mb-4 sm:mb-6">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg sm:text-xl font-semibold">Summary</h3>
-        <Collapsible open={!isCollapsed} onOpenChange={(open) => setIsCollapsed(!open)}>
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="sm">
-              <ChevronDown className={`h-4 w-4 transition-transform ${isCollapsed ? "" : "transform rotate-180"}`} />
-            </Button>
-          </CollapsibleTrigger>
-        </Collapsible>
-      </div>
-
-      <Collapsible open={!isCollapsed} onOpenChange={(open) => setIsCollapsed(!open)}>
-        <CollapsibleContent>
-          {isLoading ? (
-            <div className="space-y-4 py-4">
-              <p className="text-sm text-muted-foreground">
-                Generating summary... This might take a moment.
-              </p>
-              <Progress value={progress} className="w-full" />
-              <p className="text-xs text-muted-foreground text-right">
-                {Math.round(progress)}% complete
-              </p>
+    <div className="bg-white dark:bg-gray-900 rounded-md border border-gray-200 dark:border-gray-800 p-4 sm:p-6">
+      {/* Responsive header layout */}
+      <div className="space-y-6 sm:space-y-0 mb-6">
+        {/* Mobile layout: Title first, then buttons */}
+        <div className="sm:hidden">
+          {/* Title - Mobile only */}
+          <div className="text-center mb-6">
+            <h2 className="text-xl font-bold text-gray-900 dark:text-white mb-2">
+              Summary
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 break-words px-2">
+              {title}
+            </p>
+          </div>
+          
+          {/* Action row - Mobile */}
+          <div className="flex items-stretch gap-3 px-2">
+            <div className="flex-1">
+              {contentId && (
+                <GlassesQRGenerator 
+                  contentId={contentId}
+                  title={title}
+                  className="w-full min-h-[44px] h-full"
+                />
+              )}
             </div>
-          ) : summary ? (
-            <>
-              <Textarea 
-                value={summary} 
-                readOnly 
-                className="w-full h-48 sm:h-64 mb-4 resize-none text-sm sm:text-base"
-              />
-              
-              <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:justify-between sm:items-center sm:gap-2 mt-4">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => onStartReading(false)}
-                    className="w-full sm:w-auto text-sm sm:text-base"
-                  >
-                    <Text className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Read Summary</span>
-                    <span className="sm:hidden">Summary</span>
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    onClick={() => onStartReading(true)}
-                    className="w-full sm:w-auto text-sm sm:text-base"
-                  >
-                    <FileText className="h-4 w-4 mr-2" />
-                    <span className="hidden sm:inline">Read Full Text</span>
-                    <span className="sm:hidden">Full Text</span>
-                  </Button>
-                </div>
-                
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  onClick={handleRetry}
-                  disabled={isLoading}
-                  className="w-full sm:w-auto text-xs sm:text-sm"
-                >
-                  <RefreshCw className="h-4 w-4 mr-1" />
-                  <span className="hidden sm:inline">Regenerate</span>
-                  <span className="sm:hidden">Retry</span>
-                </Button>
-              </div>
-            </>
-          ) : (
-            <div className="text-center py-8">
-              <p className="text-muted-foreground text-sm sm:text-base mb-4">
-                Summary generation failed. Please try again.
-              </p>
-              <Button onClick={handleRetry} className="w-full sm:w-auto">
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Retry Summarization
+            <div className="flex-1">
+              <Button 
+                variant="outline"
+                onClick={onBackToText}
+                className="flex items-center justify-center gap-2 w-full min-h-[44px] h-full border-2"
+              >
+                <FileText className="h-4 w-4" />
+                <span className="font-medium">Back to Full Text</span>
               </Button>
             </div>
-          )}
-        </CollapsibleContent>
-      </Collapsible>
-      
-      {isCollapsed && summary && (
-        <div className="text-sm text-muted-foreground flex items-center gap-2">
-          <FileText className="h-4 w-4" />
-          <span>Summary available</span>
+          </div>
+        </div>
+
+        {/* Desktop layout: Three-column */}
+        <div className="hidden sm:flex sm:items-center sm:justify-between sm:gap-4">
+          {/* Left: QR Generator */}
+          <div className="flex items-center">
+            {contentId && (
+              <GlassesQRGenerator 
+                contentId={contentId}
+                title={title}
+                className="min-h-[44px]"
+              />
+            )}
+          </div>
+          
+          {/* Center: Title */}
+          <div className="flex-1 text-center">
+            <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">
+              Summary
+            </h2>
+            <p className="text-sm text-gray-600 dark:text-gray-400 break-words">
+              {title}
+            </p>
+          </div>
+          
+          {/* Right: Back button */}
+          <div className="flex items-center">
+            <Button 
+              variant="outline"
+              onClick={onBackToText}
+              className="flex items-center justify-center gap-2 min-h-[44px] border-2"
+            >
+              <FileText className="h-4 w-4" />
+              <span className="font-medium">Back to Full Text</span>
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-4 py-8 text-center">
+          <p className="text-sm text-muted-foreground">
+            Generating summary... This might take a moment.
+          </p>
+          <Progress value={progress} className="w-full max-w-md mx-auto" />
+          <p className="text-xs text-muted-foreground">
+            {Math.round(progress)}% complete
+          </p>
+        </div>
+      ) : summary ? (
+        <>
+          <div className="max-h-[400px] overflow-y-auto overflow-x-hidden p-4 bg-gray-50 dark:bg-gray-800 rounded-md mb-6">
+            <div className="prose prose-sm dark:prose-invert max-w-none">
+              <div className="leading-relaxed text-sm sm:text-base whitespace-pre-wrap break-words">
+                {summary}
+              </div>
+            </div>
+          </div>
+          
+          <div className="text-center mb-4">
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 px-2">
+              Click on any word to set your reading position • Total words: {summary.split(' ').length} •
+            </p>
+          </div>
+
+          {/* Read Summary button */}
+          <div className="text-center flex justify-center px-4 sm:px-0">
+            <Button 
+              onClick={() => onStartReading(false)}
+              size="lg"
+              className="flex items-center gap-2 w-full sm:w-auto min-w-[200px] sm:min-w-0"
+            >
+              <Play className="h-4 w-4" />
+              Read Summary
+            </Button>
+          </div>
+        </>
+      ) : (
+        <div className="text-center py-8">
+          <p className="text-muted-foreground text-sm sm:text-base mb-4">
+            Summary generation failed. Please try again.
+          </p>
+          <Button onClick={handleRetry} className="w-full sm:w-auto">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Retry Summarization
+          </Button>
         </div>
       )}
     </div>

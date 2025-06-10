@@ -16,6 +16,7 @@ interface RSVPReaderProps {
   initialPosition?: number;
   initialWpm?: number;
   isGlassesMode?: boolean;
+  onCloseReader?: () => void;
 }
 
 const RSVPReader = ({ 
@@ -25,7 +26,8 @@ const RSVPReader = ({
   source, 
   initialPosition = 0,
   initialWpm,
-  isGlassesMode = false
+  isGlassesMode = false,
+  onCloseReader
 }: RSVPReaderProps) => {
   const readerRef = useRef<HTMLDivElement>(null);
   const { showNotifications, setShowNotifications, toggleNotifications } = useNotifications(false);
@@ -84,6 +86,8 @@ const RSVPReader = ({
         wordCount={words.length}
         isFullscreen={isFullscreen}
         isGlassesMode={isGlassesMode}
+        contentId={contentId}
+        onCloseReader={onCloseReader}
       />
       
       <SourceLink source={source} isFullscreen={isFullscreen} />

@@ -15,6 +15,7 @@ import { useAuth } from "@/context/AuthContext";
 interface GlassesQRGeneratorProps {
   contentId: string;
   title: string;
+  className?: string;
 }
 
 interface GlassesTokenResponse {
@@ -25,7 +26,7 @@ interface GlassesTokenResponse {
   contentTitle: string;
 }
 
-const GlassesQRGenerator = ({ contentId, title }: GlassesQRGeneratorProps) => {
+const GlassesQRGenerator = ({ contentId, title, className }: GlassesQRGeneratorProps) => {
   const { user } = useAuth();
   const [isGenerating, setIsGenerating] = useState(false);
   const [glassesData, setGlassesData] = useState<GlassesTokenResponse | null>(null);
@@ -90,10 +91,9 @@ const GlassesQRGenerator = ({ contentId, title }: GlassesQRGeneratorProps) => {
       <DialogTrigger asChild>
         <Button 
           variant="outline" 
-          size="sm"
-          className="text-purple-600 border-purple-300 hover:bg-purple-50 dark:hover:bg-purple-950 mb-4"
+          className={`flex items-center gap-2 ${className || ''}`}
         >
-          <Glasses className="mr-2 h-4 w-4" />
+          <Glasses className="h-4 w-4" />
           View on Glasses
         </Button>
       </DialogTrigger>

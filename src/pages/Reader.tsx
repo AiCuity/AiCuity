@@ -30,6 +30,8 @@ const Reader = () => {
     handleWordClick,
     handleSummarize,
     handleRetrySummarization,
+    handleBackToText,
+    handleCloseReader,
     setApiKey,
     setUseOpenAI
   } = useReaderPage();
@@ -54,6 +56,7 @@ const Reader = () => {
         source={source}
         initialPosition={initialPosition}
         initialWpm={savedWpm} // Make sure to pass the savedWpm to the container
+        onCloseReader={handleCloseReader}
       />
     );
   }
@@ -91,11 +94,13 @@ const Reader = () => {
           summarizationProgress={summarizationProgress}
           summarizationError={summarizationError}
           selectedWordPosition={selectedWordPosition}
+          contentId={contentId}
           handleSummarize={() => handleSummarize(apiKey, useOpenAI)}
           handleStartReading={handleStartReading}
           handleStartReadingFromPosition={handleStartReadingFromPosition}
           handleWordClick={handleWordClick}
           handleRetrySummarization={handleRetrySummarization}
+          handleBackToText={handleBackToText}
         />
       </div>
     </div>

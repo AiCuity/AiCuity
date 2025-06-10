@@ -1,8 +1,6 @@
 import React from 'react';
 import ApiKeyConfig from "@/components/ApiKeyConfig";
 import SummaryPanel from "@/components/SummaryPanel";
-import SummarizePrompt from "@/components/Reader/SummarizePrompt";
-import ContentPreview from "@/components/Reader/ContentPreview";
 import InteractiveTextPreview from "@/components/Reader/InteractiveTextPreview";
 
 interface ReaderOptionsProps {
@@ -18,11 +16,13 @@ interface ReaderOptionsProps {
   summarizationProgress: number;
   summarizationError: string | null;
   selectedWordPosition: number;
+  contentId?: string;
   handleSummarize: () => void;
   handleStartReading: (useFull: boolean) => void;
   handleStartReadingFromPosition: (useFull: boolean, position?: number) => void;
   handleWordClick: (wordIndex: number) => void;
   handleRetrySummarization: () => void;
+  handleBackToText: () => void;
 }
 
 const ReaderOptions: React.FC<ReaderOptionsProps> = ({
@@ -38,11 +38,13 @@ const ReaderOptions: React.FC<ReaderOptionsProps> = ({
   summarizationProgress,
   summarizationError,
   selectedWordPosition,
+  contentId,
   handleSummarize,
   handleStartReading,
   handleStartReadingFromPosition,
   handleWordClick,
-  handleRetrySummarization
+  handleRetrySummarization,
+  handleBackToText
 }) => {
   return (
     <div className="space-y-6">
@@ -53,17 +55,7 @@ const ReaderOptions: React.FC<ReaderOptionsProps> = ({
         onUseOpenAIChange={setUseOpenAI}
       />
       
-      {/* Show Interactive Text Preview first if there's a saved position */}
-      {selectedWordPosition > 0 && (
-        <InteractiveTextPreview
-          content={content}
-          currentPosition={selectedWordPosition}
-          onWordClick={handleWordClick}
-          onStartReading={() => handleStartReadingFromPosition(true, selectedWordPosition)}
-          title={title}
-        />
-      )}
-      
+      {/* Show Summary Panel if summary is available, otherwise show Interactive Text Preview */}
       {summary ? (
         <SummaryPanel
           summary={summary}
@@ -74,28 +66,22 @@ const ReaderOptions: React.FC<ReaderOptionsProps> = ({
           progress={summarizationProgress}
           onStartReading={handleStartReading}
           onRetry={handleRetrySummarization}
+          onBackToText={handleBackToText}
+          contentId={contentId}
         />
       ) : (
-        <SummarizePrompt
-          onSummarize={handleSummarize} 
-          onReadFullText={() => handleStartReading(true)}
-          isSummarizing={isSummarizing}
-          summarizationError={summarizationError}
-        />
-      )}
-      
-      {/* Show Interactive Text Preview below other options if no saved position */}
-      {selectedWordPosition === 0 && (
         <InteractiveTextPreview
           content={content}
           currentPosition={selectedWordPosition}
           onWordClick={handleWordClick}
           onStartReading={() => handleStartReadingFromPosition(true, selectedWordPosition)}
+          onSummarize={handleSummarize}
           title={title}
+          isSummarizing={isSummarizing}
+          summarizationError={summarizationError}
+          contentId={contentId}
         />
       )}
-      
-      <ContentPreview content={content} />
     </div>
   );
 };

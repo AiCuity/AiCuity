@@ -8,10 +8,25 @@ interface TitleBarProps {
   wordCount: number;
   isFullscreen: boolean;
   isGlassesMode?: boolean;
+  contentId?: string;
+  onCloseReader?: () => void;
 }
 
-const TitleBar = ({ title, wordCount, isFullscreen, isGlassesMode = false }: TitleBarProps) => {
+const TitleBar = ({ title, wordCount, isFullscreen, isGlassesMode = false, contentId, onCloseReader }: TitleBarProps) => {
   const navigate = useNavigate();
+
+  const handleBackClick = () => {
+    if (onCloseReader) {
+      // Close the RSVP reader and return to reader selection page
+      onCloseReader();
+    } else if (contentId) {
+      // Fallback: Navigate back to the reader page for this content
+      navigate(`/reader/${contentId}`);
+    } else {
+      // Fallback: Navigate to landing page if no contentId
+      navigate("/");
+    }
+  };
 
   if (isFullscreen) {
     return null;
@@ -20,7 +35,7 @@ const TitleBar = ({ title, wordCount, isFullscreen, isGlassesMode = false }: Tit
   return (
     <div className="flex items-center justify-between p-4">
       {!isGlassesMode && (
-        <Button variant="ghost" size="sm" onClick={() => navigate("/")}>
+        <Button variant="ghost" size="sm" onClick={handleBackClick}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>

@@ -87,7 +87,7 @@ const ContentHeader: React.FC<ContentHeaderProps> = ({ content, isFullscreen, co
       </div>
 
       {/* QR Code Generator - positioned below header */}
-      {contentId && (
+      {/* {contentId && (
         <div className="container mx-auto px-3 sm:px-4 lg:px-6 max-w-4xl py-4">
           <div className="flex justify-center sm:justify-end">
             <GlassesQRGenerator
@@ -96,7 +96,7 @@ const ContentHeader: React.FC<ContentHeaderProps> = ({ content, isFullscreen, co
             />
           </div>
         </div>
-      )}
+      )} */}
     </div>
   );
 };
