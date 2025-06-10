@@ -1,14 +1,16 @@
 import { Button } from "@/components/ui/button";
-import { ChevronLeft, ChevronRight, Pause, Play, Gauge, RefreshCw, Minimize } from "lucide-react";
+import { ChevronLeft, ChevronRight, Pause, Play, Gauge, RefreshCw, Minimize, Maximize2 } from "lucide-react";
 import { 
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger 
 } from "@/components/ui/tooltip";
+import NotificationToggle from "./NotificationToggle";
 
 interface PlaybackControlsProps {
   isPlaying: boolean;
+  isFullscreen: boolean;
   onPlayPause: () => void;
   onPrevious: () => void;
   onNext: () => void;
@@ -22,10 +24,14 @@ interface PlaybackControlsProps {
   effectiveWpm: number;
   isGlassesFullscreen?: boolean;
   onToggleFullscreen?: () => void;
+  showNotifications: boolean;
+  onToggleNotifications: () => void;
+  isGlassesMode: boolean;
 }
 
 const PlaybackControls = ({
   isPlaying,
+  isFullscreen,
   onPlayPause,
   onPrevious,
   onNext,
@@ -38,9 +44,13 @@ const PlaybackControls = ({
   totalWords,
   effectiveWpm,
   isGlassesFullscreen = false,
-  onToggleFullscreen
+  onToggleFullscreen,
+  showNotifications,
+  onToggleNotifications,
+  isGlassesMode
 }: PlaybackControlsProps) => {
   // Fixed function to handle play/pause that prevents default behavior
+
   const handlePlayPause = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -233,6 +243,34 @@ const PlaybackControls = ({
               <p>Next word (Right Arrow)</p>
             </TooltipContent>
           </Tooltip>
+
+          {/* Fullscreen toggle button */}
+          {onToggleFullscreen && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant={buttonVariant} 
+                  size="icon"
+                  onClick={handleToggleFullscreen}
+                  type="button"
+                  className="h-10 w-10 sm:h-11 sm:w-11"
+                >
+                  {isFullscreen ? (
+                    <Minimize className="h-4 w-4 sm:h-5 sm:w-5" />
+                  ) : (
+                    <Maximize2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                {isFullscreen ? (
+                  <p>Exit fullscreen</p>
+                ) : (
+                  <p>Enter fullscreen</p>
+                )}
+              </TooltipContent>
+            </Tooltip>
+          )}
         </div>
       </TooltipProvider>
       
@@ -247,7 +285,7 @@ const PlaybackControls = ({
       </div>
       
       <TooltipProvider>
-        <div className="flex items-center justify-center mb-3 sm:mb-4">
+        <div className="flex items-center justify-center mb-3 sm:mb-4 gap-4">
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -270,6 +308,12 @@ const PlaybackControls = ({
               <p>Adjust reading speed based on text complexity</p>
             </TooltipContent>
           </Tooltip>
+
+          <NotificationToggle 
+            showNotifications={showNotifications} 
+            onToggle={onToggleNotifications}
+            isGlassesMode={isGlassesMode}
+          />
         </div>
       </TooltipProvider>
     </div>

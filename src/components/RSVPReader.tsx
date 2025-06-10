@@ -88,9 +88,10 @@ const RSVPReader = ({
         isGlassesMode={isGlassesMode}
         contentId={contentId}
         onCloseReader={onCloseReader}
+        source={source}
       />
       
-      <SourceLink source={source} isFullscreen={isFullscreen} />
+      {/* <SourceLink source={source} isFullscreen={isFullscreen} /> */}
 
       <ReadingArea
         isFullscreen={isFullscreen}
