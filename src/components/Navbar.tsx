@@ -16,13 +16,17 @@ import {
   DialogTitle,
   DialogTrigger
 } from "@/components/ui/dialog";
-import { Menu, Crown, Shield, LogOut, User, Settings, Zap } from "lucide-react";
+import { Menu, Crown, Shield, LogOut, User, Settings } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useSubscriptionQuery } from "@/hooks/useSubscriptionQuery";
 import CalibrationButton from "@/components/CalibrationButton";
 import ThemeToggle from "@/components/ui/theme-toggle";
 import SubscribeButton from "@/components/SubscribeButton";
+
+// Import SVG logos
+import logoFull from "/assets/logo.svg";
+import logoClosed from "/assets/closed.svg";
 
 const Navbar = () => {
   const [isCalibrationOpen, setIsCalibrationOpen] = useState(false);
@@ -46,13 +50,19 @@ const Navbar = () => {
       <div className="container mx-auto px-3 sm:px-4 lg:px-6">
         <div className="flex h-16 items-center justify-between">
           {/* Logo/Brand */}
-          <Link to="/" className="flex items-center space-x-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-purple-600 to-blue-600">
-              <Zap className="h-5 w-5 text-white" />
-            </div>
-            <span className="hidden font-bold text-xl bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent sm:inline-block">
-              AiCuity
-            </span>
+          <Link to="/" className="flex items-center space-x-3">
+            {/* Desktop Logo - Full logo visible on sm screens and up */}
+            <img 
+              src={logoFull} 
+              alt="AiCuity" 
+              className="hidden sm:block h-8 w-auto transition-opacity duration-200 hover:opacity-80" 
+            />
+            {/* Mobile Logo - Compact logo for small screens */}
+            <img 
+              src={logoClosed} 
+              alt="AiCuity" 
+              className="block sm:hidden h-8 w-auto transition-opacity duration-200 hover:opacity-80" 
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -146,13 +156,12 @@ const Navbar = () => {
               </SheetTrigger>
               <SheetContent side="right" className="w-[300px] sm:w-[400px]">
                 <SheetHeader>
-                  <SheetTitle className="flex items-center space-x-2">
-                    <div className="flex h-6 w-6 items-center justify-center rounded-md bg-gradient-to-r from-purple-600 to-blue-600">
-                      <Zap className="h-4 w-4 text-white" />
-                    </div>
-                    <span className="bg-gradient-to-r from-purple-600 to-blue-600 bg-clip-text text-transparent">
-                      AiCuity
-                    </span>
+                  <SheetTitle className="flex items-center space-x-3">
+                    <img 
+                      src={logoFull} 
+                      alt="AiCuity" 
+                      className="h-6 w-auto" 
+                    />
                   </SheetTitle>
                 </SheetHeader>
 
