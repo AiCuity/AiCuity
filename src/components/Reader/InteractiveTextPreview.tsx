@@ -92,7 +92,7 @@ const InteractiveTextPreview = ({
               <Button 
                 onClick={onSummarize} 
                 disabled={isSummarizing}
-                className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 w-full min-h-[44px] h-full font-medium"
+                className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 w-full min-h-[44px] h-full font-medium text-white"
               >
                 {isSummarizing ? (
                   <>
@@ -138,7 +138,7 @@ const InteractiveTextPreview = ({
             <Button 
               onClick={onSummarize} 
               disabled={isSummarizing}
-              className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 min-h-[44px] font-medium"
+              className="flex items-center justify-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 min-h-[44px] font-medium text-white"
             >
               {isSummarizing ? (
                 <>

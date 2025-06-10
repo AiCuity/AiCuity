@@ -90,8 +90,7 @@ const GlassesQRGenerator = ({ contentId, title, className }: GlassesQRGeneratorP
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
         <Button 
-          variant="outline" 
-          className={`flex items-center gap-2 ${className || ''}`}
+          className={`flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium ${className || ''}`}
         >
           <Glasses className="h-4 w-4" />
           View on Glasses

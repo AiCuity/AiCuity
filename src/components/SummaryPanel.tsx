@@ -65,9 +65,8 @@ const SummaryPanel = ({
             </div>
             <div className="flex-1">
               <Button 
-                variant="outline"
                 onClick={onBackToText}
-                className="flex items-center justify-center gap-2 w-full min-h-[44px] h-full border-2"
+                className="flex items-center justify-center gap-2 w-full min-h-[44px] h-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
               >
                 <FileText className="h-4 w-4" />
                 <span className="font-medium">Back to Full Text</span>
@@ -102,9 +101,8 @@ const SummaryPanel = ({
           {/* Right: Back button */}
           <div className="flex items-center">
             <Button 
-              variant="outline"
               onClick={onBackToText}
-              className="flex items-center justify-center gap-2 min-h-[44px] border-2"
+              className="flex items-center justify-center gap-2 min-h-[44px] bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-medium"
             >
               <FileText className="h-4 w-4" />
               <span className="font-medium">Back to Full Text</span>
