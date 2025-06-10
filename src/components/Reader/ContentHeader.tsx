@@ -1,7 +1,7 @@
 import React from 'react';
 import { Button } from '@/components/ui/button';
-import { ArrowLeft, Bookmark, ExternalLink, BookOpen } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Bookmark, ExternalLink, BookOpen, User } from 'lucide-react';
+import { Link, useNavigate } from 'react-router-dom';
 import { Content } from '@/utils/types';
 import CalibrationButton from '@/components/CalibrationButton';
 
@@ -25,23 +25,23 @@ const ContentHeader: React.FC<ContentHeaderProps> = ({ content, isFullscreen, co
         <div className="container mx-auto px-3 sm:px-4 lg:px-6 max-w-4xl">
           <div className="flex h-16 items-center gap-3 sm:gap-4">
             {/* Back Button */}
-            <Button 
-              variant="ghost" 
-              size="sm" 
+            <Button
+              variant="ghost"
+              size="sm"
               onClick={() => navigate(-1)}
               className="px-2 sm:px-3 flex-shrink-0"
             >
               <ArrowLeft className="h-4 w-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">Back</span>
             </Button>
-            
+
             <div className="hidden sm:block h-6 w-px bg-border flex-shrink-0"></div>
-            
+
             {/* Icon */}
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 flex-shrink-0">
               <BookOpen className="h-5 w-5 text-white" />
             </div>
-            
+
             {/* Title and Source - with proper overflow handling */}
             <div className="min-w-0 flex-1 overflow-hidden">
               <h1 className="font-bold text-base sm:text-lg bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent truncate leading-tight">
@@ -67,7 +67,13 @@ const ContentHeader: React.FC<ContentHeaderProps> = ({ content, isFullscreen, co
             {/* Right side actions */}
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <div className="hidden sm:flex items-center gap-2">
-                <CalibrationButton size="sm" />
+                {/* <CalibrationButton size="sm" /> */}
+                <Link to="/account">
+                  <Button variant="ghost" size="sm">
+                    <User className="mr-2 h-4 w-4" />
+                    Account
+                  </Button>
+                </Link>
                 <Button variant="ghost" size="sm" className="hidden md:flex">
                   <Bookmark className="h-4 w-4 mr-1" />
                   Save
