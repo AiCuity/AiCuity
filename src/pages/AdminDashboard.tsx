@@ -111,7 +111,7 @@ export default function AdminDashboard() {
                 <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''} ${isLoading ? 'mr-0' : 'mr-1 sm:mr-2'}`} />
                 <span className={`${isLoading ? 'hidden' : 'hidden sm:inline'}`}>Refresh</span>
               </Button>
-              <ThemeToggle />
+              {/* <ThemeToggle /> */}
             </div>
           </div>
         </div>

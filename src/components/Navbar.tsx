@@ -21,7 +21,6 @@ import { useAuth } from "@/context/AuthContext";
 import { useProfile } from "@/hooks/useProfile";
 import { useSubscriptionQuery } from "@/hooks/useSubscriptionQuery";
 import CalibrationButton from "@/components/CalibrationButton";
-import ThemeToggle from "@/components/ui/theme-toggle";
 import SubscribeButton from "@/components/SubscribeButton";
 
 // Import SVG logos
@@ -118,9 +117,6 @@ const Navbar = () => {
                 </SubscribeButton>
               )}
 
-              {/* Theme Toggle */}
-              <ThemeToggle />
-
               {/* Sign Out */}
               <Button variant="ghost" size="sm" onClick={signOut}>
                 <LogOut className="mr-2 h-4 w-4" />
@@ -129,7 +125,6 @@ const Navbar = () => {
             </div>
           ) : (
             <div className="hidden md:flex items-center space-x-4">
-              <ThemeToggle />
               <Link to="/login">
                 <Button variant="ghost" size="sm">
                   Sign In
@@ -146,7 +141,6 @@ const Navbar = () => {
 
           {/* Mobile Menu */}
           <div className="md:hidden flex items-center space-x-2">
-            <ThemeToggle />
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="sm" className="px-2">

@@ -71,7 +71,7 @@ const TitleBar = ({ title, wordCount, isFullscreen, isGlassesMode = false, conte
           
           {/* Mobile menu for Account and Theme (visible only on small screens) */}
           <div className="flex items-center gap-2 sm:hidden">
-            <ThemeToggle />
+            {/* <ThemeToggle /> */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="sm" className="min-h-[44px] px-2">
@@ -124,7 +124,7 @@ const TitleBar = ({ title, wordCount, isFullscreen, isGlassesMode = false, conte
             Account
           </Button>
           
-          <ThemeToggle />
+          {/* <ThemeToggle /> */}
           
           <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400 flex-shrink-0">
             <span className="font-medium">{wordCount} words</span>

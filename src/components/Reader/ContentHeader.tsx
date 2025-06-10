@@ -4,8 +4,6 @@ import { ArrowLeft, Bookmark, ExternalLink, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Content } from '@/utils/types';
 import CalibrationButton from '@/components/CalibrationButton';
-import ThemeToggle from '@/components/ui/theme-toggle';
-import GlassesQRGenerator from '@/components/GlassesQRGenerator';
 
 interface ContentHeaderProps {
   content: Content;
@@ -51,7 +49,7 @@ const ContentHeader: React.FC<ContentHeaderProps> = ({ content, isFullscreen, co
               </h1>
               {content.source && (
                 <div className="flex items-center text-xs sm:text-sm text-muted-foreground mt-0.5">
-                  <span className="truncate flex-1 min-w-0">{content.source}</span>
+                  <span className="truncate min-w-0">{content.source}</span>
                   {content.url && (
                     <a
                       href={content.url}
@@ -70,16 +68,10 @@ const ContentHeader: React.FC<ContentHeaderProps> = ({ content, isFullscreen, co
             <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
               <div className="hidden sm:flex items-center gap-2">
                 <CalibrationButton size="sm" />
-                <ThemeToggle />
                 <Button variant="ghost" size="sm" className="hidden md:flex">
                   <Bookmark className="h-4 w-4 mr-1" />
                   Save
                 </Button>
-              </div>
-              
-              {/* Mobile - only theme toggle */}
-              <div className="sm:hidden">
-                <ThemeToggle />
               </div>
             </div>
           </div>
