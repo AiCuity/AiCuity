@@ -29,7 +29,7 @@ const ReadingArea = ({
         isGlassesMode={isGlassesMode}
       />
       
-      <ProgressBar progress={progress} complexity={currentComplexity} />
+      {/* <ProgressBar progress={progress} complexity={currentComplexity} /> */}
     </div>
   );
 };
