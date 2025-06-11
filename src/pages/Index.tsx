@@ -15,6 +15,8 @@ import { useSubscriptionQuery } from "@/hooks/useSubscriptionQuery";
 import Navbar from "@/components/Navbar";
 import LandingPage from "@/components/LandingPage";
 
+import MxmcSVG from "/assets/mxmc.svg";
+
 const Index = () => {
   const [activeTab, setActiveTab] = useState<string>("website");
   const { user } = useAuth();
@@ -115,7 +117,37 @@ const Index = () => {
         )}
 
         <div className="mt-8 sm:mt-12 text-center text-xs sm:text-sm text-gray-500 px-4">
-          <p>AiCuity - Speed Reading Technology</p>
+          <div className="flex flex-col items-center space-y-4">
+            {/* Main footer text */}
+            <p>AiCuity - Speed Reading Technology</p>
+            
+            {/* Privacy and Terms links */}
+            <div className="flex items-center space-x-4">
+              <Link 
+                to="/privacy" 
+                className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              >
+                Privacy Policy
+              </Link>
+              <span>•</span>
+              <Link 
+                to="/terms" 
+                className="hover:text-gray-700 dark:hover:text-gray-300 transition-colors"
+              >
+                Terms of Service
+              </Link>
+            </div>
+            
+            {/* MXMC Logo */}
+            <div className="flex items-center space-x-2">
+              <span className="text-xs text-gray-400">Designed by</span>
+              <img 
+                src={MxmcSVG} 
+                alt="MXMC" 
+                className="h-4 w-auto opacity-70 hover:opacity-100 transition-opacity"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
