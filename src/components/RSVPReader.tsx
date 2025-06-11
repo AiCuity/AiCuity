@@ -1,12 +1,16 @@
-import { useRef } from "react";
+import { useRef, useEffect, useState } from "react";
 import { useRSVPReader } from "@/hooks/useRSVPReader";
 import { useFullscreen } from "@/hooks/useFullscreen";
+import { useAugmentOSIntegration } from "@/hooks/useAugmentOSIntegration";
+import { useAuth } from "@/context/AuthContext";
 import KeyboardControls from "./RSVPReader/KeyboardControls";
 import TitleBar from "./RSVPReader/TitleBar";
 import SourceLink from "./RSVPReader/SourceLink";
 import ReadingArea from "./RSVPReader/ReadingArea";
 import ControlsContainer from "./RSVPReader/ControlsContainer";
 import { useNotifications } from "@/hooks/rsvp/useNotifications";
+import { Button } from "@/components/ui/button";
+import { Glasses, WifiOff, Users } from "lucide-react";
 
 interface RSVPReaderProps {
   text: string;
@@ -29,8 +33,11 @@ const RSVPReader = ({
   isGlassesMode = false,
   onCloseReader
 }: RSVPReaderProps) => {
+  const { user } = useAuth();
   const readerRef = useRef<HTMLDivElement>(null);
   const { showNotifications, setShowNotifications, toggleNotifications } = useNotifications(false);
+  const [arStreamingEnabled, setArStreamingEnabled] = useState(false);
+  const [augmentOSServerUrl] = useState('http://localhost:3001'); // TODO: Make configurable
   
   const {
     words,
@@ -60,10 +67,73 @@ const RSVPReader = ({
   
   const { isFullscreen, toggleFullscreen } = useFullscreen(readerRef);
 
+  // AugmentOS Integration
+  const { 
+    isConnected, 
+    activeSessions,
+    connectionError,
+    sessionToken,
+    streamRSVPData,
+    generateSessionToken
+  } = useAugmentOSIntegration({
+    serverUrl: augmentOSServerUrl,
+    enabled: arStreamingEnabled,
+    contentId: contentId,
+    userId: user?.id
+  });
+
+  // Stream RSVP data when reading
+  useEffect(() => {
+    if (arStreamingEnabled && isConnected && isPlaying && activeSessions.length > 0) {
+      const streamData = {
+        currentWordIndex,
+        word: {
+          full: words[currentWordIndex] || '',
+          before: formattedWord.before,
+          highlight: formattedWord.highlight,
+          after: formattedWord.after
+        },
+        wpm: baseWpm,
+        effectiveWpm,
+        complexity: currentComplexity,
+        isPlaying,
+        progress,
+        totalWords: words.length
+      };
+      
+      streamRSVPData(streamData);
+    }
+  }, [
+    arStreamingEnabled, 
+    isConnected, 
+    isPlaying, 
+    currentWordIndex, 
+    formattedWord, 
+    baseWpm, 
+    effectiveWpm, 
+    currentComplexity, 
+    progress, 
+    words,
+    activeSessions,
+    streamRSVPData
+  ]);
+
   // Toggle notifications handler
   const handleToggleNotifications = () => {
     toggleNotifications();
     setShowToasts(!showNotifications);
+  };
+
+  // Toggle AR streaming
+  const handleToggleArStreaming = async () => {
+    const newState = !arStreamingEnabled;
+    setArStreamingEnabled(newState);
+    
+    // If enabling AR streaming, generate token immediately
+    if (newState && !sessionToken && contentId && user) {
+      console.log('AR streaming enabled, generating session token...');
+      await generateSessionToken();
+    }
   };
 
   return (
@@ -123,6 +193,43 @@ const RSVPReader = ({
         onToggleNotifications={handleToggleNotifications}
         isGlassesMode={isGlassesMode}
       />
+      
+      {/* AugmentOS Streaming Control */}
+      {!isGlassesMode && (
+        <div className="fixed bottom-4 right-4 z-50">
+          <Button
+            variant={arStreamingEnabled ? "default" : "outline"}
+            size="sm"
+            onClick={handleToggleArStreaming}
+            className={`flex items-center gap-2 ${
+              isConnected && sessionToken && activeSessions.length > 0 ? 'border-green-500 text-green-600' : 
+              arStreamingEnabled ? 'border-yellow-500 text-yellow-600' : ''
+            }`}
+            title={connectionError || (sessionToken ? 'Session active' : 'No session token')}
+          >
+            {isConnected && sessionToken && activeSessions.length > 0 ? (
+              <div className="flex items-center gap-1">
+                <Glasses className="h-4 w-4" />
+                {activeSessions.length > 1 && (
+                  <div className="flex items-center">
+                    <Users className="h-3 w-3" />
+                    <span className="text-xs">{activeSessions.length}</span>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <WifiOff className="h-4 w-4" />
+            )}
+            <span className="hidden sm:inline">
+              {isConnected && sessionToken && activeSessions.length > 0
+                ? `AR Connected (${activeSessions.length})` 
+                : arStreamingEnabled 
+                ? sessionToken ? 'AR Connecting...' : 'Generating Token...'
+                : 'AR Stream'}
+            </span>
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
