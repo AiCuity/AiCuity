@@ -7,12 +7,12 @@ export const stripePromise = loadStripe(import.meta.env.VITE_STRIPE_PUBLISHABLE_
 export const pricingTiers = [
   { min: 0, max: 5, price: 0, name: 'Free', description: 'Free tier with basic features' },
   { min: 6, max: 50, price: 5.00, name: 'Starter', description: 'Perfect for light readers' },
-  { min: 51, max: 100, price: 9.50, name: 'Basic', description: 'Great for regular readers' },
-  { min: 101, max: 150, price: 13.50, name: 'Professional', description: 'For avid readers' },
-  { min: 151, max: 200, price: 17.50, name: 'Advanced', description: 'Heavy reading workload' },
-  { min: 201, max: 250, price: 20.00, name: 'Premium', description: 'Professional use' },
+  // { min: 51, max: 100, price: 9.50, name: 'Basic', description: 'Great for regular readers' },
+  { min: 51, max: 150, price: 13.50, name: 'Professional', description: 'For avid readers' },
+  // { min: 151, max: 200, price: 17.50, name: 'Advanced', description: 'Heavy reading workload' },
+  // { min: 201, max: 250, price: 20.00, name: 'Premium', description: 'Professional use' },
   { min: 251, max: 300, price: 22.00, name: 'Enterprise', description: 'Maximum capacity' },
-  { min: 301, max: Infinity, price: 30.00, name: 'Unlimited', description: 'No limits' }
+  // { min: 301, max: Infinity, price: 30.00, name: 'Unlimited', description: 'No limits' }
 ];
 
 // Your Stripe product configuration with multiple price IDs for different tiers
@@ -24,11 +24,11 @@ export const stripeProduct = {
   tierPrices: {
     starter: import.meta.env.VITE_STRIPE_PRICE_ID_STARTER || import.meta.env.VITE_STRIPE_PRICE_ID || '',
     basic: import.meta.env.VITE_STRIPE_PRICE_ID_BASIC || import.meta.env.VITE_STRIPE_PRICE_ID || '',
-    professional: import.meta.env.VITE_STRIPE_PRICE_ID_PROFESSIONAL || import.meta.env.VITE_STRIPE_PRICE_ID || '',
-    advanced: import.meta.env.VITE_STRIPE_PRICE_ID_ADVANCED || import.meta.env.VITE_STRIPE_PRICE_ID || '',
-    premium: import.meta.env.VITE_STRIPE_PRICE_ID_PREMIUM || import.meta.env.VITE_STRIPE_PRICE_ID || '',
+    // professional: import.meta.env.VITE_STRIPE_PRICE_ID_PROFESSIONAL || import.meta.env.VITE_STRIPE_PRICE_ID || '',
+    // advanced: import.meta.env.VITE_STRIPE_PRICE_ID_ADVANCED || import.meta.env.VITE_STRIPE_PRICE_ID || '',
+    // premium: import.meta.env.VITE_STRIPE_PRICE_ID_PREMIUM || import.meta.env.VITE_STRIPE_PRICE_ID || '',
     enterprise: import.meta.env.VITE_STRIPE_PRICE_ID_ENTERPRISE || import.meta.env.VITE_STRIPE_PRICE_ID || '',
-    unlimited: import.meta.env.VITE_STRIPE_PRICE_ID_UNLIMITED || import.meta.env.VITE_STRIPE_PRICE_ID || '',
+    // unlimited: import.meta.env.VITE_STRIPE_PRICE_ID_UNLIMITED || import.meta.env.VITE_STRIPE_PRICE_ID || '',
   }
 };
 
@@ -46,10 +46,10 @@ export const getMonthlyLimit = (tier: string) => {
   const tierMap: { [key: string]: number } = {
     'free': 5,
     'starter': 50,
-    'basic': 100,
+    // 'basic': 100,
     'professional': 150,
-    'advanced': 200,
-    'premium': 250,
+    // 'advanced': 200,
+    // 'premium': 250,
     'enterprise': 300,
     'unlimited': Infinity
   };
