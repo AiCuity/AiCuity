@@ -1,8 +1,11 @@
 import { useState, useEffect, useCallback } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 interface AugmentOSConfig {
   serverUrl: string;
   enabled: boolean;
+  contentId?: string;
+  userId?: string;
 }
 
 interface SessionStatus {
@@ -29,10 +32,21 @@ interface RSVPStreamData {
   totalWords: number;
 }
 
+interface AugmentOSTokenResponse {
+  token: string;
+  sessionId: string;
+  augmentOSServerUrl: string;
+  augmentOSStatus: string;
+  activeSessions: number;
+}
+
 export function useAugmentOSIntegration(config: AugmentOSConfig) {
+  const { user } = useAuth();
   const [isConnected, setIsConnected] = useState(false);
   const [activeSessions, setActiveSessions] = useState<SessionStatus[]>([]);
   const [connectionError, setConnectionError] = useState<string | null>(null);
+  const [sessionToken, setSessionToken] = useState<string | null>(null);
+  const [currentSessionId, setCurrentSessionId] = useState<string | null>(null);
 
   // Check server connection through AiCuity backend
   const checkConnection = useCallback(async () => {
@@ -93,9 +107,60 @@ export function useAugmentOSIntegration(config: AugmentOSConfig) {
     }
   }, [isConnected]);
 
+  // Generate AugmentOS session token
+  const generateSessionToken = useCallback(async () => {
+    if (!config.enabled || !user || !config.contentId) {
+      return null;
+    }
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/rsvp-stream/token`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          userId: user.id,
+          contentId: config.contentId
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const result: AugmentOSTokenResponse = await response.json();
+      setSessionToken(result.token);
+      setCurrentSessionId(result.sessionId);
+      setIsConnected(result.augmentOSStatus === 'healthy');
+      
+      // Update sessions based on response
+      const sessionCount = result.activeSessions || 0;
+      const mockSessions: SessionStatus[] = Array.from({ length: sessionCount }, (_, i) => ({
+        sessionId: `session-${i + 1}`,
+        isReading: false,
+        currentWord: '',
+        progress: 0,
+        wpm: 300
+      }));
+      setActiveSessions(mockSessions);
+
+      console.log('AugmentOS session token generated:', result.sessionId);
+      return result.token;
+    } catch (error) {
+      console.error('Error generating AugmentOS token:', error);
+      setConnectionError('Failed to generate AugmentOS session token');
+      return null;
+    }
+  }, [config.enabled, config.contentId, user]);
+
   // Stream RSVP data through AiCuity backend to AugmentOS
   const streamRSVPData = useCallback(async (data: RSVPStreamData) => {
-    if (!isConnected || activeSessions.length === 0) {
+    if (!isConnected || !sessionToken || !config.contentId || !user) {
+      // Try to generate token if we don't have one
+      if (!sessionToken && config.enabled) {
+        await generateSessionToken();
+      }
       return;
     }
 
@@ -105,16 +170,22 @@ export function useAugmentOSIntegration(config: AugmentOSConfig) {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('auth_token') || ''}`
+          'Authorization': `Bearer ${sessionToken}`
         },
         body: JSON.stringify({
-          userId: 'current_user', // TODO: Get from auth context
-          contentId: 'current_content', // TODO: Get from reading context
+          userId: user.id,
+          contentId: config.contentId,
           rsvpData: data
         })
       });
 
       if (!response.ok) {
+        // If token expired, try to regenerate
+        if (response.status === 401) {
+          console.log('Token expired, regenerating...');
+          await generateSessionToken();
+          return;
+        }
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
@@ -130,12 +201,13 @@ export function useAugmentOSIntegration(config: AugmentOSConfig) {
           wpm: data.wpm
         }));
         setActiveSessions(mockSessions);
+        setConnectionError(null);
       }
     } catch (error) {
       console.error('Error streaming RSVP data:', error);
       setConnectionError('Failed to stream data to AR glasses');
     }
-  }, [isConnected, activeSessions]);
+  }, [isConnected, sessionToken, config.contentId, config.enabled, user, generateSessionToken]);
 
   // Send control command to specific session
   const sendControlCommand = useCallback(async (sessionId: string, command: string, data?: any) => {
@@ -173,6 +245,13 @@ export function useAugmentOSIntegration(config: AugmentOSConfig) {
     return null;
   }, [isConnected, config.serverUrl]);
 
+  // Generate token when enabled
+  useEffect(() => {
+    if (config.enabled && config.contentId && user && !sessionToken) {
+      generateSessionToken();
+    }
+  }, [config.enabled, config.contentId, user, sessionToken, generateSessionToken]);
+
   // Periodic connection check and session refresh
   useEffect(() => {
     if (!config.enabled) return;
@@ -184,7 +263,7 @@ export function useAugmentOSIntegration(config: AugmentOSConfig) {
       if (isConnected) {
         fetchActiveSessions();
       }
-    }, 5000); // Check every 5 seconds
+    }, 10000); // Check every 10 seconds (less frequent)
 
     return () => clearInterval(interval);
   }, [config.enabled, checkConnection, fetchActiveSessions, isConnected]);
@@ -200,7 +279,10 @@ export function useAugmentOSIntegration(config: AugmentOSConfig) {
     isConnected,
     activeSessions,
     connectionError,
+    sessionToken,
+    currentSessionId,
     streamRSVPData,
+    generateSessionToken,
     sendControlCommand,
     getSessionStatus,
     refreshSessions: fetchActiveSessions,
