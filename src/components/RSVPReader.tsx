@@ -203,14 +203,14 @@ const RSVPReader = ({
             variant={arStreamingEnabled ? "default" : "outline"}
             size="sm"
             onClick={handleToggleArStreaming}
-            className={`flex items-center gap-2 ${
+            className={`flex items-center gap-1 sm:gap-2 min-w-0 max-w-full ${
               isConnected && sessionToken && activeSessions.length > 0 ? 'border-green-500 text-green-600' : 
               arStreamingEnabled ? 'border-yellow-500 text-yellow-600' : ''
             }`}
             title={connectionError || (sessionToken ? 'Session active' : 'No session token')}
           >
             {isConnected && sessionToken && activeSessions.length > 0 ? (
-              <div className="flex items-center gap-1">
+              <div className="flex items-center gap-1 flex-shrink-0">
                 <Glasses className="h-4 w-4" />
                 {activeSessions.length > 1 && (
                   <div className="flex items-center">
@@ -220,9 +220,9 @@ const RSVPReader = ({
                 )}
               </div>
             ) : (
-              <WifiOff className="h-4 w-4" />
+              <WifiOff className="h-4 w-4 flex-shrink-0" />
             )}
-            <span className="hidden sm:inline">
+            <span className="hidden sm:inline truncate">
               {isConnected && sessionToken && activeSessions.length > 0
                 ? `AR Connected (${activeSessions.length})` 
                 : arStreamingEnabled 
