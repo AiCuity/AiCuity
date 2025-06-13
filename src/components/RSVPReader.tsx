@@ -12,6 +12,8 @@ import { useNotifications } from "@/hooks/rsvp/useNotifications";
 import { Button } from "@/components/ui/button";
 import { Glasses, WifiOff, Users } from "lucide-react";
 
+const AUGMENTOS_SERVER_URL = import.meta.env.VITE_AUGMENTOS_SERVER_URL || 'http://localhost:3001';
+
 interface RSVPReaderProps {
   text: string;
   contentId: string;
@@ -37,7 +39,7 @@ const RSVPReader = ({
   const readerRef = useRef<HTMLDivElement>(null);
   const { showNotifications, setShowNotifications, toggleNotifications } = useNotifications(false);
   const [arStreamingEnabled, setArStreamingEnabled] = useState(false);
-  const [augmentOSServerUrl] = useState('http://localhost:3001'); // TODO: Make configurable
+  const [augmentOSServerUrl] = useState(AUGMENTOS_SERVER_URL);
   
   const {
     words,
