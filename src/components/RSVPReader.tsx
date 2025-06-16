@@ -11,6 +11,7 @@ import ControlsContainer from "./RSVPReader/ControlsContainer";
 import { useNotifications } from "@/hooks/rsvp/useNotifications";
 import { Button } from "@/components/ui/button";
 import { Glasses, WifiOff, Users } from "lucide-react";
+import { calculateComplexity } from "@/utils/rsvp-timing";
 
 const AUGMENTOS_SERVER_URL = import.meta.env.VITE_AUGMENTOS_SERVER_URL || 'http://localhost:3001';
 
@@ -40,6 +41,7 @@ const RSVPReader = ({
   const { showNotifications, setShowNotifications, toggleNotifications } = useNotifications(false);
   const [arStreamingEnabled, setArStreamingEnabled] = useState(false);
   const [augmentOSServerUrl] = useState(AUGMENTOS_SERVER_URL);
+  const sentChunksRef = useRef<Set<string>>(new Set());
   
   const {
     words,
@@ -84,26 +86,79 @@ const RSVPReader = ({
     userId: user?.id
   });
 
-  // Stream RSVP data when reading
+  // Chunk streaming: Send chunks of words to reduce HTTP requests
   useEffect(() => {
     if (arStreamingEnabled && isConnected && isPlaying && activeSessions.length > 0) {
-      const streamData = {
-        currentWordIndex,
-        word: {
-          full: words[currentWordIndex] || '',
-          before: formattedWord.before,
-          highlight: formattedWord.highlight,
-          after: formattedWord.after
-        },
-        wpm: baseWpm,
-        effectiveWpm,
-        complexity: currentComplexity,
-        isPlaying,
-        progress,
-        totalWords: words.length
-      };
+      const CHUNK_SIZE = 10;
+      const PREFETCH_THRESHOLD = 3; // Send next chunk when 3 words remaining in current chunk
       
-      streamRSVPData(streamData);
+      // Send chunk at start, or when we're near the end of current chunk for seamless playback
+      const shouldSendChunk = 
+        currentWordIndex === 0 || // First chunk
+        currentWordIndex % CHUNK_SIZE === 0 || // Start of new chunk
+        (currentWordIndex % CHUNK_SIZE === CHUNK_SIZE - PREFETCH_THRESHOLD); // Near end of current chunk
+      
+      if (shouldSendChunk) {
+        // For prefetch, send the next chunk early
+        const chunkStartIndex = currentWordIndex % CHUNK_SIZE === CHUNK_SIZE - PREFETCH_THRESHOLD 
+          ? Math.floor(currentWordIndex / CHUNK_SIZE) * CHUNK_SIZE + CHUNK_SIZE  // Next chunk
+          : currentWordIndex; // Current chunk
+
+        const chunkEndIndex = Math.min(chunkStartIndex + CHUNK_SIZE, words.length);
+        
+        // Don't send if we're trying to send beyond the text
+        if (chunkStartIndex >= words.length) {
+          return;
+        }
+        
+        const wordChunk = [];
+        
+        for (let i = chunkStartIndex; i < chunkEndIndex; i++) {
+          if (words[i]) {
+            wordChunk.push({
+              word: words[i],
+              index: i,
+              complexity: calculateComplexity(words[i])
+            });
+          }
+        }
+
+        if (wordChunk.length > 0) {
+          // Create chunk identifier to prevent frontend duplicates
+          const chunkId = `${chunkStartIndex}-${chunkEndIndex-1}`;
+          
+          // Check if we've already sent this chunk
+          if (sentChunksRef.current.has(chunkId)) {
+            console.log(`🔄 Frontend: Skipping already sent chunk ${chunkId}`);
+            return;
+          }
+          
+          // Mark chunk as sent
+          sentChunksRef.current.add(chunkId);
+          
+          const isPrefetch = currentWordIndex % CHUNK_SIZE === CHUNK_SIZE - PREFETCH_THRESHOLD;
+          console.log(`📦 ${isPrefetch ? 'Prefetching' : 'Sending'} word chunk: ${chunkId} (${wordChunk.length} words)`);
+
+          const streamData = {
+            currentWordIndex,
+            word: {
+              full: words[currentWordIndex] || '',
+              before: formattedWord.before,
+              highlight: formattedWord.highlight,
+              after: formattedWord.after
+            },
+            wpm: baseWpm,
+            effectiveWpm,
+            complexity: currentComplexity,
+            isPlaying,
+            progress,
+            totalWords: words.length,
+            wordChunk: wordChunk
+          };
+          
+          streamRSVPData(streamData);
+        }
+      }
     }
   }, [
     arStreamingEnabled, 
@@ -130,6 +185,9 @@ const RSVPReader = ({
   const handleToggleArStreaming = async () => {
     const newState = !arStreamingEnabled;
     setArStreamingEnabled(newState);
+    
+    // Clear sent chunks when toggling
+    sentChunksRef.current.clear();
     
     // If enabling AR streaming, generate token immediately
     if (newState && !sessionToken && contentId && user) {

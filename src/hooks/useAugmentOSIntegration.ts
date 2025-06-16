@@ -30,6 +30,12 @@ interface RSVPStreamData {
   isPlaying: boolean;
   progress: number;
   totalWords: number;
+  // New chunk support
+  wordChunk?: Array<{
+    word: string;
+    index: number;
+    complexity: number;
+  }>;
 }
 
 interface AugmentOSTokenResponse {
