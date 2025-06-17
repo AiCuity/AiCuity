@@ -84,41 +84,123 @@ const RSVPReader = ({
     userId: user?.id
   });
 
-  // Stream RSVP data when reading
+  // Simple word buffering for high-speed streaming
+  const wordBufferRef = useRef<Array<{
+    wordIndex: number;
+    word: string;
+    wpm: number;
+    effectiveWpm: number;
+    timestamp: number;
+  }>>([]);
+  const bufferFlushTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastStreamedWordRef = useRef<number>(-1);
+
+  // Stream RSVP data when reading - with properly synchronized buffering
   useEffect(() => {
-    if (arStreamingEnabled && isConnected && isPlaying && activeSessions.length > 0) {
-      const streamData = {
-        currentWordIndex,
-        word: {
-          full: words[currentWordIndex] || '',
-          before: formattedWord.before,
-          highlight: formattedWord.highlight,
-          after: formattedWord.after
-        },
-        wpm: baseWpm,
-        effectiveWpm,
-        complexity: currentComplexity,
-        isPlaying,
-        progress,
-        totalWords: words.length
-      };
-      
-      streamRSVPData(streamData);
+    if (!arStreamingEnabled || !isConnected || !isPlaying || activeSessions.length === 0) {
+      return;
     }
-  }, [
-    arStreamingEnabled, 
-    isConnected, 
-    isPlaying, 
-    currentWordIndex, 
-    formattedWord, 
-    baseWpm, 
-    effectiveWpm, 
-    currentComplexity, 
-    progress, 
-    words,
-    activeSessions,
-    streamRSVPData
-  ]);
+
+    // Only buffer if word actually changed
+    if (lastStreamedWordRef.current === currentWordIndex) {
+      return;
+    }
+
+    // Add word to buffer
+    wordBufferRef.current.push({
+      wordIndex: currentWordIndex,
+      word: words[currentWordIndex] || '',
+      wpm: baseWpm,
+      effectiveWpm,
+      timestamp: Date.now()
+    });
+
+    lastStreamedWordRef.current = currentWordIndex;
+    console.log(`📝 Buffered word ${currentWordIndex}: "${words[currentWordIndex]}" (buffer: ${wordBufferRef.current.length})`);
+
+    // Clear existing timeout
+    if (bufferFlushTimeoutRef.current) {
+      clearTimeout(bufferFlushTimeoutRef.current);
+    }
+
+    // Calculate timing based on WPM - each word takes this long
+    const msPerWord = (60 * 1000) / baseWpm;
+    
+    // Buffer sizing based on speed - more conservative for high speeds
+    const optimalBufferSize = baseWpm > 300 ? 2 : 3; // Smaller buffer for high speeds
+    const flushDelay = Math.max(150, msPerWord * 1.2); // More spacing between flushes, minimum 150ms
+
+    if (wordBufferRef.current.length >= optimalBufferSize) {
+      // Flush immediately if buffer is optimal size
+      console.log(`🚀 Buffer reached optimal size (${optimalBufferSize}), flushing immediately`);
+      flushWordBuffer();
+    } else {
+      // Schedule flush based on word timing
+      bufferFlushTimeoutRef.current = setTimeout(() => {
+        console.log(`⏰ Timer flush triggered after ${flushDelay.toFixed(0)}ms`);
+        flushWordBuffer();
+      }, flushDelay);
+    }
+
+    // Cleanup function
+    return () => {
+      if (bufferFlushTimeoutRef.current) {
+        clearTimeout(bufferFlushTimeoutRef.current);
+      }
+    };
+  }, [arStreamingEnabled, isConnected, isPlaying, currentWordIndex, baseWpm, activeSessions.length]);
+
+  // Function to flush the word buffer
+  const flushWordBuffer = async () => {
+    if (wordBufferRef.current.length === 0) return;
+
+    const buffer = [...wordBufferRef.current];
+    wordBufferRef.current = []; // Clear immediately
+
+    const msPerWord = (60 * 1000) / (buffer[0]?.wpm || 300);
+    console.log(`📦 Flushing ${buffer.length} words to AR server (${buffer[0]?.wpm} WPM = ${msPerWord.toFixed(0)}ms per word)`);
+    console.log(`📋 Words: [${buffer.map(w => `${w.wordIndex}:"${w.word}"`).join(', ')}]`);
+
+    try {
+      // Send words as array in single API call
+      await streamRSVPData({
+        wordBuffer: buffer,
+        isBuffered: true,
+        totalWords: words.length,
+        currentProgress: progress
+      });
+      console.log(`✅ Successfully sent ${buffer.length} words to AR`);
+    } catch (error) {
+      console.error('❌ Error flushing word buffer:', error);
+      // Re-add failed words to buffer for retry (at the beginning)
+      wordBufferRef.current = [...buffer, ...wordBufferRef.current];
+    }
+  };
+
+  // Flush buffer when reading stops or streaming disabled
+  useEffect(() => {
+    if (!isPlaying && wordBufferRef.current.length > 0) {
+      console.log('📤 Reading paused, flushing remaining buffer');
+      flushWordBuffer();
+    }
+  }, [isPlaying]);
+
+  // Reset buffer when streaming disabled
+  useEffect(() => {
+    if (!arStreamingEnabled) {
+      // Flush any remaining words before clearing
+      if (wordBufferRef.current.length > 0) {
+        console.log('📤 AR streaming disabled, flushing remaining buffer');
+        flushWordBuffer();
+      }
+      
+      wordBufferRef.current = [];
+      lastStreamedWordRef.current = -1;
+      if (bufferFlushTimeoutRef.current) {
+        clearTimeout(bufferFlushTimeoutRef.current);
+      }
+    }
+  }, [arStreamingEnabled]);
 
   // Toggle notifications handler
   const handleToggleNotifications = () => {
