@@ -17,19 +17,31 @@ interface SessionStatus {
 }
 
 interface RSVPStreamData {
-  currentWordIndex: number;
-  word: {
+  // Single word streaming (original)
+  currentWordIndex?: number;
+  word?: {
     full: string;
     before: string;
     highlight: string;
     after: string;
   };
-  wpm: number;
-  effectiveWpm: number;
-  complexity: number;
-  isPlaying: boolean;
-  progress: number;
-  totalWords: number;
+  wpm?: number;
+  effectiveWpm?: number;
+  complexity?: number;
+  isPlaying?: boolean;
+  progress?: number;
+  totalWords?: number;
+  
+  // Buffered streaming (new)
+  wordBuffer?: Array<{
+    wordIndex: number;
+    word: string;
+    wpm: number;
+    effectiveWpm: number;
+    timestamp: number;
+  }>;
+  isBuffered?: boolean;
+  currentProgress?: number;
 }
 
 interface AugmentOSTokenResponse {
@@ -196,9 +208,13 @@ export function useAugmentOSIntegration(config: AugmentOSConfig) {
         const mockSessions: SessionStatus[] = Array.from({ length: sessionCount }, (_, i) => ({
           sessionId: `session-${i + 1}`,
           isReading: true,
-          currentWord: data.word.full,
-          progress: data.progress,
-          wpm: data.wpm
+          currentWord: data.isBuffered 
+            ? `${data.wordBuffer?.length || 0} words buffered`
+            : data.word?.full || '',
+          progress: data.currentProgress || data.progress || 0,
+          wpm: data.isBuffered 
+            ? data.wordBuffer?.[0]?.wpm || 300
+            : data.wpm || 300
         }));
         setActiveSessions(mockSessions);
         setConnectionError(null);
