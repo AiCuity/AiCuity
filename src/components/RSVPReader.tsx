@@ -126,9 +126,9 @@ const RSVPReader = ({
     // Calculate timing based on WPM - each word takes this long
     const msPerWord = (60 * 1000) / baseWpm;
     
-    // Buffer sizing based on speed - more conservative for high speeds
-    const optimalBufferSize = baseWpm > 300 ? 2 : 3; // Smaller buffer for high speeds
-    const flushDelay = Math.max(150, msPerWord * 1.2); // More spacing between flushes, minimum 150ms
+    // Buffer sizing based on speed - larger buffers for stable display
+    const optimalBufferSize = baseWpm > 400 ? 6 : baseWpm > 300 ? 7 : 8; // Larger buffers to reduce network calls
+    const flushDelay = Math.max(300, msPerWord * 2.0); // Slower flushing to match AR display timing
 
     if (wordBufferRef.current.length >= optimalBufferSize) {
       // Flush immediately if buffer is optimal size
