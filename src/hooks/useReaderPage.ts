@@ -24,6 +24,15 @@ export function useReaderPage() {
   const [useOpenAI, setUseOpenAI] = useState<boolean>(false);
   const [selectedWordPosition, setSelectedWordPosition] = useState<number>(0);
 
+  // Helper function to detect if content is from image scan
+  const isImageScanContent = (title?: string, source?: string): boolean => {
+    return (
+      title?.startsWith('Book Scan:') || 
+      source?.startsWith('Image Scan:') ||
+      source?.includes('image-scan')
+    );
+  };
+
   // Initialize selected word position from initial position
   useEffect(() => {
     if (initialPosition > 0) {
@@ -89,8 +98,27 @@ export function useReaderPage() {
     console.log("Set selectedWordPosition to:", wordIndex);
   };
 
+  const handleSummarizeWithImageScanCheck = (apiKey: string, useOpenAI: boolean) => {
+    // For image scan content, just use the original content as summary
+    if (isImageScanContent(title, source)) {
+      console.log("Image scan content detected, using original content as summary instead of processing");
+      setSummary(content);
+      return;
+    }
+    
+    // For other content types, use normal summarization
+    handleSummarize(apiKey, useOpenAI);
+  };
+
   const handleRetrySummarization = () => {
-    // Clear previous summary and regenerate
+    // For image scan content, don't re-summarize, just use the original content
+    if (isImageScanContent(title, source)) {
+      console.log("Image scan content detected, using original content instead of re-summarizing");
+      setSummary(content);
+      return;
+    }
+    
+    // Clear previous summary and regenerate for other content types
     setSummary("");
     handleSummarize(apiKey, useOpenAI);
   };
@@ -123,10 +151,11 @@ export function useReaderPage() {
     apiKey,
     useOpenAI,
     selectedWordPosition,
+    isImageScanContent: isImageScanContent(title, source),
     handleStartReading,
     handleStartReadingFromPosition,
     handleWordClick,
-    handleSummarize,
+    handleSummarize: handleSummarizeWithImageScanCheck,
     handleRetrySummarization,
     handleBackToText,
     handleCloseReader,
