@@ -167,8 +167,24 @@ export const useContentLoader = (contentId?: string) => {
           setTitle(title);
           setSource(`Wikipedia: ${title}`);
         } else {
-          // For other content types - could be from reading history
+          // For other content types - could be from reading history or localStorage content
           console.log("Unknown content type, looking for any available data:", contentId);
+          
+          // First check localStorage for stored content (like image scans)
+          const localStorageContent = localStorage.getItem(`content_${contentId}`);
+          if (localStorageContent) {
+            try {
+              const contentData = JSON.parse(localStorageContent);
+              console.log("Loading content from localStorage:", contentData.type || 'unknown');
+              setContent(contentData.text);
+              setTitle(contentData.title);
+              setSource(contentData.source || "");
+              setIsLoading(false);
+              return;
+            } catch (error) {
+              console.error("Error parsing localStorage content:", error);
+            }
+          }
           
           // Try to load from sessionStorage as a fallback
           const storedContent = sessionStorage.getItem('readerContent');

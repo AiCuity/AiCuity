@@ -46,6 +46,7 @@ export const useReadingSession = () => {
     // If we have parsed text, use it
     if (item.parsed_text) {
       console.log("DEBUG: Using parsed_text path");
+      console.log("DEBUG: Source type:", item.source_type);
       console.log("Storing parsed text in sessionStorage for content ID:", item.content_id);
       
       // Store this item's content
@@ -53,6 +54,19 @@ export const useReadingSession = () => {
       sessionStorage.setItem('contentTitle', item.title);
       if (item.source) {
         sessionStorage.setItem('contentSource', item.source_input || item.source);
+      }
+      
+      // For image scans, also store the content in localStorage as backup
+      if (item.source_type === 'image-scan' || item.source?.startsWith('Image Scan:')) {
+        console.log("DEBUG: Storing image scan content in localStorage for cross-browser access");
+        const contentData = {
+          text: item.parsed_text,
+          title: item.title,
+          source: item.source_input || item.source,
+          timestamp: Date.now(),
+          type: 'image-scan'
+        };
+        localStorage.setItem(`content_${item.content_id}`, JSON.stringify(contentData));
       }
       
       console.log("Content ID, position, and WPM stored:", item.content_id, readingPosition, wpm);
@@ -165,6 +179,53 @@ export const useReadingSession = () => {
         });
       } finally {
         setLoadingContentId(null);
+      }
+    }
+    // If this is an image scan, try to retrieve from localStorage
+    else if (item.source_type === 'image-scan' || (item.source && item.source.startsWith('Image Scan:'))) {
+      console.log("DEBUG: Using image scan content");
+      const localStorageContent = localStorage.getItem(`content_${item.content_id}`);
+      
+      if (localStorageContent) {
+        try {
+          const contentData = JSON.parse(localStorageContent);
+          console.log("DEBUG: Successfully retrieved image scan content from localStorage");
+          
+          // Store the content for the reader
+          sessionStorage.setItem('readerContent', contentData.text);
+          sessionStorage.setItem('contentTitle', contentData.title);
+          sessionStorage.setItem('contentSource', contentData.source);
+          
+          // Store the reading position
+          if (readingPosition > 0) {
+            sessionStorage.setItem('initialPosition', readingPosition.toString());
+          }
+          
+          // Store the WPM
+          sessionStorage.setItem('savedWpm', wpm.toString());
+          
+          toast({
+            title: "Image scan content retrieved",
+            description: "Successfully retrieved the scanned content. Starting reader...",
+          });
+          
+          // Navigate to the reader
+          navigate(`/reader/${item.content_id}`);
+        } catch (error) {
+          console.error("DEBUG: Error parsing image scan content:", error);
+          toast({
+            title: "Content unavailable",
+            description: "Could not retrieve the scanned image content. The content may have been cleared.",
+            variant: "destructive",
+          });
+        }
+      } else {
+        console.log("DEBUG: No image scan content found in localStorage");
+        toast({
+          title: "Content not found",
+          description: "The scanned image content is no longer available in local storage.",
+          variant: "destructive",
+        });
       }
     }
     // If source starts with "File:" but isn't a storage path, it's a descriptive source

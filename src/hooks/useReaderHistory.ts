@@ -66,10 +66,12 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
       const isExistingContent = sessionStorage.getItem('isExistingContent') === 'true';
       const contentIdMatches = storedContentId === contentId;
       
-      console.log("Is existing content (continue reading):", isExistingContent);
-      console.log("Stored content ID:", storedContentId);
-      console.log("Current content ID:", contentId);
-      console.log("Content ID matches:", contentIdMatches);
+      console.log("DEBUG useReaderHistory: Continue reading check:");
+      console.log("  - Is existing content (continue reading):", isExistingContent);
+      console.log("  - Stored content ID:", storedContentId);
+      console.log("  - Current content ID:", contentId);
+      console.log("  - Content ID matches:", contentIdMatches);
+      console.log("  - Will skip save:", isExistingContent && contentIdMatches);
       
       // If this is existing content (continue reading), don't create a new entry
       if (isExistingContent && contentIdMatches) {
@@ -80,6 +82,8 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
         sessionStorage.removeItem('isExistingContent');
         return;
       }
+      
+      console.log("DEBUG useReaderHistory: Proceeding with save - not existing content");
       
       // Check if entry already exists by content_id
       const existingEntryById = history.find(entry => entry.content_id === contentId);
@@ -114,7 +118,12 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
       // Get total words from sessionStorage if available (do this before clearing)
       const totalWordsStr = sessionStorage.getItem('contentTotalWords');
       const totalWords = totalWordsStr ? parseInt(totalWordsStr, 10) : null;
+      
+      // Get summary from sessionStorage for image scans
+      const summaryFromSession = sessionStorage.getItem('contentSummary');
+      
       console.log("DEBUG useReaderHistory: totalWords from session =", totalWords);
+      console.log("DEBUG useReaderHistory: summary from session =", summaryFromSession ? summaryFromSession.substring(0, 100) + '...' : 'none');
       
       // If totalWords is null, try to calculate it from the content as fallback
       let finalTotalWords = totalWords;
@@ -130,8 +139,10 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
       
       console.log("DEBUG useReaderHistory: contentId =", contentId);
       console.log("DEBUG useReaderHistory: original source =", source);
+      console.log("DEBUG useReaderHistory: title =", title);
+      console.log("DEBUG useReaderHistory: content length =", content?.length);
       
-      // Check if this is from file upload based on contentId pattern
+      // Check content type and set appropriate source handling
       if (contentId?.startsWith('file_')) {
         sourceType = 'file';
         
@@ -155,6 +166,14 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
           sourceInput = actualSource;
           console.log("DEBUG useReaderHistory: Using fallback file source =", actualSource);
         }
+      } else if (source?.startsWith('Image Scan:') || title?.startsWith('Book Scan:')) {
+        // Handle image scan content - check both source and title
+        sourceType = 'image-scan';
+        actualSource = source;
+        sourceInput = source;
+        console.log("DEBUG useReaderHistory: Image scan content detected via source/title");
+        console.log("DEBUG useReaderHistory: Source starts with 'Image Scan:':", source?.startsWith('Image Scan:'));
+        console.log("DEBUG useReaderHistory: Title starts with 'Book Scan:':", title?.startsWith('Book Scan:'));
       }
       
       console.log("DEBUG useReaderHistory: Final source details:");
@@ -162,6 +181,14 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
       console.log("  - actualSource:", actualSource);
       console.log("  - sourceInput:", sourceInput);
       console.log("  - totalWords:", finalTotalWords);
+      
+      console.log("DEBUG useReaderHistory: About to save entry with:");
+      console.log("  - title:", title);
+      console.log("  - source:", actualSource);
+      console.log("  - source_type:", sourceType);
+      console.log("  - source_input:", sourceInput);
+      console.log("  - content_id:", contentId);
+      console.log("  - parsed_text length:", content?.length);
       
       try {
         await saveHistoryEntry({
@@ -174,21 +201,22 @@ export function useReaderHistory(contentId: string | undefined, title: string, s
           current_position: 0,
           total_words: finalTotalWords, // Include total words for progress calculation
           calibrated: false,
-          summary: null,
+          summary: sourceType === 'image-scan' ? summaryFromSession : null, // Use AI summary for image scans
           parsed_text: content,
         });
         
         setHistorySaved(true);
-        console.log("New history entry saved for:", contentId, "with total_words:", finalTotalWords);
+        console.log("✅ New history entry saved successfully for:", contentId, "with source_type:", sourceType, "and parsed_text length:", content?.length);
         
-        // Only clear the total words from sessionStorage after successful save
+        // Only clear the session data from sessionStorage after successful save
         // and only if this is the initial save (not from continue reading)
         if (!isExistingContent) {
           sessionStorage.removeItem('contentTotalWords');
-          console.log("Cleared contentTotalWords from sessionStorage after successful save");
+          sessionStorage.removeItem('contentSummary');
+          console.log("Cleared contentTotalWords and contentSummary from sessionStorage after successful save");
         }
       } catch (error) {
-        console.error("Error saving history:", error);
+        console.error("❌ Error saving history:", error);
       }
     };
     

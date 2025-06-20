@@ -7,6 +7,7 @@ import { Crown } from "lucide-react";
 import Hero from "@/components/Hero";
 import WebsiteForm from "@/components/WebsiteForm";
 import FileUploadNetlify from "@/components/FileUploadNetlify";
+import ImageScan from "@/components/ImageScan";
 import ReadingHistory from "@/components/ReadingHistory";
 import SubscribeButton from "@/components/SubscribeButton";
 import { useAuth } from "@/context/AuthContext";
@@ -94,13 +95,25 @@ const Index = () => {
               </TabsContent>
 
               <TabsContent value="upload">
-                <section className="rounded border p-3 sm:p-6 shadow-sm">
-                  <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold">Upload Document</h2>
-                  <p className="mb-4 sm:mb-6 text-sm text-muted-foreground">
-                    Upload a document to start reading with RSVP (powered by Netlify Functions)
-                  </p>
-                  <FileUploadNetlify />
-                </section>
+                <div className="space-y-6">
+                  {/* File Upload Section */}
+                  <section className="rounded border p-3 sm:p-6 shadow-sm">
+                    <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold">Upload Document</h2>
+                    <p className="mb-4 sm:mb-6 text-sm text-muted-foreground">
+                      Upload a document to start reading with RSVP (powered by Netlify Functions)
+                    </p>
+                    <FileUploadNetlify />
+                  </section>
+
+                  {/* Image Scan Section */}
+                  <section className="rounded border p-3 sm:p-6 shadow-sm">
+                    <h2 className="mb-3 sm:mb-4 text-base sm:text-lg font-semibold">Scan Book Cover</h2>
+                    <p className="mb-4 sm:mb-6 text-sm text-muted-foreground">
+                      Upload a book cover image and let AI generate a detailed summary for RSVP reading
+                    </p>
+                    <ImageScan />
+                  </section>
+                </div>
               </TabsContent>
 
               <TabsContent value="history">

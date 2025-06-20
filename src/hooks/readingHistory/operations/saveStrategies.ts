@@ -50,6 +50,7 @@ export const saveToSupabase = async (
           wpm: entry.wpm,
           total_words: entry.total_words,
           summary: entry.summary || existingEntry.summary,
+          parsed_text: entry.parsed_text || existingEntry.parsed_text,
           updated_at: new Date().toISOString()
         })
         .eq('id', existingEntry.id)
@@ -70,7 +71,8 @@ export const saveToSupabase = async (
                 current_position: entry.current_position, 
                 wpm: entry.wpm, 
                 total_words: entry.total_words || item.total_words,
-                summary: entry.summary || item.summary, 
+                summary: entry.summary || item.summary,
+                parsed_text: entry.parsed_text || item.parsed_text,
                 updated_at: new Date().toISOString() 
               }
             : item
@@ -105,8 +107,8 @@ export const saveToSupabase = async (
         wpm: entry.wpm,
         current_position: entry.current_position,
         source: entry.source,
-        source_type: entry.source_type,
-        parsed_text_length: entry.parsed_text?.length
+        parsed_text_length: entry.parsed_text?.length,
+        summary_length: entry.summary?.length
       });
       
       // Create new entry
@@ -120,6 +122,7 @@ export const saveToSupabase = async (
           current_position: entry.current_position,
           total_words: entry.total_words,
           summary: entry.summary,
+          parsed_text: entry.parsed_text,
           user_id: user.id // Ensure the user_id is set to the current user
         })
         .select()
@@ -134,7 +137,7 @@ export const saveToSupabase = async (
         ...data,
         source_type: entry.source_type || 'unknown',
         source_input: data.source || data.title || '',
-        parsed_text: entry.parsed_text || null,
+        parsed_text: entry.parsed_text || data.parsed_text || null,
         calibrated: entry.calibrated || false,
       };
 
